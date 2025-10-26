@@ -1,6 +1,6 @@
 // components/TabBar.tsx
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, Animated } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 type TabItem = {
@@ -11,8 +11,8 @@ type TabItem = {
 
 const tabItems: TabItem[] = [
   { name: 'home', icon: 'home', label: 'Início' },
-  { name: 'explore', icon: 'search', label: 'Explorar' },
   { name: 'maps', icon: 'map', label: 'Mapas' },
+  { name: 'camera', icon: 'camera', label: 'Câmera' },
   { name: 'history', icon: 'time', label: 'Histórico' },
   { name: 'profile', icon: 'person', label: 'Perfil' },
 ];
@@ -22,7 +22,7 @@ interface TabBarProps {
   activeTab?: string;
 }
 
-export const TabBar = ({ onTabPress, activeTab = 'home' }: TabBarProps) => {
+export const TabBar = ({ onTabPress, activeTab = 'maps' }: TabBarProps) => {
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
 
   const handleTabPress = (tabName: string) => {
@@ -47,11 +47,15 @@ export const TabBar = ({ onTabPress, activeTab = 'home' }: TabBarProps) => {
           const isActive = isTabActive(tab.name);
           const isHovered = isTabHovered(tab.name);
           const showWhiteBackground = isHovered && !isActive;
+          const isCamera = tab.name === 'camera';
 
           return (
             <TouchableOpacity
               key={tab.name}
-              style={styles.tabItem}
+              style={[
+                styles.tabItem,
+                isCamera && styles.cameraTabItem
+              ]}
               onPress={() => handleTabPress(tab.name)}
               onPressIn={() => handlePressIn(tab.name)}
               onPressOut={handlePressOut}
@@ -62,12 +66,16 @@ export const TabBar = ({ onTabPress, activeTab = 'home' }: TabBarProps) => {
               <View style={[
                 styles.iconContainer,
                 isActive && styles.activeIconContainer,
-                showWhiteBackground && styles.hoverIconContainer
+                showWhiteBackground && styles.hoverIconContainer,
+                isCamera && styles.cameraIconContainer,
+                isCamera && isActive && styles.cameraActiveIconContainer,
+                isCamera && showWhiteBackground && styles.cameraHoverIconContainer
               ]}>
                 <Ionicons
                   name={tab.icon}
-                  size={24}
+                  size={isCamera ? 28 : 24}
                   color={
+                    isCamera ? '#FFFFFF' :
                     isActive ? '#FFA62B' : 
                     showWhiteBackground ? '#FFA62B' : '#FFFFFF'
                   }
@@ -76,9 +84,9 @@ export const TabBar = ({ onTabPress, activeTab = 'home' }: TabBarProps) => {
               <Text style={[
                 styles.label,
                 isActive && styles.activeLabel,
-                showWhiteBackground && styles.hoverLabel
+                showWhiteBackground && styles.hoverLabel,
+                isCamera && styles.cameraLabel
               ]}>
-                {tab.label}
               </Text>
             </TouchableOpacity>
           );
@@ -104,26 +112,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
+    position: 'relative',
   },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    position: 'relative',
   },
   tabItem: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     flex: 1,
+  },
+  cameraTabItem: {
+    marginBottom: 15, // Eleva o ícone da câmera
   },
   iconContainer: {
     width: 50,
     height: 50,
-    borderRadius: 16, // Bordas mais arredondadas
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
     backgroundColor: 'transparent',
-    transition: 'all 0.2s ease-in-out',
   },
   activeIconContainer: {
     backgroundColor: '#FFFFFF',
@@ -138,7 +150,7 @@ const styles = StyleSheet.create({
   },
   hoverIconContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16, // Bordas arredondadas no hover também
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -148,6 +160,31 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     transform: [{ scale: 0.95 }],
+  },
+  cameraIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: '#4CAF50', // Verde
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  cameraActiveIconContainer: {
+    backgroundColor: '#388E3C', // Verde mais escuro quando ativo
+    transform: [{ scale: 1.05 }],
+  },
+  cameraHoverIconContainer: {
+    backgroundColor: '#388E3C', // Verde mais escuro no hover
+    transform: [{ scale: 1.02 }],
   },
   label: {
     fontSize: 12,
@@ -161,5 +198,8 @@ const styles = StyleSheet.create({
   hoverLabel: {
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  cameraLabel: {
+    marginTop: 4,
   },
 });
