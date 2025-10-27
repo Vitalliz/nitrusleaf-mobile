@@ -30,7 +30,6 @@ nitrusleaf-mobile/
 ├── package.json # Configurações do projeto e dependências
 └── tsconfig.json # Configuração do TypeScript
 
-
 ---
 
 ## 🧭 Funcionalidades Principais
