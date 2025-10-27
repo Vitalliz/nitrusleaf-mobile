@@ -19,18 +19,18 @@ O projeto foi criado para oferecer uma experiência fluida, responsiva e com sup
 
 ## 📂 Estrutura do Projeto
 
+```text
 nitrusleaf-mobile/
-├── app/ # Telas e rotas do aplicativo
-│ ├── (tabs)/ # Navegação com abas (Home, Login, Registro, etc.)
-│ ├── _layout.tsx # Layout global de navegação
-│ └── modal.tsx # Modal de exemplo
-├── assets/ # Imagens e ícones
-├── components/ # (Se existir) Componentes reutilizáveis
-├── App.js # Ponto de entrada principal
-├── package.json # Configurações do projeto e dependências
-└── tsconfig.json # Configuração do TypeScript
+├── app/                 
+│   ├── (tabs)/          # Navegação com abas (Home, Login, Registro, etc.)
+│   ├── _layout.tsx      # Layout global de navegação
+│   └── modal.tsx        # Modal de exemplo
+├── assets/              # Imagens e ícones
+├── components/          # (Se existir) Componentes reutilizáveis
+├── App.js               # Ponto de entrada principal
+├── package.json         # Configurações do projeto e dependências
+└── tsconfig.json        # Configuração do TypeScript
 
----
 
 ## 🧭 Funcionalidades Principais
 
