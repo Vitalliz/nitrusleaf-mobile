@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
-import { PieChart, BarChart } from "react-native-chart-kit";
+import { BarChart } from "react-native-chart-kit";
 
 type GraphVariant = "deficiency-percentage" | "monthly-comparison" | "probability";
 
@@ -34,15 +34,15 @@ export const Graph = ({
   const renderDeficiencyPercentage = () => {
     const customData = data || [
       { name: "Cobre", percentage: 45, color: "#6BC24A" },
-      { name: "Manganês", percentage: 30, color: "#FFA62B" },
+      { name: "ManganÃªs", percentage: 30, color: "#FFA62B" },
       { name: "Adversos", percentage: 25, color: "#9C27B0" }
     ];
 
     return (
       <View style={[styles.container, styles.deficiencyContainer]}>
         <View style={styles.deficiencyHeader}>
-          <Text style={styles.deficiencyMainTitle}>OCORRÊNCIAS TOTAIS DE</Text>
-          <Text style={styles.deficiencySubTitle}>deficiências em %</Text>
+          <Text style={styles.deficiencyMainTitle}>OCORRÃŠNCIAS TOTAIS DE</Text>
+          <Text style={styles.deficiencySubTitle}>deficiÃªncias em %</Text>
         </View>
         
         <View style={styles.deficiencyContent}>
@@ -59,8 +59,8 @@ export const Graph = ({
         </View>
 
         <View style={styles.deficiencyFooter}>
-          <Text style={styles.footerMainText}>56/87 Pés</Text>
-          <Text style={styles.footerSubText}>Total de pés analisados</Text>
+          <Text style={styles.footerMainText}>56/87 PÃ©s</Text>
+          <Text style={styles.footerSubText}>Total de pÃ©s analisados</Text>
         </View>
       </View>
     );
@@ -68,13 +68,13 @@ export const Graph = ({
 
   const renderMonthlyComparison = () => {
     const chartData = data || {
-      labels: ["Talhão 1", "Talhão 2", "Talhão 3"],
+      labels: ["TalhÃ£o 1", "TalhÃ£o 2", "TalhÃ£o 3"],
       datasets: [
         {
           data: [22, 15, 18], // Cobre
         },
         {
-          data: [12, 20, 8], // Manganês
+          data: [12, 20, 8], // ManganÃªs
         }
       ]
     };
@@ -140,7 +140,7 @@ export const Graph = ({
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: "#FFA62B" }]} />
-            <Text style={styles.legendText}>Manganês</Text>
+            <Text style={styles.legendText}>ManganÃªs</Text>
           </View>
         </View>
       </View>
@@ -149,7 +149,7 @@ export const Graph = ({
 
   const renderProbability = () => {
     const percentage = data?.percentage || 92;
-    const deficiency = data?.deficiency || "Deficiência de Cobre";
+    const deficiency = data?.deficiency || "DeficiÃªncia de Cobre";
 
     return (
       <View style={[styles.container, styles.probabilityContainer]}>
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// Componentes específicos para cada variant
+// Componentes especÃ­ficos para cada variant
 export const DeficiencyPercentageGraph = ({ data, width, height }: { data?: any; width?: number; height?: number }) => (
   <Graph variant="deficiency-percentage" data={data} width={width} height={height} />
 );

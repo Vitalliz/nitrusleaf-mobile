@@ -1,13 +1,18 @@
-// app/_layout.tsx
-import { Stack } from "expo-router";
+// app/(tabs)/_layout.tsx - SEM TABBAR (USANDO FOOTER CUSTOM)
+import { Stack } from 'expo-router';
 
-export default function RootLayout() {
+export default function TabsLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-       <Stack.Screen name="test" options={{ headerShown: false }} />{/*
-      <Stack.Screen name="register" options={{ headerShown: false }} />
-      <Stack.Screen name="register-two" options={{ headerShown: false }} /> */}
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name='index' />
+      <Stack.Screen name='explore' />
+      <Stack.Screen name='maps' />
+      <Stack.Screen name='history' />
+      <Stack.Screen name='profile' />
     </Stack>
   );
 }

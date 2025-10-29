@@ -1,6 +1,6 @@
 // components/TabBar.tsx
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, Animated } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 type TabItem = {
@@ -10,10 +10,10 @@ type TabItem = {
 };
 
 const tabItems: TabItem[] = [
-  { name: 'home', icon: 'home', label: 'Início' },
+  { name: 'home', icon: 'home', label: 'InÃ­cio' },
   { name: 'explore', icon: 'search', label: 'Explorar' },
   { name: 'maps', icon: 'map', label: 'Mapas' },
-  { name: 'history', icon: 'time', label: 'Histórico' },
+  { name: 'history', icon: 'time', label: 'HistÃ³rico' },
   { name: 'profile', icon: 'person', label: 'Perfil' },
 ];
 
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   hoverIconContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16, // Bordas arredondadas no hover também
+    borderRadius: 16, // Bordas arredondadas no hover tambÃ©m
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

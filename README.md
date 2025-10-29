@@ -79,6 +79,4 @@ Desenvolvido com ❤️ usando React Native + Expo
 
 ---
 
-Deseja que eu gere o arquivo `README.md` dentro do projeto (`nitrusleaf-mobile/README.md`) e disponibilize para download? ​:contentReference[oaicite:0]{index=0}​
-
 

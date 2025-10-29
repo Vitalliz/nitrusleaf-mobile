@@ -1,48 +1,94 @@
+// components/footer.tsx - FOOTER PROFISSIONAL COM NAVEGAÇÃO
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
+export default function Footer() {
+  const router = useRouter();
 
-const Footer = () => {
+  const handleNavigation = (route: string) => {
+    router.push(route);
+  };
+
+  const handleCamera = () => {
+    // Aqui você pode adicionar lógica da câmera depois
+    console.log('Camera pressed');
+  };
+
   return (
-    <View style={styles.container}>
-      <Svg
-        height="100%"
-        width="100%"
-        viewBox="0 0 428 246"
-        preserveAspectRatio="none"
-        style={styles.svg}
+    <View style={styles.footer}>
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/home')}
       >
-        <Defs>
-          <LinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#FFB534" />
-            <Stop offset="100%" stopColor="#E88239" />
-          </LinearGradient>
-        </Defs>
-        <Path
-          d="M0,0 
-             C20,30 100,100 230,54 
-             C400,-30 400,20 940,250 
-             L430,246 L0,246 Z"
-          fill="url(#grad)"
-        />
-      </Svg>
+        <Ionicons name="home" size={28} color="white" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/explore')}
+      >
+        <Ionicons name="image" size={28} color="white" />
+      </TouchableOpacity>
+
+      <View style={styles.cameraButtonContainer}>
+        <TouchableOpacity
+          style={styles.cameraButton}
+          onPress={handleCamera}
+        >
+          <Ionicons name="camera" size={32} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/maps')}
+      >
+        <Ionicons name="bar-chart" size={28} color="white" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/profile')}
+      >
+        <Ionicons name="person" size={28} color="white" />
+      </TouchableOpacity>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    height: 246,
-    position: 'absolute',
-    bottom: 0,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#F9AA33',
+    paddingBottom: 12,
+    paddingTop: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
-  svg: {
-    width: '100%',
-    height: '100%',
+  footerButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraButtonContainer: {
+    marginBottom: 20,
+  },
+  cameraButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#6BC24A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
 });
-
-export default Footer;

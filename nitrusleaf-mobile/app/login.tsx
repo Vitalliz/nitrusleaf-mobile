@@ -1,4 +1,4 @@
-// app/(tabs)/explore.tsx
+// app/login.tsx - LOGIN PAGE
 import { Background } from "@/components/ui/background";
 import { WelcomeTitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,18 +8,25 @@ import { View, StyleSheet, Text, Image, TouchableOpacity } from "react-native";
 import Footer from "@/components/footer";
 import { useRouter } from "expo-router";
 
-export default function ExploreScreen() {
+export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    console.log("Login:", { email, password });
-    // Aqui você implementa a lógica de login
+    if (email.trim() && password.trim()) {
+      console.log("Login:", { email, password });
+      // Aqui você faria a autenticação
+      // Para teste, vamos redirecionar para a home
+      router.replace("/(tabs)/home");
+    } else {
+      alert("Por favor, preencha email e senha");
+    }
   };
 
   const handleGoogleLogin = () => {
     console.log("Login com Google");
+    // Implementar login com Google aqui
   };
 
   const handleRegister = () => {
@@ -35,19 +42,19 @@ export default function ExploreScreen() {
         />
         <WelcomeTitle text="Bem vindo!" />
         <Text style={styles.subtitle}>Entre na sua conta</Text>
-        
+
         <View style={styles.form}>
           <Text style={styles.label}>E-mail ou número:</Text>
-          <Input 
+          <Input
             placeholder="Email ou número de telefone"
             size="size-327"
             variant="default"
             value={email}
             onChangeText={setEmail}
           />
-          
+
           <Text style={styles.label}>Senha:</Text>
-          <Input 
+          <Input
             placeholder="Digite sua senha"
             size="size-327"
             variant="default"
@@ -55,10 +62,10 @@ export default function ExploreScreen() {
             onChangeText={setPassword}
             secureTextEntry={true}
           />
-          
+
           <LoginButton onPress={handleLogin} />
           <GoogleButton2 onPress={handleGoogleLogin} />
-          
+
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>
               Não possui uma conta?{" "}
