@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
 
 const { width } = Dimensions.get('window');
@@ -58,7 +60,9 @@ const PieChart = ({ data, size = 120 }) => {
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const firstName = user?.name?.split(' ')[0] || 'Paulo';
+  const firstName = 'João Silva';
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const analysisData = [
     {
@@ -99,7 +103,10 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[
+        styles.header,
+        { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF', paddingBottom: 18 }
+      ]}>
         <View style={styles.headerLeft}>
           <Image
             source={{ uri: 'https://i.pravatar.cc/150?img=1' }}
@@ -109,7 +116,7 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>Olá, {firstName}!</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity style={styles.menuButton} onPress={() => router.push('/(tabs)/profile')}>
           <Ionicons name="menu" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -198,9 +205,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F5F0E8',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
   },
   headerLeft: {
     flexDirection: 'row',

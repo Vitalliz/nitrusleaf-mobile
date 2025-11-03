@@ -1,78 +1,33 @@
 // app/(tabs)/history.tsx - HISTORY SCREEN
+import Footer from "@/components/footer";
+import { useAuth } from "@/contexts/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import Footer from "@/components/footer";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HistoryScreen() {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId] = useState<number | null>(null);
+  const { user } = useAuth();
+  const firstName = 'João Silva';
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
 
-  const history = [
-    {
-      id: 1,
-      type: "watering",
-      title: "Rega realizada",
-      plantation: "Plantation A",
-      amount: "500L",
-      timestamp: "Hoje às 08:30",
-      date: "28/10/2025",
-      duration: "45 minutos",
-    },
-    {
-      id: 2,
-      type: "alert",
-      title: "Alerta de umidade baixa",
-      plantation: "Plantation C",
-      humidity: "45%",
-      timestamp: "Hoje às 06:15",
-      date: "28/10/2025",
-      recommendation: "Aumentar frequência de rega",
-    },
-    {
-      id: 3,
-      type: "inspection",
-      title: "Inspeção concluída",
-      plantation: "Plantation B",
-      notes: "Plantação em perfeito estado",
-      timestamp: "Ontem às 14:20",
-      date: "27/10/2025",
-      duration: "1 hora",
-    },
-    {
-      id: 4,
-      type: "maintenance",
-      title: "Manutenção do sistema",
-      plantation: "Sistema geral",
-      status: "Concluído",
-      timestamp: "26/10 às 10:00",
-      date: "26/10/2025",
-      details: "Calibração de sensores",
-    },
-    {
-      id: 5,
-      type: "photo",
-      title: "Foto adicionada",
-      plantation: "Plantation D",
-      count: "5 fotos",
-      timestamp: "25/10 às 16:45",
-      date: "25/10/2025",
-    },
-    {
-      id: 6,
-      type: "report",
-      title: "Relatório gerado",
-      plantation: "Plantation A",
-      report: "Relatório mensal de produção",
-      timestamp: "24/10 às 09:00",
-      date: "24/10/2025",
-    },
-  ];
+  // Dados de exemplo (poderão vir da API no futuro)
+  const summary = {
+    talhoes: 3,
+    totalPes: 82,
+    diagnosticados: 42,
+    analisados: 52,
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -114,110 +69,65 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header estilizado como na Home */}
+      <View style={[
+        styles.header,
+        { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF', paddingBottom: 18 }
+      ]}>
+        <View style={styles.headerLeft}>
+          <Image
+            source={{ uri: 'https://i.pravatar.cc/150?img=1' }}
+            style={styles.avatar}
+          />
+          <View style={styles.headerText}>
+            <Text style={styles.greeting}>Olá, {firstName}!</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.menuButton} onPress={() => router.push('/(tabs)/profile')}>
+          <Ionicons name="menu" size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Histórico de Atividades</Text>
+        {/* Título + dropdown de propriedade */}
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Histórico</Text>
+          <TouchableOpacity style={styles.propertyDropdown}>
+            <Text style={styles.propertyText}>Propriedade 1</Text>
+            <Ionicons name="chevron-down" size={20} color="#333" />
+          </TouchableOpacity>
         </View>
 
-        {/* Timeline */}
-        <View style={styles.timelineContainer}>
-          {history.map((item, index) => (
-            <View key={item.id}>
-              <TouchableOpacity
-                style={styles.timelineItem}
-                onPress={() =>
-                  setExpandedId(expandedId === item.id ? null : item.id)
-                }
-              >
-                <View style={styles.timelineLeft}>
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      { backgroundColor: getTypeColor(item.type) },
-                    ]}
-                  >
-                    <Ionicons
-                      name={getTypeIcon(item.type) as any}
-                      size={20}
-                      color="#FFFFFF"
-                    />
-                  </View>
-                  {index < history.length - 1 && <View style={styles.line} />}
-                </View>
-
-                <View style={styles.timelineContent}>
-                  <View style={styles.contentHeader}>
-                    <Text style={styles.itemTitle}>{item.title}</Text>
-                    <Ionicons
-                      name={expandedId === item.id ? "chevron-up" : "chevron-down"}
-                      size={20}
-                      color="#999"
-                    />
-                  </View>
-                  <Text style={styles.plantation}>{item.plantation}</Text>
-                  <Text style={styles.timestamp}>{item.timestamp}</Text>
-
-                  {expandedId === item.id && (
-                    <View style={styles.expandedContent}>
-                      {item.type === "watering" && (
-                        <>
-                          <Text style={styles.detailText}>
-                            Volume: {item.amount}
-                          </Text>
-                          <Text style={styles.detailText}>
-                            Duração: {item.duration}
-                          </Text>
-                        </>
-                      )}
-                      {item.type === "alert" && (
-                        <>
-                          <Text style={styles.detailText}>
-                            Umidade: {item.humidity}
-                          </Text>
-                          <Text style={styles.detailText}>
-                            Recomendação: {item.recommendation}
-                          </Text>
-                        </>
-                      )}
-                      {item.type === "inspection" && (
-                        <>
-                          <Text style={styles.detailText}>
-                            Observações: {item.notes}
-                          </Text>
-                          <Text style={styles.detailText}>
-                            Duração: {item.duration}
-                          </Text>
-                        </>
-                      )}
-                      {item.type === "maintenance" && (
-                        <>
-                          <Text style={styles.detailText}>
-                            Status: {item.status}
-                          </Text>
-                          <Text style={styles.detailText}>
-                            Detalhes: {item.details}
-                          </Text>
-                        </>
-                      )}
-                      {item.type === "photo" && (
-                        <Text style={styles.detailText}>
-                          Adicionadas: {item.count}
-                        </Text>
-                      )}
-                      {item.type === "report" && (
-                        <Text style={styles.detailText}>
-                          Tipo: {item.report}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </View>
-          ))}
+        {/* Card de resumo */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Talhões registrados</Text>
+            <Text style={styles.summaryValue}>{summary.talhoes}</Text>
+          </View>
+          <View style={styles.dashed} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Total de pés</Text>
+            <Text style={styles.summaryValue}>{summary.totalPes}</Text>
+          </View>
+          <View style={styles.dashed} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Pés Diagnosticados</Text>
+            <Text style={styles.summaryValue}>{summary.diagnosticados}</Text>
+          </View>
+          <View style={styles.dashed} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Pés analisados</Text>
+            <Text style={styles.summaryValue}>{summary.analisados}</Text>
+          </View>
         </View>
 
-        <View style={styles.spacer} />
+        {/* Card link para tabela de Talhões */}
+        <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/(tabs)/fields')}>
+          <Text style={styles.linkText}>Ver tabela de Talhões</Text>
+          <Ionicons name="chevron-forward" size={24} color="#999" />
+        </TouchableOpacity>
+
+        <View style={styles.bottomSpace} />
       </ScrollView>
       <Footer />
     </View>
@@ -227,89 +137,51 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F5F0E8",
   },
-  content: {
-    flex: 1,
-  },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 15,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2B2B2B",
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  timelineContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
-  timelineItem: {
-    flexDirection: "row",
-    marginBottom: 10,
+  headerText: {
+    justifyContent: 'center',
   },
-  timelineLeft: {
-    alignItems: "center",
-    marginRight: 15,
-    width: 40,
+  greeting: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
+  menuButton: {
+    padding: 8,
   },
-  line: {
-    width: 2,
-    flex: 1,
-    backgroundColor: "#DDD",
-    marginTop: 4,
-  },
-  timelineContent: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 2,
-  },
-  contentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  itemTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2B2B2B",
-    flex: 1,
-  },
-  plantation: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4,
-  },
-  timestamp: {
-    fontSize: 11,
-    color: "#CCC",
-    marginTop: 2,
-  },
-  expandedContent: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#EEE",
-  },
-  detailText: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 6,
-    lineHeight: 18,
-  },
-  spacer: {
-    height: 40,
-  },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  title: { fontSize: 24, fontWeight: '700', color: '#1A1A1A' },
+  propertyDropdown: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#D4D4D4', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#FFFFFF' },
+  propertyText: { fontSize: 14, color: '#333', marginRight: 6 },
+
+  summaryCard: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingVertical: 18, paddingHorizontal: 18, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+  summaryLabel: { fontSize: 14, color: '#2B2B2B', fontWeight: '600' },
+  summaryValue: { fontSize: 28, fontWeight: '800', color: '#1A1A1A' },
+  dashed: { height: 1, backgroundColor: '#EAEAEA', borderStyle: 'dashed', borderWidth: 0.5, borderColor: '#EAEAEA' },
+
+  linkCard: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingVertical: 18, paddingHorizontal: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  linkText: { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
+  bottomSpace: { height: 40 },
 });

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
 import React, { useState } from "react";
 import { View, StyleSheet, Text, Image, TouchableOpacity } from "react-native";
-import Footer from "@/components/footer";
+// Footer removido nesta tela
 import { useRouter } from "expo-router";
 
 export default function LoginScreen() {
@@ -76,7 +76,12 @@ export default function LoginScreen() {
           </View>
         </View>
       </View>
-      <Footer />
+      {/* Onda laranja na base (ao fundo) */}
+      <Image
+        source={require("@/assets/images/icons/wave-laranja.png")}
+        style={styles.wave}
+        resizeMode="cover"
+      />
     </Background>
   );
 }
@@ -88,6 +93,16 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 24,
     justifyContent: "flex-start",
+  },
+  wave: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 140,
+    width: '100%',
+    zIndex: -1,
+    pointerEvents: 'none',
   },
   subtitle: {
     fontSize: 16,

@@ -1,8 +1,8 @@
 // components/footer.tsx - FOOTER PROFISSIONAL COM NAVEGAÇÃO
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function Footer() {
   const router = useRouter();
@@ -12,8 +12,8 @@ export default function Footer() {
   };
 
   const handleCamera = () => {
-    // Aqui você pode adicionar lógica da câmera depois
-    console.log('Camera pressed');
+    // Navega para a tela do menuzinho com a folha
+    router.push('/(tabs)/menu');
   };
 
   return (
@@ -37,13 +37,17 @@ export default function Footer() {
           style={styles.cameraButton}
           onPress={handleCamera}
         >
-          <Ionicons name="camera" size={32} color="white" />
+          <Image
+            source={require('@/assets/images/icons/camera-white.png')}
+            style={{ width: 36, height: 28 }}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/maps')}
+        onPress={() => handleNavigation('/(tabs)/history')}
       >
         <Ionicons name="bar-chart" size={28} color="white" />
       </TouchableOpacity>

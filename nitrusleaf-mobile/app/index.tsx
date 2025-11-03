@@ -20,9 +20,11 @@ export default function SplashScreen() {
         source={require('@/assets/images/icons/Logo.png')}
         style={styles.logo}
       />
+      {/* Onda laranja na base da splash (ao fundo) */}
       <Image
-        source={require('@/assets/images/icons/orange.png')}
-        style={styles.orange}
+        source={require('@/assets/images/icons/wave-laranja.png')}
+        style={styles.wave}
+        resizeMode="cover"
       />
     </View>
   );
@@ -40,11 +42,14 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: 'contain',
   },
-  orange: {
-    width: 320,
-    height: 400,
-    resizeMode: 'contain',
+  wave: {
     position: 'absolute',
+    left: 0,
+    right: 0,
     bottom: 0,
+    height: 140,
+    width: '100%',
+    zIndex: -1,
+    pointerEvents: 'none',
   },
 });

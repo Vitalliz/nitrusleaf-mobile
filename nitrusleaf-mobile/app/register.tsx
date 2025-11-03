@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { LoginButton } from "@/components/ui/button";
 import React, { useState } from "react";
 import { View, StyleSheet, Text, Image, TouchableOpacity, ScrollView } from "react-native";
-import Footer from "@/components/footer";
 import { useRouter } from "expo-router";
 
 export default function RegisterScreen() {
@@ -129,7 +128,12 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
-      <Footer />
+      {/* Onda laranja na base (ao fundo) */}
+      <Image
+        source={require("@/assets/images/icons/wave-laranja.png")}
+        style={styles.wave}
+        resizeMode="cover"
+      />
     </Background>
   );
 }
@@ -186,5 +190,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6BC24A",
     fontWeight: "600",
+  },
+  wave: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 140,
+    width: '100%',
+    zIndex: -1,
+    pointerEvents: 'none',
   },
 });
