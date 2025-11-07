@@ -10,30 +10,31 @@ import Footer from "@/components/footer";
 export default function ExploreScreen() {
   return (
     <Background>
-     
       <View style={styles.container}>
-         <Image
+        <Image
           source={require("@/assets/images/icons/leaf.png")}
-          style={{ width: 115, height: 125, marginBottom: 20 }}
+          style={styles.logo}
         />
         <WelcomeTitle text="Bem vindo!" />
         <Text style={styles.subtitle}>Cadastre-se</Text>
         
         <View style={styles.form}>
           <Text style={styles.label}>Nome:</Text>
-         <Input 
+          <Input 
             placeholder="Nome"
             size="size-327"
             variant="default"
           />
-           <Text style={styles.label}>Sobrenome:</Text>
-         <Input 
+          
+          <Text style={styles.label}>Sobrenome:</Text>
+          <Input 
             placeholder="Sobrenome"
             size="size-327"
             variant="default"
           />
-           <Text style={styles.label}>Telefone:</Text>
-         <Input 
+          
+          <Text style={styles.label}>Telefone:</Text>
+          <Input 
             placeholder="Telefone"
             size="size-327"
             variant="default"
@@ -47,7 +48,7 @@ export default function ExploreScreen() {
           </Text>
         </View>
       </View>
-       <Footer />
+      <Footer />
     </Background>
   );
 }
@@ -58,8 +59,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 60,
     paddingHorizontal: 24,
-    alignContent:"flex-end",
     justifyContent: "flex-start",
+  },
+  logo: {
+    width: 115,
+    height: 125,
+    marginBottom: 20,
   },
   subtitle: {
     fontSize: 16,
