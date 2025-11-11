@@ -1,25 +1,32 @@
-// app/(tabs)/explore.tsx
+// app/login.tsx - LOGIN PAGE
 import { Background } from "@/components/ui/background";
 import { WelcomeTitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
 import React, { useState } from "react";
 import { View, StyleSheet, Text, Image, TouchableOpacity } from "react-native";
-import Footer from "@/components/footer";
+// Footer removido nesta tela
 import { useRouter } from "expo-router";
 
-export default function ExploreScreen() {
+export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    console.log("Login:", { email, password });
-    // Aqui você implementa a lógica de login
+    if (email.trim() && password.trim()) {
+      console.log("Login:", { email, password });
+      // Aqui você faria a autenticação
+      // Para teste, vamos redirecionar para a home
+      router.replace("/(tabs)/home");
+    } else {
+      alert("Por favor, preencha email e senha");
+    }
   };
 
   const handleGoogleLogin = () => {
     console.log("Login com Google");
+    // Implementar login com Google aqui
   };
 
   const handleRegister = () => {
@@ -35,19 +42,19 @@ export default function ExploreScreen() {
         />
         <WelcomeTitle text="Bem vindo!" />
         <Text style={styles.subtitle}>Entre na sua conta</Text>
-        
+
         <View style={styles.form}>
           <Text style={styles.label}>E-mail ou número:</Text>
-          <Input 
+          <Input
             placeholder="Email ou número de telefone"
             size="size-327"
             variant="default"
             value={email}
             onChangeText={setEmail}
           />
-          
+
           <Text style={styles.label}>Senha:</Text>
-          <Input 
+          <Input
             placeholder="Digite sua senha"
             size="size-327"
             variant="default"
@@ -55,10 +62,10 @@ export default function ExploreScreen() {
             onChangeText={setPassword}
             secureTextEntry={true}
           />
-          
+
           <LoginButton onPress={handleLogin} />
           <GoogleButton2 onPress={handleGoogleLogin} />
-          
+
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>
               Não possui uma conta?{" "}
@@ -69,7 +76,12 @@ export default function ExploreScreen() {
           </View>
         </View>
       </View>
-      <Footer />
+      {/* Onda laranja na base (ao fundo) */}
+      <Image
+        source={require("@/assets/images/icons/wave-laranja.png")}
+        style={styles.wave}
+        resizeMode="cover"
+      />
     </Background>
   );
 }
@@ -81,6 +93,16 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 24,
     justifyContent: "flex-start",
+  },
+  wave: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 140,
+    width: '100%',
+    zIndex: -1,
+    pointerEvents: 'none',
   },
   subtitle: {
     fontSize: 16,
