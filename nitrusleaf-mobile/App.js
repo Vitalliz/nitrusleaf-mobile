@@ -1,10 +1,13 @@
-import { useEffect } from "react";
-import { initDB } from "./database/database";
+const loadData = useCallback ( async () => { 
+  try { 
+    const db = await  connectToDatabase () 
+    await  createTables (db) 
+  } catch (error) { 
+    console . error (error) 
+  } 
+}, []) 
 
-export default function App() {
-  useEffect(() => {
-    initDB();
-  }, []);
+useEffect ( () => { 
+  loadData () 
+}, [loadData])
 
-  return (...);
-}
