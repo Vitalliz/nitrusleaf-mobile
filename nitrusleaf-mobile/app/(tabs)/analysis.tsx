@@ -153,7 +153,9 @@ export default function AnalysisScreen() {
     <View style={{ padding: 16 }}>
       <FlatList
         data={vm.items}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item, index) =>
+          item.id ? item.id.toString() : index.toString()
+        }
         renderItem={({ item }) => (
           <View style={{ paddingVertical: 8 }}>
             <Text>{item.field}</Text>
@@ -166,4 +168,3 @@ export default function AnalysisScreen() {
     </View>
   );
 }
-

@@ -15,39 +15,30 @@ export default function ExploreScreen() {
           source={require("@/assets/images/icons/leaf.png")}
           style={styles.logo}
         />
+
         <WelcomeTitle text="Bem vindo!" />
         <Text style={styles.subtitle}>Cadastre-se</Text>
-        
+
         <View style={styles.form}>
           <Text style={styles.label}>Nome:</Text>
-          <Input 
-            placeholder="Nome"
-            size="size-327"
-            variant="default"
-          />
-          
+          <Input placeholder="Nome" size="size-327" variant="default" />
+
           <Text style={styles.label}>Sobrenome:</Text>
-          <Input 
-            placeholder="Sobrenome"
-            size="size-327"
-            variant="default"
-          />
-          
+          <Input placeholder="Sobrenome" size="size-327" variant="default" />
+
           <Text style={styles.label}>Telefone:</Text>
-          <Input 
-            placeholder="Telefone"
-            size="size-327"
-            variant="default"
-          />
-          
+          <Input placeholder="Telefone" size="size-327" variant="default" />
+
           <LoginButton onPress={() => console.log("Entrar pressionado")} />
           <GoogleButton onPress={() => console.log("Google pressionado")} />
-          
+
           <Text style={styles.registerText}>
-            Não possui uma conta? <Text style={styles.registerLink}>Fazer cadastro</Text>
+            Não possui uma conta?
+            <Text style={styles.registerLink}> Fazer cadastro</Text>
           </Text>
         </View>
       </View>
+
       <Footer />
     </Background>
   );

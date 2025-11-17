@@ -174,22 +174,18 @@
 //   cascadeLink: { alignSelf: 'flex-end', marginTop: 8, backgroundColor: '#6BC24A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
 //   cascadeLinkText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
 // });
-import { View, TextInput, Button } from "react-native";
-import { useAnalysisFormViewModel } from "@/src/viewmodels/analysisFormViewModel";
 
-export default function AnalysisForm() {
-  const vm = useAnalysisFormViewModel();
+import React from 'react';
+import { View, Text } from 'react-native';
+import { useAnalysisFormViewModel } from '@/src/viewmodels/analysisFormViewModel';
 
+export default function AnalysisFormScreen() {
+  const viewModel = useAnalysisFormViewModel();
+  
   return (
-    <View style={{ padding: 20 }}>
-      <TextInput placeholder="Talhão" value={vm.field} onChangeText={vm.setField} />
-      <TextInput placeholder="Nitrogênio" value={vm.nitrogen} onChangeText={vm.setNitrogen} />
-      <TextInput placeholder="Potássio" value={vm.potassium} onChangeText={vm.setPotassium} />
-      <TextInput placeholder="Cálcio" value={vm.calcium} onChangeText={vm.setCalcium} />
-
-      <Button title="Salvar" onPress={vm.save} />
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Formulário de Análise</Text>
+      <Text>Em desenvolvimento...</Text>
     </View>
   );
 }
-
-

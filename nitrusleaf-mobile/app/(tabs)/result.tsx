@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Card, DeficiencyCard } from '@/components/card';
-import Footer from '@/components/footer';
 import Top from '@/components/top';
 import { ContinueButton, SeeMoreButton } from '@/components/ui/button';
 import { Background } from '@/components/ui/background';

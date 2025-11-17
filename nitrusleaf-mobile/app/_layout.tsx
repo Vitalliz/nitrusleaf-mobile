@@ -14,23 +14,20 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: bg },
-          animationEnabled: true,
         }}
       >
         {/* Rotas Públicas (antes de login) */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
-          name="login"
+          name="analysis"
           options={{
             headerShown: false,
-            animationEnabled: false,
           }}
         />
         <Stack.Screen
           name="register"
           options={{
             headerShown: false,
-            animationEnabled: true,
           }}
         />
 
@@ -39,7 +36,6 @@ export default function RootLayout() {
           name="(tabs)"
           options={{
             headerShown: false,
-            animationEnabled: false,
           }}
         />
       </Stack>
