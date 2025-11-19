@@ -1,3 +1,4 @@
+
 // app/(tabs)/maps.tsx - MAPS SCREEN
 import React, { useState } from "react";
 import {
@@ -9,9 +10,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Footer from "@/components/footer";
+import Menu from "@/components/menu";
 
 export default function MapsScreen() {
-  const [selectedPlantation, setSelectedPlantation] = useState(null);
+  const [selectedPlantation, setSelectedPlantation] = useState<number | null>(null);
 
   const plantations = [
     {
@@ -149,7 +151,7 @@ export default function MapsScreen() {
 
         <View style={styles.spacer} />
       </ScrollView>
-      <Footer />
+      <Menu />
     </View>
   );
 }

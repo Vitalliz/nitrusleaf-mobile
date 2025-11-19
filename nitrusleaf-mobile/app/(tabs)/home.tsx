@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
+import Menu from './menu';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
@@ -190,7 +191,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Footer Profissional */}
-      <Footer />
+      <Menu/>
     </View>
   );
 }

@@ -1,206 +1,98 @@
-// components/TabBar.tsx
-import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+// components/footer.tsx - FOOTER PROFISSIONAL COM NAVEGAÇÃO
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-type TabItem = {
-  name: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-};
+export default function Menu() {
+  const router = useRouter();
 
-const tabItems: TabItem[] = [
-  { name: 'home', icon: 'home', label: 'Início' },
-  { name: 'maps', icon: 'map', label: 'Mapas' },
-  { name: 'camera', icon: 'camera', label: 'Câmera' },
-  { name: 'history', icon: 'time', label: 'Histórico' },
-  { name: 'profile', icon: 'person', label: 'Perfil' },
-];
-
-interface TabBarProps {
-  onTabPress?: (tabName: string) => void;
-  activeTab?: string;
-}
-
-export const TabBar = ({ onTabPress, activeTab = 'maps' }: TabBarProps) => {
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-
-  const handleTabPress = (tabName: string) => {
-    onTabPress?.(tabName);
+  const handleNavigation = (route: string) => {
+    router.push(route);
   };
 
-  const handlePressIn = (tabName: string) => {
-    setHoveredTab(tabName);
+  const handleCamera = () => {
+    // Navega para a tela do menuzinho com a folha
+    router.push('/(tabs)/menu');
   };
-
-  const handlePressOut = () => {
-    setHoveredTab(null);
-  };
-
-  const isTabActive = (tabName: string) => activeTab === tabName;
-  const isTabHovered = (tabName: string) => hoveredTab === tabName;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabBar}>
-        {tabItems.map((tab) => {
-          const isActive = isTabActive(tab.name);
-          const isHovered = isTabHovered(tab.name);
-          const showWhiteBackground = isHovered && !isActive;
-          const isCamera = tab.name === 'camera';
+    <View style={styles.footer}>
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/home')}
+      >
+        <Ionicons name="home" size={28} color="white" />
+      </TouchableOpacity>
 
-          return (
-            <TouchableOpacity
-              key={tab.name}
-              style={[
-                styles.tabItem,
-                isCamera && styles.cameraTabItem
-              ]}
-              onPress={() => handleTabPress(tab.name)}
-              onPressIn={() => handlePressIn(tab.name)}
-              onPressOut={handlePressOut}
-              activeOpacity={1}
-              delayPressIn={0}
-              delayPressOut={0}
-            >
-              <View style={[
-                styles.iconContainer,
-                isActive && styles.activeIconContainer,
-                showWhiteBackground && styles.hoverIconContainer,
-                isCamera && styles.cameraIconContainer,
-                isCamera && isActive && styles.cameraActiveIconContainer,
-                isCamera && showWhiteBackground && styles.cameraHoverIconContainer
-              ]}>
-                <Ionicons
-                  name={tab.icon}
-                  size={isCamera ? 28 : 24}
-                  color={
-                    isCamera ? '#FFFFFF' :
-                    isActive ? '#FFA62B' : 
-                    showWhiteBackground ? '#FFA62B' : '#FFFFFF'
-                  }
-                />
-              </View>
-              <Text style={[
-                styles.label,
-                isActive && styles.activeLabel,
-                showWhiteBackground && styles.hoverLabel,
-                isCamera && styles.cameraLabel
-              ]}>
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/explore')}
+      >
+        <Ionicons name="image" size={28} color="white" />
+      </TouchableOpacity>
+
+      <View style={styles.cameraButtonContainer}>
+        <TouchableOpacity
+          style={styles.cameraButton}
+          onPress={handleCamera}
+        >
+          <Image
+            source={require('@/assets/images/icons/camera-white.png')}
+            style={{ width: 36, height: 28 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
+
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/history')}
+      >
+        <Ionicons name="bar-chart" size={28} color="white" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/profile')}
+      >
+        <Ionicons name="person" size={28} color="white" />
+      </TouchableOpacity>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFA62B',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 8,
-    paddingTop: 12,
-    paddingBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 5,
-    position: 'relative',
-  },
-  tabBar: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    position: 'relative',
-  },
-  tabItem: {
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    flex: 1,
+    backgroundColor: '#F9AA33',
+    paddingBottom: 12,
+    paddingTop: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
-  cameraTabItem: {
-    marginBottom: 15, // Eleva o ícone da câmera
-  },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    alignItems: 'center',
+  footerButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     justifyContent: 'center',
-    marginBottom: 4,
-    backgroundColor: 'transparent',
+    alignItems: 'center',
   },
-  activeIconContainer: {
-    backgroundColor: '#FFFFFF',
+  cameraButtonContainer: {
+    marginBottom: 20,
+  },
+  cameraButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#6BC24A',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  hoverIconContainer: {
-    backgroundColor: '#FFFFFF',
-
-    borderRadius: 16, // Bordas arredondadas no hover tambÃ©m
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    transform: [{ scale: 0.95 }],
-  },
-  cameraIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: '#4CAF50', // Verde
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  cameraActiveIconContainer: {
-    backgroundColor: '#388E3C', // Verde mais escuro quando ativo
-    transform: [{ scale: 1.05 }],
-  },
-  cameraHoverIconContainer: {
-    backgroundColor: '#388E3C', // Verde mais escuro no hover
-    transform: [{ scale: 1.02 }],
-  },
-  label: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  activeLabel: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  hoverLabel: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  cameraLabel: {
-    marginTop: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
 });

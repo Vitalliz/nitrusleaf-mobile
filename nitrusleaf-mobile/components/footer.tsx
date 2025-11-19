@@ -1,98 +1,50 @@
-// components/footer.tsx - FOOTER PROFISSIONAL COM NAVEGAÇÃO
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-export default function Footer() {
-  const router = useRouter();
+const { width } = Dimensions.get('window');
 
-  const handleNavigation = (route: string) => {
-    router.push(route);
-  };
-
-  const handleCamera = () => {
-    // Navega para a tela do menuzinho com a folha
-    router.push('/(tabs)/menu');
-  };
-
+const Top = () => {
   return (
-    <View style={styles.footer}>
-      <TouchableOpacity
-        style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/home')}
+    <View style={styles.container}>
+      <Svg
+        height="100%"
+        width="100%"
+        viewBox="0 0 428 246"
+        preserveAspectRatio="none"
+        style={styles.svg}
       >
-        <Ionicons name="home" size={28} color="white" />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/explore')}
-      >
-        <Ionicons name="image" size={28} color="white" />
-      </TouchableOpacity>
-
-      <View style={styles.cameraButtonContainer}>
-        <TouchableOpacity
-          style={styles.cameraButton}
-          onPress={handleCamera}
-        >
-          <Image
-            source={require('@/assets/images/icons/camera-white.png')}
-            style={{ width: 36, height: 28 }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/history')}
-      >
-        <Ionicons name="bar-chart" size={28} color="white" />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/profile')}
-      >
-        <Ionicons name="person" size={28} color="white" />
-      </TouchableOpacity>
+        <Defs>
+          <LinearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor="#FFB534" />
+            <Stop offset="100%" stopColor="#E88239" />
+          </LinearGradient>
+        </Defs>
+        <Path
+          d="M0,0 
+             L428,0 
+             L428,200 
+             C350,220 280,180 200,160 
+             C120,140 60,160 0,180 
+             Z"
+          fill="url(#grad)"
+        />
+      </Svg>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#F9AA33',
-    paddingBottom: 12,
-    paddingTop: 8,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+  container: {
+    width: '100%',
+    height: 246,
+    position: 'absolute',
+    top: 0,
   },
-  footerButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cameraButtonContainer: {
-    marginBottom: 20,
-  },
-  cameraButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#6BC24A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+  svg: {
+    width: '100%',
+    height: '100%',
   },
 });
+
+export default Top;

@@ -1,5 +1,6 @@
 // app/(tabs)/history.tsx - HISTORY SCREEN
 import Footer from "@/components/footer";
+import Menu from "@/components/menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -129,7 +130,7 @@ export default function HistoryScreen() {
 
         <View style={styles.bottomSpace} />
       </ScrollView>
-      <Footer />
+      <Menu />
     </View>
   );
 }

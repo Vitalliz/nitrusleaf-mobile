@@ -5,9 +5,9 @@ const loadData = useCallback ( async () => {
   } catch (error) { 
     console . error (error) 
   } 
-}, []) 
+}, []);
 
 useEffect ( () => { 
   loadData () 
-}, [loadData])
+}, [loadData]);
 

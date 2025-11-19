@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
-import Footer from '@/components/footer';
+import Menu from '@/components/menu'; // Importação corrigida
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -116,10 +116,11 @@ export default function HomeScreen() {
 
         <View style={styles.spacer} />
       </ScrollView>
-      <Footer />
+      <Menu />
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

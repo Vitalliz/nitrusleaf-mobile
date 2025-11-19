@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
+import Menu from '@/components/menu';
 
 export default function FieldFeetScreen() {
   const router = useRouter();
@@ -91,7 +92,7 @@ export default function FieldFeetScreen() {
 
         <View style={{ height: 40 }} />
       </View>
-      <Footer />
+      <Menu />
     </View>
   );
 }
