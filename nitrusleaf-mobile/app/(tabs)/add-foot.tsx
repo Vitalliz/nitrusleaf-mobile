@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, TextInput, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Footer from '@/components/footer';
 
 export default function AddFootScreen() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function AddFootScreen() {
           <Text style={styles.saveText}>Salvar</Text>
         </TouchableOpacity>
       </View>
+      <Footer />
     </View>
   );
 }

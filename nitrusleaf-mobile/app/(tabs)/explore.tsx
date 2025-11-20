@@ -1,16 +1,15 @@
 // app/(tabs)/explore.tsx - EXPLORE SCREEN
+import Footer from "@/components/footer";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  View,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import Footer from "@/components/footer";
-import Menu from "@/components/menu";
 
 export default function ExploreScreen() {
   const [searchText, setSearchText] = useState("");
@@ -101,7 +100,7 @@ export default function ExploreScreen() {
 
         <View style={styles.spacer} />
       </ScrollView>
-      <Menu />
+      <Footer />
     </View>
   );
 }

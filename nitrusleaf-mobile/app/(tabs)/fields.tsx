@@ -1,6 +1,5 @@
 // app/(tabs)/fields.tsx - Tabela de Talhões com busca
 import Footer from '@/components/footer';
-import Menu from '@/components/menu';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -68,7 +67,7 @@ export default function FieldsScreen() {
 
         <View style={{ height: 40 }} />
       </View>
-      <Menu />
+      <Footer />
     </View>
   );
 }

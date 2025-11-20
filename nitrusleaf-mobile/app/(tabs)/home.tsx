@@ -142,41 +142,42 @@ export default function HomeScreen() {
         {/* Scrollable Cards */}
         <FlatList
           data={analysisData}
-          renderItem={({ item }) => (
-            <View style={styles.analysisCard}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
+          renderItem={({ item }) => {
+            return (
+              <View style={styles.analysisCard}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
 
-              {/* Pie Chart */}
-              <View style={styles.chartContainer}>
-                <PieChart data={item.data} size={120} />
+                {/* Pie Chart */}
+                <View style={styles.chartContainer}>
+                  <PieChart data={item.data} size={120} />
+                </View>
+
+                {/* Legend */}
+                <View style={styles.legendContainer}>
+                  {item.data.map((legend: { color: any; label: any; }, idx: any) => (
+                    <View key={idx} style={styles.legendItem}>
+                      <View
+                        style={[styles.legendDot, { backgroundColor: legend.color }]} />
+                      <Text style={styles.legendText}>{legend.label}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Total Info */}
+                <View style={styles.totalInfo}>
+                  <Text style={styles.totalValue}>{item.total}</Text>
+                  <Text style={styles.totalLabel}>{item.subtitle}</Text>
+                </View>
+
+                {/* Detalhar Button */}
+                <TouchableOpacity style={styles.detailButton}>
+                  <Text style={styles.detailButtonText}>Detalhar</Text>
+                </TouchableOpacity>
               </View>
-
-              {/* Legend */}
-              <View style={styles.legendContainer}>
-                {item.data.map((legend, idx) => (
-                  <View key={idx} style={styles.legendItem}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: legend.color }]}
-                    />
-                    <Text style={styles.legendText}>{legend.label}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Total Info */}
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalValue}>{item.total}</Text>
-                <Text style={styles.totalLabel}>{item.subtitle}</Text>
-              </View>
-
-              {/* Detalhar Button */}
-              <TouchableOpacity style={styles.detailButton}>
-                <Text style={styles.detailButtonText}>Detalhar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            );
+          }}
           renderToHardwareTextureAndroid
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: { id: any; }) => item.id}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -191,7 +192,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Footer Profissional */}
-      <Menu/>
+      <Footer/>
     </View>
   );
 }

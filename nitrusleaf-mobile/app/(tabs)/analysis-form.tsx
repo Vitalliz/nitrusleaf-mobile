@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Footer from '@/components/footer';
 
 export default function AnalysisFormScreen() {
   const router = useRouter();
@@ -119,6 +120,7 @@ export default function AnalysisFormScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+      <Footer />
     </View>
   );
 }

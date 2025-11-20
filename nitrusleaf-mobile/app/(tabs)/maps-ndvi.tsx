@@ -26,14 +26,14 @@ export default function MapScreen(props: { navigation: { goBack: () => void; }; 
       <MapView
         style={styles.map}
         initialRegion={{
-          latitude: -23.55052,
-          longitude: -46.633308,
+          latitude: -24.689680996798725,
+          longitude: -47.851206422814904,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
       >
         <Marker
-          coordinate={{ latitude: -23.55052, longitude: -46.633308 }}
+          coordinate={{ latitude: -24.689680996798725, longitude:  -47.851206422814904 }}
           title="Propriedade"
         />
       </MapView>

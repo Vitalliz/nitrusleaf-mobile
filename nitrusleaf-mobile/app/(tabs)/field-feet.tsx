@@ -1,11 +1,10 @@
 // app/(tabs)/field-feet.tsx - Lista de pés de um Talhão
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
-import Menu from '@/components/menu';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function FieldFeetScreen() {
   const router = useRouter();
@@ -92,7 +91,7 @@ export default function FieldFeetScreen() {
 
         <View style={{ height: 40 }} />
       </View>
-      <Menu />
+      <Footer />
     </View>
   );
 }

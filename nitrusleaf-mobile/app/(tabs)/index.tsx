@@ -1,16 +1,16 @@
 // app/(tabs)/index.tsx - HOME SCREEN
+import Footer from '@/components/footer';
+import { useAuth } from '@/contexts/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  StatusBar,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/contexts/AuthContext';
-import Menu from '@/components/menu'; // Importação corrigida
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -116,7 +116,7 @@ export default function HomeScreen() {
 
         <View style={styles.spacer} />
       </ScrollView>
-      <Menu />
+      <Footer />
     </View>
   );
 }

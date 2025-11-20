@@ -1,7 +1,7 @@
+import Footer from "@/components/footer";
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { WebView } from "react-native-webview";
-import Menu from "@/components/menu"
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
 export default function SatelliteMapScreen(props: { navigation: { goBack: () => void; }; }) {
   return (
@@ -39,15 +39,24 @@ export default function SatelliteMapScreen(props: { navigation: { goBack: () => 
       {/* Property Name */}
       <Text style={styles.propertyName}>Propriedade 1</Text>
 
-      {/* Satellite Map (WebView Google Maps Embed) */}
+      {/* Satellite Map usando MapView igual ao segundo código */}
       <View style={styles.mapContainer}>
-        <WebView
-          style={styles.webview}
-          source={{
-            uri:
-              "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3658.8192687378106!2d-46.62529028447607!3d-23.507150584715266!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94c1f8dfd90bf497%3A0xbaa7a3f2f07e0df2!2sSample%20Farm!5e0!3m2!1sen!2sbr!4v1700000000000!5m2!1sen!2sbr",
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: -24.68964,
+            longitude: -47.85112,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
           }}
-        />
+          mapType="satellite" // Define como mapa satélite
+        >
+          <Marker
+            coordinate={{ latitude: -24.68964, longitude: -47.85112 }}
+            title="Propriedade 1"
+            description="Sua propriedade"
+          />
+        </MapView>
       </View>
 
       {/* Expand Button */}
@@ -56,9 +65,8 @@ export default function SatelliteMapScreen(props: { navigation: { goBack: () => 
           <Text style={styles.expandText}>Expandir ↗️</Text>
         </TouchableOpacity>
       </View>
-
-       <Menu/>
-      </View>
+      <Footer/>
+    </View>
   );
 }
 
@@ -148,7 +156,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#ddd",
   },
-  webview: {
+  map: {
     flex: 1,
   },
   expandContainer: {
@@ -164,75 +172,5 @@ const styles = StyleSheet.create({
   expandText: {
     fontSize: 15,
     color: "#5A5A5A",
-  },
-  menuContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  topBadgeContainer: {
-    paddingTop: 20,
-    alignItems: 'center',
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#57B33E',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  bottomControls: {
-    position: 'absolute',
-    bottom: 24,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  sideButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  captureButton: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: '#6BC24A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  iconButton: {
-    padding: 10,
-  },
-  icon: {
-    fontSize: 26,
-  },
-  centerButton: {
-    backgroundColor: "#5DBF4A",
-    padding: 18,
-    borderRadius: 40,
-    marginTop: -30,
-  },
-  centerIcon: {
-    fontSize: 30,
-    color: "white",
   },
 });
