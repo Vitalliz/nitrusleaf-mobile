@@ -27,9 +27,9 @@ export default function Footer() {
 
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/explore')}
+        onPress={() => handleNavigation('/(tabs)/maps')}
       >
-        <Ionicons name="image" size={28} color="white" />
+        <Ionicons name="map" size={28} color="white" />
       </TouchableOpacity>
 
       <View style={styles.cameraButtonContainer}>

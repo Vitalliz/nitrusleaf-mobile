@@ -18,7 +18,7 @@ export default function RootLayout() {
         }}
       >
         {/* Rotas Públicas (antes de login) */}
-        <Stack.Screen name="maps-satellite" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen
           name="analysis"
           options={{

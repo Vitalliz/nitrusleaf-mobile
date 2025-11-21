@@ -111,10 +111,7 @@ export default function HomeScreen() {
         { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF', paddingBottom: 18 }
       ]}>
         <View style={styles.headerLeft}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/150?img=1' }}
-            style={styles.avatar}
-          />
+          <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
           <View style={styles.headerText}>
             <Text style={styles.greeting}>Olá, {firstName}!</Text>
           </View>
@@ -202,7 +199,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
 
-    backgroundColor: '#F5F0E8',
+    backgroundColor: '#FAF1E5',
   },
 
   /* Header */

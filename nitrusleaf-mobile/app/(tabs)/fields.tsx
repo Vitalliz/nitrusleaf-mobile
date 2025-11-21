@@ -1,6 +1,7 @@
 // app/(tabs)/fields.tsx - Tabela de Talhões com busca
 import Footer from '@/components/footer';
 import { Ionicons } from '@expo/vector-icons';
+import { Background } from '@/components/ui/background';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -20,11 +21,11 @@ export default function FieldsScreen() {
   const filtered = fields.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <View style={styles.container}>
+    <Background>
       {/* Header branco como nas outras telas */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerLeft}>
-          <Image source={{ uri: 'https://i.pravatar.cc/150?img=1' }} style={styles.avatar} />
+           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
           <View style={styles.headerText}><Text style={styles.greeting}>Olá, João Silva!</Text></View>
         </View>
         <TouchableOpacity style={styles.menuButton} onPress={() => router.push('/(tabs)/profile')}>
@@ -68,12 +69,12 @@ export default function FieldsScreen() {
         <View style={{ height: 40 }} />
       </View>
       <Footer />
-    </View>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F0E8' },
+  container: { flex: 1, backgroundColor: '#FAF6F0' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF', paddingBottom: 18 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24 },

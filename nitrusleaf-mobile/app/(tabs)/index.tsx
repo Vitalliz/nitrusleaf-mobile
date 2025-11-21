@@ -2,6 +2,7 @@
 import Footer from '@/components/footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { Background } from '@/components/ui/background';
 import React from 'react';
 import {
   ScrollView,
@@ -47,7 +48,7 @@ export default function HomeScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <Background>
       <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
@@ -117,7 +118,7 @@ export default function HomeScreen() {
         <View style={styles.spacer} />
       </ScrollView>
       <Footer />
-    </View>
+    </Background>
   );
 }
 

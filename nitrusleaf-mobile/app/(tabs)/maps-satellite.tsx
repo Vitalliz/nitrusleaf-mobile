@@ -2,18 +2,18 @@ import Footer from "@/components/footer";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import { useRouter } from "expo-router";
 
-export default function SatelliteMapScreen(props: { navigation: { goBack: () => void; }; }) {
+export default function SatelliteMapScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.profileContainer}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/100" }}
-            style={styles.avatar}
-          />
-          <Text style={styles.greeting}>Olá, Paulo!</Text>
+           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
+          <Text style={styles.greeting}>Olá, João Silva!</Text>
         </View>
         <TouchableOpacity>
           <Text style={styles.menuIcon}>≡</Text>
@@ -25,7 +25,7 @@ export default function SatelliteMapScreen(props: { navigation: { goBack: () => 
         <Text style={styles.breadcrumb}>Mapas</Text>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => props.navigation.goBack()}
+          onPress={() => router.push("/(tabs)/maps")}
         >
           <Text style={styles.backArrow}>←</Text>
           <Text style={styles.backText}>Voltar</Text>
@@ -65,7 +65,8 @@ export default function SatelliteMapScreen(props: { navigation: { goBack: () => 
           <Text style={styles.expandText}>Expandir ↗️</Text>
         </TouchableOpacity>
       </View>
-      <Footer/>
+      <View style={styles.footer}></View>
+      <Footer />
     </View>
   );
 }
@@ -172,5 +173,8 @@ const styles = StyleSheet.create({
   expandText: {
     fontSize: 15,
     color: "#5A5A5A",
+  },
+  footer: {
+    marginTop: 250,
   },
 });
