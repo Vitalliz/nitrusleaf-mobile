@@ -9,7 +9,7 @@ export const Background = ({ children }: { children: ReactNode }) => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#FAF1E5',
+    backgroundColor: '#FEF7EE',
     alignItems: 'center',
     justifyContent: 'center',
     width: 'auto',
