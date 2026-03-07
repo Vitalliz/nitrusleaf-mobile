@@ -1,3 +1,4 @@
+
 // app/(tabs)/home.tsx - HOME SCREEN COM DESIGN PROFISSIONAL
 import React from 'react';
 import {
@@ -9,6 +10,7 @@ import {
   Image,
   FlatList,
   Dimensions,
+  ColorValue,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,16 +18,18 @@ import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
+import Menu from './menu';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
 
 // Componente de Gráfico de Pizza
-const PieChart = ({ data, size = 120 }) => {
+type PieChartItem = { value: number; color: ColorValue };
+const PieChart = ({ data, size = 120 }: { data: PieChartItem[]; size?: number }) => {
   const radius = size / 2;
   let currentAngle = -Math.PI / 2;
 
-  const createPath = (value, total) => {
+  const createPath = (value: number, total: number) => {
     const sliceAngle = (value / total) * 2 * Math.PI;
     const endAngle = currentAngle + sliceAngle;
 
@@ -42,12 +46,12 @@ const PieChart = ({ data, size = 120 }) => {
     return path;
   };
 
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const total = data.reduce((sum: any, item: { value: any; }) => sum + item.value, 0);
   currentAngle = -Math.PI / 2;
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {data.map((item, index) => (
+      {data.map((item: { value: number; color: ColorValue | undefined; }, index: React.Key | null | undefined) => (
         <Path
           key={index}
           d={createPath(item.value, total)}
@@ -60,7 +64,8 @@ const PieChart = ({ data, size = 120 }) => {
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const firstName = 'João Silva';
+  const fullName = user?.name || 'Usuário';
+  const firstName = fullName.split(' ')[0];
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -108,10 +113,7 @@ export default function HomeScreen() {
         { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF', paddingBottom: 18 }
       ]}>
         <View style={styles.headerLeft}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/150?img=1' }}
-            style={styles.avatar}
-          />
+          <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
           <View style={styles.headerText}>
             <Text style={styles.greeting}>Olá, {firstName}!</Text>
           </View>
@@ -139,41 +141,42 @@ export default function HomeScreen() {
         {/* Scrollable Cards */}
         <FlatList
           data={analysisData}
-          renderItem={({ item }) => (
-            <View style={styles.analysisCard}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
+          renderItem={({ item }) => {
+            return (
+              <View style={styles.analysisCard}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
 
-              {/* Pie Chart */}
-              <View style={styles.chartContainer}>
-                <PieChart data={item.data} size={120} />
+                {/* Pie Chart */}
+                <View style={styles.chartContainer}>
+                  <PieChart data={item.data} size={120} />
+                </View>
+
+                {/* Legend */}
+                <View style={styles.legendContainer}>
+                  {item.data.map((legend: { color: any; label: any; }, idx: any) => (
+                    <View key={idx} style={styles.legendItem}>
+                      <View
+                        style={[styles.legendDot, { backgroundColor: legend.color }]} />
+                      <Text style={styles.legendText}>{legend.label}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Total Info */}
+                <View style={styles.totalInfo}>
+                  <Text style={styles.totalValue}>{item.total}</Text>
+                  <Text style={styles.totalLabel}>{item.subtitle}</Text>
+                </View>
+
+                {/* Detalhar Button */}
+                <TouchableOpacity style={styles.detailButton}>
+                  <Text style={styles.detailButtonText}>Detalhar</Text>
+                </TouchableOpacity>
               </View>
-
-              {/* Legend */}
-              <View style={styles.legendContainer}>
-                {item.data.map((legend, idx) => (
-                  <View key={idx} style={styles.legendItem}>
-                    <View
-                      style={[styles.legendDot, { backgroundColor: legend.color }]}
-                    />
-                    <Text style={styles.legendText}>{legend.label}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Total Info */}
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalValue}>{item.total}</Text>
-                <Text style={styles.totalLabel}>{item.subtitle}</Text>
-              </View>
-
-              {/* Detalhar Button */}
-              <TouchableOpacity style={styles.detailButton}>
-                <Text style={styles.detailButtonText}>Detalhar</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            );
+          }}
           renderToHardwareTextureAndroid
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: { id: any; }) => item.id}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -188,15 +191,17 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Footer Profissional */}
-      <Footer />
+      <Footer/>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F0E8',
+
+    backgroundColor: '#FAF1E5',
   },
 
   /* Header */
@@ -363,3 +368,4 @@ const styles = StyleSheet.create({
     height: 40,
   },
 });
+

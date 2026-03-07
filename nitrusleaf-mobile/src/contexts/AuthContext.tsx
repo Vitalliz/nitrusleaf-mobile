@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import type { AuthContextType, User, RegisterRequest } from "@/types/auth";
-import { apiService } from "@/services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getUserByIdLocal, loginLocal, registerLocal } from "@/repositories/authRepository";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -20,12 +21,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const initializeAuth = useCallback(async () => {
     try {
-      // TODO: Carregar token do AsyncStorage
-      // const savedToken = await AsyncStorage.getItem("authToken");
-      // if (savedToken) {
-      //   setToken(savedToken);
-      //   await refreshToken();
-      // }
+      const savedUserId = await AsyncStorage.getItem("auth_user_id");
+      if (savedUserId) {
+        const savedUser = await getUserByIdLocal(savedUserId);
+        if (savedUser) {
+          setUser(savedUser);
+          setToken(`local-${savedUser.id}`);
+        } else {
+          await AsyncStorage.removeItem("auth_user_id");
+        }
+      }
     } catch (error) {
       console.error("Erro ao inicializar autenticação:", error);
     } finally {
@@ -37,21 +42,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     async (email: string, password: string) => {
       try {
         setIsLoading(true);
-        // TODO: Fazer chamada real à API
-        // const response = await apiService.post("/auth/login", { email, password });
-        // setUser(response.user);
-        // setToken(response.token);
-        // await AsyncStorage.setItem("authToken", response.token);
-
-        // MOCK - Remover em produção
-        setUser({
-          id: "1",
-          name: email.split("@")[0],
-          email,
-          company: "Minha Empresa",
-          experience: "5 anos",
-        });
-        setToken("mock-token-" + Date.now());
+        const loggedUser = await loginLocal(email, password);
+        setUser(loggedUser);
+        setToken(`local-${loggedUser.id}-${Date.now()}`);
+        await AsyncStorage.setItem("auth_user_id", loggedUser.id);
       } catch (error) {
         console.error("Erro no login:", error);
         throw error;
@@ -66,22 +60,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     async (data: RegisterRequest) => {
       try {
         setIsLoading(true);
-        // TODO: Fazer chamada real à API
-        // const response = await apiService.post("/auth/register", data);
-        // setUser(response.user);
-        // setToken(response.token);
-        // await AsyncStorage.setItem("authToken", response.token);
+        if (data.password !== data.passwordConfirmation) {
+          throw new Error("As senhas não conferem.");
+        }
 
-        // MOCK - Remover em produção
-        setUser({
-          id: "1",
+        const createdUser = await registerLocal({
           name: data.name,
           email: data.email,
           phone: data.phone,
-          company: "Minha Empresa",
-          experience: "Iniciante",
+          cpf: data.cpf,
+          password: data.password,
         });
-        setToken("mock-token-" + Date.now());
+
+        setUser(createdUser);
+        setToken(`local-${createdUser.id}-${Date.now()}`);
+        await AsyncStorage.setItem("auth_user_id", createdUser.id);
       } catch (error) {
         console.error("Erro no registro:", error);
         throw error;
@@ -95,11 +88,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = useCallback(async () => {
     try {
       setIsLoading(true);
-      // TODO: Fazer chamada à API de logout
-      // await apiService.post("/auth/logout");
       setUser(null);
       setToken(null);
-      // await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("auth_user_id");
     } catch (error) {
       console.error("Erro no logout:", error);
       throw error;
@@ -110,10 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const refreshToken = useCallback(async () => {
     try {
-      // TODO: Implementar refresh token real
-      // const response = await apiService.post("/auth/refresh");
-      // setToken(response.token);
-      // await AsyncStorage.setItem("authToken", response.token);
+      // Sessão local: nada para renovar
     } catch (error) {
       console.error("Erro ao renovar token:", error);
       logout();

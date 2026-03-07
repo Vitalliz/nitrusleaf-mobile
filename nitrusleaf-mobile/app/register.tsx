@@ -1,169 +1,120 @@
-// app/register.tsx - REGISTER PAGE
 import { Background } from "@/components/ui/background";
 import { WelcomeTitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton } from "@/components/ui/button";
-import React, { useState } from "react";
-import { View, StyleSheet, Text, Image, TouchableOpacity, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Text, Image, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const { register, isLoading, isSignedIn } = useAuth();
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
-  const handleRegister = () => {
-    const { name, email, phone, password, confirmPassword } = formData;
+  useEffect(() => {
+    if (isSignedIn) router.replace("/(tabs)/home");
+  }, [isSignedIn, router]);
 
-    if (!name.trim() || !email.trim() || !phone.trim() || !password.trim()) {
-      alert("Por favor, preencha todos os campos");
-      return;
+  const handleRegister = async () => {
+    try {
+      if (!name.trim() || !email.trim() || !phone.trim() || !cpf.trim() || !password.trim() || !passwordConfirmation.trim()) {
+        alert("Preencha todos os campos, incluindo CPF.");
+        return;
+      }
+
+      await register({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        cpf: cpf.trim(),
+        password,
+        passwordConfirmation,
+      });
+
+      router.replace("/(tabs)/home");
+    } catch (e: any) {
+      alert(e?.message ?? "Erro ao cadastrar.");
     }
-
-    if (password !== confirmPassword) {
-      alert("As senhas não conferem");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("A senha deve ter pelo menos 6 caracteres");
-      return;
-    }
-
-    console.log("Registro:", formData);
-    // Aqui você faria o registro do usuário
-    alert("Cadastro realizado com sucesso!");
-    router.replace("/login");
-  };
-
-  const handleBackToLogin = () => {
-    router.back();
   };
 
   return (
     <Background>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.container}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackToLogin}>
-            <Text style={styles.backText}>← Voltar</Text>
-          </TouchableOpacity>
+      <View style={styles.container}>
+        <Image source={require("@/assets/images/icons/leaf.png")} style={styles.logo} />
 
-          <Image
-            source={require("@/assets/images/icons/leaf.png")}
-            style={{ width: 100, height: 110, marginBottom: 15 }}
-          />
-          <WelcomeTitle text="Criar Conta" />
-          <Text style={styles.subtitle}>Cadastre-se para continuar</Text>
+        <WelcomeTitle text="Bem vindo!" />
+        <Text style={styles.subtitle}>Cadastre-se</Text>
 
-          <View style={styles.form}>
-            <Text style={styles.label}>Nome Completo:</Text>
-            <Input
-              placeholder="Seu nome"
-              size="size-327"
-              variant="default"
-              value={formData.name}
-              onChangeText={(value) => handleInputChange("name", value)}
-            />
+        <View style={styles.form}>
+          <Text style={styles.label}>Nome completo:</Text>
+          <Input placeholder="Nome e sobrenome" size="size-327" variant="default" value={name} onChangeText={setName} />
 
-            <Text style={styles.label}>E-mail:</Text>
-            <Input
-              placeholder="seu@email.com"
-              size="size-327"
-              variant="default"
-              value={formData.email}
-              onChangeText={(value) => handleInputChange("email", value)}
-            />
+          <Text style={styles.label}>E-mail:</Text>
+          <Input placeholder="email@exemplo.com" size="size-327" variant="default" value={email} onChangeText={setEmail} />
 
-            <Text style={styles.label}>Telefone:</Text>
-            <Input
-              placeholder="(11) 99999-9999"
-              size="size-327"
-              variant="default"
-              value={formData.phone}
-              onChangeText={(value) => handleInputChange("phone", value)}
-            />
+          <Text style={styles.label}>Telefone:</Text>
+          <Input placeholder="(xx) xxxxx-xxxx" size="size-327" variant="default" value={phone} onChangeText={setPhone} />
 
-            <Text style={styles.label}>Senha:</Text>
-            <Input
-              placeholder="Digite uma senha"
-              size="size-327"
-              variant="default"
-              value={formData.password}
-              onChangeText={(value) => handleInputChange("password", value)}
-              secureTextEntry={true}
-            />
+          <Text style={styles.label}>CPF:</Text>
+          <Input placeholder="000.000.000-00" size="size-327" variant="default" value={cpf} onChangeText={setCpf} />
 
-            <Text style={styles.label}>Confirmar Senha:</Text>
-            <Input
-              placeholder="Confirme a senha"
-              size="size-327"
-              variant="default"
-              value={formData.confirmPassword}
-              onChangeText={(value) => handleInputChange("confirmPassword", value)}
-              secureTextEntry={true}
-            />
+          <Text style={styles.label}>Senha:</Text>
+          <Input placeholder="Crie uma senha" size="size-327" variant="default" value={password} onChangeText={setPassword} secureTextEntry />
 
-            <LoginButton 
-              onPress={handleRegister} 
-              title="Cadastrar"
-            />
+          <Text style={styles.label}>Confirmar senha:</Text>
+          <Input placeholder="Repita a senha" size="size-327" variant="default" value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry />
 
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>
-                Já possui uma conta?{" "}
-              </Text>
-              <TouchableOpacity onPress={handleBackToLogin}>
-                <Text style={styles.loginLink}>Fazer login</Text>
-              </TouchableOpacity>
-            </View>
+          <LoginButton onPress={handleRegister} disabled={isLoading} title="Cadastrar" />
+
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText}>Já tem conta? </Text>
+            <TouchableOpacity onPress={() => router.replace("/login")} disabled={isLoading}>
+              <Text style={styles.loginLink}>Entrar</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-      {/* Onda laranja na base (ao fundo) */}
-      <Image
-        source={require("@/assets/images/icons/wave-laranja.png")}
-        style={styles.wave}
-        resizeMode="cover"
-      />
+      </View>
+
+      <Image source={require("@/assets/images/icons/wave-laranja.png")} style={styles.wave} resizeMode="cover" />
     </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    paddingBottom: 100,
-  },
   container: {
+    flex: 1,
     alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 60,
     paddingHorizontal: 24,
     justifyContent: "flex-start",
   },
-  backButton: {
-    alignSelf: "flex-start",
+  logo: {
+    width: 115,
+    height: 125,
     marginBottom: 20,
-    padding: 8,
   },
-  backText: {
-    fontSize: 16,
-    color: "#6BC24A",
-    fontWeight: "600",
+  wave: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 140,
+    width: "100%",
+    zIndex: -1,
+    pointerEvents: "none",
   },
   subtitle: {
     fontSize: 16,
     color: "#666",
     marginTop: 8,
-    marginBottom: 30,
+    marginBottom: 24,
   },
   form: {
     width: "100%",
@@ -180,7 +131,7 @@ const styles = StyleSheet.create({
   loginContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 16,
   },
   loginText: {
     fontSize: 14,
@@ -191,14 +142,5 @@ const styles = StyleSheet.create({
     color: "#6BC24A",
     fontWeight: "600",
   },
-  wave: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 140,
-    width: '100%',
-    zIndex: -1,
-    pointerEvents: 'none',
-  },
 });
+

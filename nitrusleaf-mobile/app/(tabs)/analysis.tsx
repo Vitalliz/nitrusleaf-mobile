@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
+import Footer from '@/components/footer';
 
 export default function AnalysisScreen() {
   const router = useRouter();
@@ -66,7 +67,9 @@ export default function AnalysisScreen() {
             <Text style={styles.cascadeLinkText}>Fechar</Text>
           </TouchableOpacity>
         </View>
+        
       )}
+      <Footer />
     </View>
   );
 }
@@ -140,5 +143,3 @@ const styles = StyleSheet.create({
   cascadeLink: { alignSelf: 'flex-end', marginTop: 8, backgroundColor: '#6BC24A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   cascadeLinkText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
 });
-
-

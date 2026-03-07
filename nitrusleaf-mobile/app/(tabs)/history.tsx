@@ -13,11 +13,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Background } from '@/components/ui/background';
 
 export default function HistoryScreen() {
   const [expandedId] = useState<number | null>(null);
   const { user } = useAuth();
-  const firstName = 'João Silva';
+  const fullName = user?.name || 'Usuário';
+  const firstName = fullName.split(' ')[0];
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -68,17 +70,14 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Background>
       {/* Header estilizado como na Home */}
       <View style={[
         styles.header,
         { paddingTop: insets.top + 12, backgroundColor: '#FFFFFF', paddingBottom: 18 }
       ]}>
         <View style={styles.headerLeft}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/150?img=1' }}
-            style={styles.avatar}
-          />
+           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
           <View style={styles.headerText}>
             <Text style={styles.greeting}>Olá, {firstName}!</Text>
           </View>
@@ -130,14 +129,14 @@ export default function HistoryScreen() {
         <View style={styles.bottomSpace} />
       </ScrollView>
       <Footer />
-    </View>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F0E8",
+    backgroundColor: "#FAF6F0",
   },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
   header: {

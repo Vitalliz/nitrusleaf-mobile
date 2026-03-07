@@ -277,12 +277,21 @@ export const GoogleButton2 = ({ onPress }: { onPress?: () => void }) => (
   />
 );
 
-export const LoginButton = ({ onPress }: { onPress?: () => void }) => (
+export const LoginButton = ({
+  onPress,
+  disabled = false,
+  title = "Entrar",
+}: {
+  onPress?: () => void;
+  disabled?: boolean;
+  title?: string;
+}) => (
   <Button 
-    title="Entrar" 
+    title={title}
     variant="primary" 
     size="328" 
     onPress={onPress} 
+    disabled={disabled}
   />
 );
 

@@ -2,17 +2,19 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { isLoading, isSignedIn } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/login');
-    }, 2000); // 2 segundos de splash
+      router.replace(isSignedIn ? '/(tabs)/home' : '/login');
+    }, 900);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [router, isSignedIn]);
 
   return (
     <View style={styles.container}>

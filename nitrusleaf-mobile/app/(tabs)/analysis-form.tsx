@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Image, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Footer from '@/components/footer';
+import { Background } from '@/components/ui/background';
 
 export default function AnalysisFormScreen() {
   const router = useRouter();
@@ -16,7 +18,7 @@ export default function AnalysisFormScreen() {
   const pes = ['Pé 1', 'Pé 2', 'Pé 3', 'Pé 4'];
 
   return (
-    <View style={styles.container}>
+   <Background>
       {/* Wave no topo invertida */}
       <Image
         source={require('@/assets/images/icons/wave-laranja.png')}
@@ -119,7 +121,8 @@ export default function AnalysisFormScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+      <Footer />
+  </Background>
   );
 }
 
@@ -174,5 +177,4 @@ const styles = StyleSheet.create({
   cascadeLink: { alignSelf: 'flex-end', marginTop: 8, backgroundColor: '#6BC24A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   cascadeLinkText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
 });
-
 

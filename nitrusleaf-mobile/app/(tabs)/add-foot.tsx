@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, TextInput, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Footer from '@/components/footer';
+import { Background } from '@/components/ui/background';
 
 export default function AddFootScreen() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export default function AddFootScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Background>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Cadastrar pé</Text>
       </View>
@@ -43,12 +45,12 @@ export default function AddFootScreen() {
           <Text style={styles.saveText}>Salvar</Text>
         </TouchableOpacity>
       </View>
-    </View>
+      <Footer />
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F0E8' },
   header: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF', paddingBottom: 16, paddingHorizontal: 20 },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
@@ -58,5 +60,3 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: '#6BC24A', borderRadius: 24, paddingVertical: 12, alignItems: 'center', marginTop: 8 },
   saveText: { color: '#FFFFFF', fontWeight: '800' },
 });
-
-
