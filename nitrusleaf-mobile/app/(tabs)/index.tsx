@@ -1,16 +1,17 @@
 // app/(tabs)/index.tsx - HOME SCREEN
+import Footer from '@/components/footer';
+import { useAuth } from '@/contexts/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
+import { Background } from '@/components/ui/background';
 import React from 'react';
 import {
-  View,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  StatusBar,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/contexts/AuthContext';
-import Footer from '@/components/footer';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -47,7 +48,7 @@ export default function HomeScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <Background>
       <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
@@ -117,9 +118,10 @@ export default function HomeScreen() {
         <View style={styles.spacer} />
       </ScrollView>
       <Footer />
-    </View>
+    </Background>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

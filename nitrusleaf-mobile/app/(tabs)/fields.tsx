@@ -1,14 +1,19 @@
 // app/(tabs)/fields.tsx - Tabela de Talhões com busca
 import Footer from '@/components/footer';
 import { Ionicons } from '@expo/vector-icons';
+import { Background } from '@/components/ui/background';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function FieldsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const fullName = user?.name || 'Usuário';
+  const firstName = fullName.split(' ')[0];
 
   const fields = [
     { name: 'Talhão 1', analyzed: '27/32 pés analisados' },
@@ -20,12 +25,12 @@ export default function FieldsScreen() {
   const filtered = fields.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <View style={styles.container}>
+    <Background>
       {/* Header branco como nas outras telas */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerLeft}>
-          <Image source={{ uri: 'https://i.pravatar.cc/150?img=1' }} style={styles.avatar} />
-          <View style={styles.headerText}><Text style={styles.greeting}>Olá, João Silva!</Text></View>
+           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
+          <View style={styles.headerText}><Text style={styles.greeting}>Olá, {firstName}!</Text></View>
         </View>
         <TouchableOpacity style={styles.menuButton} onPress={() => router.push('/(tabs)/profile')}>
           <Ionicons name="menu" size={24} color="#333" />
@@ -68,12 +73,12 @@ export default function FieldsScreen() {
         <View style={{ height: 40 }} />
       </View>
       <Footer />
-    </View>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F0E8' },
+  container: { flex: 1, backgroundColor: '#FAF6F0' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF', paddingBottom: 18 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24 },
@@ -91,5 +96,3 @@ const styles = StyleSheet.create({
   fieldName: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 },
   fieldSubtitle: { fontSize: 14, color: '#6B7280' },
 });
-
-

@@ -4,6 +4,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  cpf?: string;
   company?: string;
   experience?: string;
   avatar?: string;
@@ -18,6 +19,7 @@ export interface RegisterRequest {
   name: string;
   email: string;
   phone: string;
+  cpf: string;
   password: string;
   passwordConfirmation: string;
 }

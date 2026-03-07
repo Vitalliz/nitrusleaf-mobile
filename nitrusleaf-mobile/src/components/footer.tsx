@@ -8,12 +8,12 @@ export default function Footer() {
   const router = useRouter();
 
   const handleNavigation = (route: string) => {
-    router.push(route);
+    router.push(route as any);
   };
 
   const handleCamera = () => {
     // Navega para a tela do menuzinho com a folha
-    router.push('/(tabs)/menu');
+    router.push('/(tabs)/menu' as any);
   };
 
   return (
@@ -27,9 +27,9 @@ export default function Footer() {
 
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/explore')}
+        onPress={() => handleNavigation('/(tabs)/maps')}
       >
-        <Ionicons name="image" size={28} color="white" />
+        <Ionicons name="map" size={28} color="white" />
       </TouchableOpacity>
 
       <View style={styles.cameraButtonContainer}>

@@ -1,15 +1,20 @@
 // app/(tabs)/field-feet.tsx - Lista de pés de um Talhão
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
+import { Ionicons } from '@expo/vector-icons';
+import { Background } from '@/components/ui/background';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function FieldFeetScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { field, newFoot } = useLocalSearchParams<{ field?: string; newFoot?: string }>();
+  const { user } = useAuth();
+  const fullName = user?.name || 'Usuário';
+  const firstName = fullName.split(' ')[0];
 
   const [query, setQuery] = useState('');
   const [feet, setFeet] = useState([
@@ -32,12 +37,12 @@ export default function FieldFeetScreen() {
   const filtered = feet.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <View style={styles.container}>
+<Background>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerLeft}>
-          <Image source={{ uri: 'https://i.pravatar.cc/150?img=1' }} style={styles.avatar} />
-          <View style={styles.headerText}><Text style={styles.greeting}>Olá, João Silva!</Text></View>
+           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
+          <View style={styles.headerText}><Text style={styles.greeting}>Olá, {firstName}!</Text></View>
         </View>
         <TouchableOpacity style={styles.menuButton} onPress={() => router.push('/(tabs)/profile')}>
           <Ionicons name="menu" size={24} color="#333" />
@@ -92,12 +97,12 @@ export default function FieldFeetScreen() {
         <View style={{ height: 40 }} />
       </View>
       <Footer />
-    </View>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F0E8' },
+  container: { flex: 1, backgroundColor: '#FAF6F0' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF', paddingBottom: 18 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24 },
@@ -117,6 +122,3 @@ const styles = StyleSheet.create({
   footName: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   footStatus: { fontSize: 14, color: '#6B7280' },
 });
-
-
-
