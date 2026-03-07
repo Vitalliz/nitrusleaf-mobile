@@ -1,5 +1,4 @@
 {
-  
   "expo": {
     "name": "nitrusleaf-mobile",
     "slug": "nitrusleaf-mobile",
@@ -39,7 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
