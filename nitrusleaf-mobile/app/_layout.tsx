@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import { AuthProvider } from "@/contexts/AuthContext";
+import React from "react";
 
 export default function RootLayout() {
   const theme = useColorScheme() ?? "light";
@@ -14,23 +15,21 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: bg },
-          animationEnabled: true,
         }}
       >
         {/* Rotas Públicas (antes de login) */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen
-          name="login"
+          name="analysis"
           options={{
             headerShown: false,
-            animationEnabled: false,
           }}
         />
         <Stack.Screen
           name="register"
           options={{
             headerShown: false,
-            animationEnabled: true,
           }}
         />
 
@@ -39,7 +38,6 @@ export default function RootLayout() {
           name="(tabs)"
           options={{
             headerShown: false,
-            animationEnabled: false,
           }}
         />
       </Stack>

@@ -3,29 +3,38 @@ import { Background } from "@/components/ui/background";
 import { WelcomeTitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Text, Image, TouchableOpacity } from "react-native";
 // Footer removido nesta tela
 import { useRouter } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login, isLoading, isSignedIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    if (email.trim() && password.trim()) {
-      console.log("Login:", { email, password });
-      // Aqui você faria a autenticação
-      // Para teste, vamos redirecionar para a home
-      router.replace("/(tabs)/home");
-    } else {
+  useEffect(() => {
+    if (isSignedIn) router.replace("/(tabs)/home");
+  }, [isSignedIn, router]);
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
       alert("Por favor, preencha email e senha");
+      return;
+    }
+
+    try {
+      await login(email, password);
+      router.replace("/(tabs)/home");
+    } catch (e: any) {
+      alert(e?.message ?? "Falha ao entrar.");
     }
   };
 
   const handleGoogleLogin = () => {
-    console.log("Login com Google");
+    // Login com Google - funcionalidade a ser implementada
     // Implementar login com Google aqui
   };
 
@@ -63,7 +72,7 @@ export default function LoginScreen() {
             secureTextEntry={true}
           />
 
-          <LoginButton onPress={handleLogin} />
+          <LoginButton onPress={handleLogin} disabled={isLoading} />
           <GoogleButton2 onPress={handleGoogleLogin} />
 
           <View style={styles.registerContainer}>

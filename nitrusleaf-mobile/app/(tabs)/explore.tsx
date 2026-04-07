@@ -1,15 +1,16 @@
 // app/(tabs)/explore.tsx - EXPLORE SCREEN
+import Footer from "@/components/footer";
+import { Ionicons } from "@expo/vector-icons";
+import { Background } from "@/components/ui/background";
 import React, { useState } from "react";
 import {
-  View,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import Footer from "@/components/footer";
 
 export default function ExploreScreen() {
   const [searchText, setSearchText] = useState("");
@@ -64,7 +65,7 @@ export default function ExploreScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <Background>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>Explorar Plantações</Text>
@@ -101,15 +102,11 @@ export default function ExploreScreen() {
         <View style={styles.spacer} />
       </ScrollView>
       <Footer />
-    </View>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5F5F5",
-  },
   content: {
     flex: 1,
   },

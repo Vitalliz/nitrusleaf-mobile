@@ -1,62 +1,580 @@
-// app/(tabs)/add-foot.tsx - Cadastro simples de Pé
+// app/(tabs)/add-foot.tsx - Cadastro de Pé
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Modal } from 'react-native';
+import { showErrorAlert, showSuccessAlert } from '@/utils/alerts';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Footer from '@/components/footer';
+import { Background } from '@/components/ui/background';
+import { Ionicons } from '@expo/vector-icons';
+import { createPe } from '@/repositories/peRepository';
+import type { CreatePeRequest, SituacaoPe } from '@/types/pe';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export default function AddFootScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { field } = useLocalSearchParams<{ field?: string }>();
+  const { talhaoId, talhaoName, propertyId } = useLocalSearchParams<{
+    talhaoId?: string;
+    talhaoName?: string;
+    propertyId?: string;
+  }>();
 
-  const [name, setName] = useState('Pé 1');
-  const [status, setStatus] = useState('Não-Tratado');
+  const [formData, setFormData] = useState({
+    identificacao: '',
+    linha: '',
+    coluna: '',
+    situacao: 'Saudável' as SituacaoPe,
+    deficienciaCobre: false,
+    deficienciaManganes: false,
+    outros: false,
+    observacoes: '',
+    dataPlantio: '',
+    latitude: '',
+    longitude: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
-  const save = () => {
-    // Passa os dados do novo pé de volta para a tela anterior
-    router.replace({
-      pathname: '/(tabs)/field-feet',
-      params: {
-        field: field,
-        newFoot: JSON.stringify({ name, status, color: status === 'Tratado' ? '#8B5CF6' : '#FACC15' })
-      }
-    });
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleMapPress = (event: any) => {
+    const { coordinate } = event.nativeEvent;
+    setSelectedLocation(coordinate);
+  };
+
+  const handleConfirmLocation = () => {
+    if (selectedLocation) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: selectedLocation.latitude.toString(),
+        longitude: selectedLocation.longitude.toString(),
+      }));
+    }
+    setShowMapModal(false);
+  };
+
+  const validateForm = () => {
+    if (!formData.identificacao.trim()) {
+      showErrorAlert('Identificação do pé é obrigatória');
+      return false;
+    }
+    if (!formData.linha.trim()) {
+      showErrorAlert('Linha é obrigatória');
+      return false;
+    }
+    const linhaNum = parseInt(formData.linha);
+    if (isNaN(linhaNum) || linhaNum <= 0) {
+      showErrorAlert('Linha deve ser um número positivo');
+      return false;
+    }
+    if (!formData.coluna.trim()) {
+      showErrorAlert('Coluna é obrigatória');
+      return false;
+    }
+    const colunaNum = parseInt(formData.coluna);
+    if (isNaN(colunaNum) || colunaNum <= 0) {
+      showErrorAlert('Coluna deve ser um número positivo');
+      return false;
+    }
+    if (formData.dataPlantio && !/^\d{4}-\d{2}-\d{2}$/.test(formData.dataPlantio)) {
+      showErrorAlert('Data de plantio deve estar no formato AAAA-MM-DD');
+      return false;
+    }
+    if (formData.latitude && (isNaN(parseFloat(formData.latitude)) || parseFloat(formData.latitude) < -90 || parseFloat(formData.latitude) > 90)) {
+      showErrorAlert('Latitude deve ser um número entre -90 e 90');
+      return false;
+    }
+    if (formData.longitude && (isNaN(parseFloat(formData.longitude)) || parseFloat(formData.longitude) < -180 || parseFloat(formData.longitude) > 180)) {
+      showErrorAlert('Longitude deve ser um número entre -180 e 180');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm() || !talhaoId) return;
+
+    setLoading(true);
+    try {
+      const peData: CreatePeRequest = {
+        talhaoId,
+        identificacao: formData.identificacao.trim(),
+        linha: parseInt(formData.linha),
+        coluna: parseInt(formData.coluna),
+        situacao: formData.situacao,
+        deficienciaCobre: formData.deficienciaCobre,
+        deficienciaManganes: formData.deficienciaManganes,
+        outros: formData.outros,
+        observacoes: formData.observacoes.trim() || undefined,
+        dataPlantio: formData.dataPlantio,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+      };
+
+      await createPe(peData);
+
+      showSuccessAlert('Pé cadastrado com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => router.replace({
+            pathname: '/(tabs)/field-feet',
+            params: {
+              talhaoId,
+              talhaoName,
+              propertyId
+            }
+          })
+        }
+      ]);
+    } catch (error) {
+      console.error('Erro ao salvar pé:', error);
+      showErrorAlert('Não foi possível salvar o pé. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <Background>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Cadastrar pé</Text>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={styles.label}>Talhão</Text>
-        <TextInput value={String(field || 'Talhão 1')} editable={false} style={styles.inputDisabled} />
-
-        <Text style={styles.label}>Nome do pé</Text>
-        <TextInput value={name} onChangeText={setName} style={styles.input} />
-
-        <Text style={styles.label}>Status</Text>
-        <TextInput value={status} onChangeText={setStatus} style={styles.input} />
-
-        <TouchableOpacity style={styles.saveBtn} onPress={save}>
-          <Text style={styles.saveText}>Salvar</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Cadastrar Pé</Text>
+        <View style={{ width: 24 }} />
       </View>
-    </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.sectionTitle}>Informações do Pé</Text>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Talhão</Text>
+          <TextInput
+            value={talhaoName || ''}
+            editable={false}
+            style={styles.inputDisabled}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Identificação do Pé *</Text>
+          <TextInput
+            value={formData.identificacao}
+            onChangeText={(value) => handleInputChange('identificacao', value)}
+            style={styles.input}
+            placeholder="Ex: Pé 1, Árvore Norte"
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Linha *</Text>
+          <TextInput
+            value={formData.linha}
+            onChangeText={(value) => handleInputChange('linha', value)}
+            style={styles.input}
+            placeholder="Ex: 1"
+            placeholderTextColor="#999"
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Coluna *</Text>
+          <TextInput
+            value={formData.coluna}
+            onChangeText={(value) => handleInputChange('coluna', value)}
+            style={styles.input}
+            placeholder="Ex: 1"
+            placeholderTextColor="#999"
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Situação</Text>
+          <View style={styles.pickerContainer}>
+            {(['Saudável', 'Doente', 'Morto'] as SituacaoPe[]).map((situacao) => (
+              <TouchableOpacity
+                key={situacao}
+                style={[
+                  styles.pickerOption,
+                  formData.situacao === situacao && styles.pickerOptionSelected
+                ]}
+                onPress={() => handleInputChange('situacao', situacao)}
+              >
+                <Text style={[
+                  styles.pickerOptionText,
+                  formData.situacao === situacao && styles.pickerOptionTextSelected
+                ]}>
+                  {situacao}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Deficiências Identificadas</Text>
+
+        <View style={styles.checkboxGroup}>
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('deficienciaCobre', !formData.deficienciaCobre)}
+          >
+            <View style={[
+              styles.checkbox,
+              formData.deficienciaCobre && styles.checkboxChecked
+            ]}>
+              {formData.deficienciaCobre && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Deficiência de Cobre</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('deficienciaManganes', !formData.deficienciaManganes)}
+          >
+            <View style={[
+              styles.checkbox,
+              formData.deficienciaManganes && styles.checkboxChecked
+            ]}>
+              {formData.deficienciaManganes && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Deficiência de Manganês</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('outros', !formData.outros)}
+          >
+            <View style={[
+              styles.checkbox,
+              formData.outros && styles.checkboxChecked
+            ]}>
+              {formData.outros && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Outros</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Observações</Text>
+          <TextInput
+            value={formData.observacoes}
+            onChangeText={(value) => handleInputChange('observacoes', value)}
+            style={[styles.input, styles.textArea]}
+            placeholder="Observações adicionais sobre o pé"
+            placeholderTextColor="#999"
+            multiline
+            numberOfLines={3}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Data de Plantio</Text>
+          <TextInput
+            value={formData.dataPlantio}
+            onChangeText={(value) => handleInputChange('dataPlantio', value)}
+            style={styles.input}
+            placeholder="AAAA-MM-DD"
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        <Text style={styles.sectionTitle}>Localização (Opcional)</Text>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Latitude</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              value={formData.latitude}
+              onChangeText={(value) => handleInputChange('latitude', value)}
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Ex: -23.550520"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+            <TouchableOpacity
+              style={styles.mapBtn}
+              onPress={() => setShowMapModal(true)}
+            >
+              <Ionicons name="map-outline" size={20} color="#6BC24A" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Longitude</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              value={formData.longitude}
+              onChangeText={(value) => handleInputChange('longitude', value)}
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Ex: -46.633308"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+            <TouchableOpacity
+              style={styles.mapBtn}
+              onPress={() => setShowMapModal(true)}
+            >
+              <Ionicons name="map-outline" size={20} color="#6BC24A" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.saveBtn, loading && styles.saveBtnDisabled]}
+          onPress={handleSave}
+          disabled={loading}
+        >
+          <Text style={styles.saveText}>
+            {loading ? 'Salvando...' : 'Salvar Pé'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+
+      {/* Modal do Mapa */}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setShowMapModal(false)}
+              style={styles.modalCloseBtn}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Selecionar Localização</Text>
+            <TouchableOpacity
+              onPress={handleConfirmLocation}
+              style={styles.modalConfirmBtn}
+            >
+              <Text style={styles.modalConfirmText}>Confirmar</Text>
+            </TouchableOpacity>
+          </View>
+
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: -24.68964,
+              longitude: -47.85112,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            onPress={handleMapPress}
+            provider={PROVIDER_GOOGLE}
+          >
+            {selectedLocation && (
+              <Marker
+                coordinate={selectedLocation}
+                title="Localização selecionada"
+              />
+            )}
+          </MapView>
+        </View>
+      </Modal>
+
+      <Footer />
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F0E8' },
-  header: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF', paddingBottom: 16, paddingHorizontal: 20 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
-  content: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
-  label: { fontSize: 14, color: '#1A1A1A', fontWeight: '700', marginBottom: 8 },
-  input: { backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: '#D4D4D4', paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14 },
-  inputDisabled: { backgroundColor: '#F9FAFB', borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14, color: '#6B7280' },
-  saveBtn: { backgroundColor: '#6BC24A', borderRadius: 24, paddingVertical: 12, alignItems: 'center', marginTop: 8 },
-  saveText: { color: '#FFFFFF', fontWeight: '800' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFEFEF'
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#6BC24A',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    color: '#1A1A1A',
+    backgroundColor: '#FFFFFF',
+    fontSize: 16,
+  },
+  inputDisabled: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    color: '#6B7280',
+    backgroundColor: '#F9FAFB',
+    fontSize: 16,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  pickerOption: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#6BC24A',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  pickerOptionSelected: {
+    backgroundColor: '#6BC24A',
+    borderColor: '#6BC24A',
+  },
+  pickerOptionText: {
+    fontSize: 14,
+    color: '#6BC24A',
+    fontWeight: '500',
+  },
+  pickerOptionTextSelected: {
+    color: '#FFFFFF',
+  },
+  checkboxGroup: {
+    marginBottom: 16,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#6BC24A',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  checkboxChecked: {
+    backgroundColor: '#6BC24A',
+    borderColor: '#6BC24A',
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  saveBtn: {
+    backgroundColor: '#6BC24A',
+    borderRadius: 8,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  saveBtnDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  saveText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mapBtn: {
+    marginLeft: 8,
+    padding: 10,
+    backgroundColor: '#F0F9F0',
+    borderRadius: 6,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalCloseBtn: {
+    padding: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  modalConfirmBtn: {
+    backgroundColor: '#6BC24A',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  modalConfirmText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  map: {
+    flex: 1,
+  },
 });
-
-
