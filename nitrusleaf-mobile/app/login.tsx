@@ -34,7 +34,7 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = () => {
-    console.log("Login com Google");
+    // Login com Google - funcionalidade a ser implementada
     // Implementar login com Google aqui
   };
 

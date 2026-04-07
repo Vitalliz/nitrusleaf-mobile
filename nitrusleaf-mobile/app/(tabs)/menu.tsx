@@ -33,7 +33,7 @@
 //       });
       
 //       // Aqui você pode salvar a foto ou processá-la
-//       console.log('Foto capturada:', photo.uri);
+      // Foto capturada - funcionalidade em desenvolvimento
       
 //       // Mostrar feedback visual
 //       Alert.alert('Sucesso!', 'Foto capturada com sucesso!', [
@@ -260,7 +260,7 @@ export default function MenuScreen() {
 
   const handleCapture = () => {
     // Ação principal (ex.: abrir câmera real no futuro)
-    console.log('Capturar');
+    // Capturar foto - funcionalidade em desenvolvimento
   };
 
   const handleLocation = () => {

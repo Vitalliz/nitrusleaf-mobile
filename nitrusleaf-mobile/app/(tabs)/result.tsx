@@ -7,12 +7,12 @@ import { Background } from '@/components/ui/background';
 
 export default function ResultScreen() {
   const handleContinue = () => {
-    console.log("Continuar pressionado");
+    // Continuar pressionado - navegar para próxima tela
     // Navegação ou ação desejada
   };
 
   const handleLearnMore = () => {
-    console.log("Saiba mais pressionado");
+    // Saiba mais pressionado - abrir modal ou navegar
     // Navegação para tela de detalhes
   };
 

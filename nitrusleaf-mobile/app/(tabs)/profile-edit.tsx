@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   });
 
   const handleSaveProfile = () => {
-    console.log("Perfil salvo:", profileData);
+    // Perfil salvo com sucesso
     setIsEditing(false);
     Alert.alert("Sucesso", "Perfil atualizado com sucesso!");
   };
