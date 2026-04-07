@@ -147,7 +147,13 @@ npx expo start
 - Validação de coordenadas GPS
 - Verificação de formatos de data
 
-## 📱 Funcionalidades Planejadas
+## � Homenagem
+
+Este projeto é dedicado com muito carinho a **Maria Cecilia Gomes Domingues**, avó do desenvolvedor Lucas Gomes Fagundes. Sua memória e ensinamentos são a inspiração por trás deste trabalho, representando o amor pela família, pela terra e pela dedicação ao próximo.
+
+*"Em memória de Maria Cecilia Gomes Domingues - Uma mulher que ensinou o valor do trabalho árduo, do amor incondicional e da força familiar."*
+
+## �📱 Funcionalidades Planejadas
 
 - [ ] Sincronização com servidor remoto
 - [ ] Análise de imagens com IA para detecção de doenças
@@ -155,13 +161,6 @@ npx expo start
 - [ ] Integração com mapas offline
 - [ ] Notificações push para alertas de saúde das plantas
 
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
 
 ## 📄 Licença
 
@@ -169,7 +168,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👥 Autores
 
-- **Equipe NitrusLeaf** - Desenvolvimento inicial
+- **Equipe Vitalliz** - Desenvolvimento inicial
 
 ## 🙏 Agradecimentos
 

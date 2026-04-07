@@ -54,6 +54,13 @@ export default function Footer() {
 
       <TouchableOpacity
         style={styles.footerButton}
+        onPress={() => handleNavigation('/(tabs)/memorial')}
+      >
+        <Ionicons name="heart" size={28} color="white" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.footerButton}
         onPress={() => handleNavigation('/(tabs)/profile')}
       >
         <Ionicons name="person" size={28} color="white" />
