@@ -189,13 +189,27 @@ export default function PeDetailsScreen() {
 
           <View style={styles.deficienciasSection}>
             <Text style={styles.sectionTitle}>Deficiências Identificadas</Text>
-            {pe.deficiencias && pe.deficiencias.length > 0 ? (
-              pe.deficiencias.map((deficiencia, index) => (
-                <View key={index} style={styles.deficienciaItem}>
-                  <Ionicons name="warning" size={16} color="#EF4444" />
-                  <Text style={styles.deficienciaText}>{deficiencia}</Text>
-                </View>
-              ))
+            {(pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) ? (
+              <>
+                {pe.deficienciaCobre && (
+                  <View style={styles.deficienciaItem}>
+                    <Ionicons name="warning" size={16} color="#EF4444" />
+                    <Text style={styles.deficienciaText}>Deficiência de Cobre</Text>
+                  </View>
+                )}
+                {pe.deficienciaManganes && (
+                  <View style={styles.deficienciaItem}>
+                    <Ionicons name="warning" size={16} color="#EF4444" />
+                    <Text style={styles.deficienciaText}>Deficiência de Manganês</Text>
+                  </View>
+                )}
+                {pe.outros && (
+                  <View style={styles.deficienciaItem}>
+                    <Ionicons name="warning" size={16} color="#EF4444" />
+                    <Text style={styles.deficienciaText}>Outros</Text>
+                  </View>
+                )}
+              </>
             ) : (
               <Text style={styles.noDeficiencias}>Nenhuma deficiência identificada</Text>
             )}

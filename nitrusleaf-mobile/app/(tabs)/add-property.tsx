@@ -1,6 +1,6 @@
 // app/(tabs)/add-property.tsx - Cadastro de Propriedade
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Alert, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { createProperty } from '@/repositories/propertyRepository';
 import type { CreatePropertyRequest } from '@/types/property';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export default function AddPropertyScreen() {
   const router = useRouter();
@@ -27,9 +28,30 @@ export default function AddPropertyScreen() {
     regiao: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleMapPress = (event: any) => {
+    const { coordinate } = event.nativeEvent;
+    setSelectedLocation(coordinate);
+  };
+
+  const handleConfirmLocation = () => {
+    if (selectedLocation) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: selectedLocation.latitude.toString(),
+        longitude: selectedLocation.longitude.toString(),
+      }));
+    }
+    setShowMapModal(false);
   };
 
   const validateForm = () => {
@@ -197,25 +219,41 @@ export default function AddPropertyScreen() {
         <View style={styles.row}>
           <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
             <Text style={styles.label}>Latitude</Text>
-            <TextInput
-              value={formData.latitude}
-              onChangeText={(value) => handleInputChange('latitude', value)}
-              style={styles.input}
-              placeholder="-23.550520"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                value={formData.latitude}
+                onChangeText={(value) => handleInputChange('latitude', value)}
+                style={[styles.input, { flex: 1 }]}
+                placeholder="-23.550520"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+              <TouchableOpacity
+                style={styles.mapBtn}
+                onPress={() => setShowMapModal(true)}
+              >
+                <Ionicons name="map-outline" size={20} color="#6BC24A" />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={[styles.formGroup, { flex: 1 }]}>
             <Text style={styles.label}>Longitude</Text>
-            <TextInput
-              value={formData.longitude}
-              onChangeText={(value) => handleInputChange('longitude', value)}
-              style={styles.input}
-              placeholder="-46.633308"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                value={formData.longitude}
+                onChangeText={(value) => handleInputChange('longitude', value)}
+                style={[styles.input, { flex: 1 }]}
+                placeholder="-46.633308"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+              <TouchableOpacity
+                style={styles.mapBtn}
+                onPress={() => setShowMapModal(true)}
+              >
+                <Ionicons name="map-outline" size={20} color="#6BC24A" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -231,6 +269,51 @@ export default function AddPropertyScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Modal do Mapa */}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setShowMapModal(false)}
+              style={styles.modalCloseBtn}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Selecionar Localização</Text>
+            <TouchableOpacity
+              onPress={handleConfirmLocation}
+              style={styles.modalConfirmBtn}
+            >
+              <Text style={styles.modalConfirmText}>Confirmar</Text>
+            </TouchableOpacity>
+          </View>
+
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: -24.68964,
+              longitude: -47.85112,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            onPress={handleMapPress}
+            provider={PROVIDER_GOOGLE}
+          >
+            {selectedLocation && (
+              <Marker
+                coordinate={selectedLocation}
+                title="Localização selecionada"
+              />
+            )}
+          </MapView>
+        </View>
+      </Modal>
+
       <Footer />
     </Background>
   );
@@ -304,5 +387,50 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mapBtn: {
+    marginLeft: 8,
+    padding: 10,
+    backgroundColor: '#F0F9F0',
+    borderRadius: 6,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalCloseBtn: {
+    padding: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  modalConfirmBtn: {
+    backgroundColor: '#6BC24A',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  modalConfirmText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  map: {
+    flex: 1,
   },
 });

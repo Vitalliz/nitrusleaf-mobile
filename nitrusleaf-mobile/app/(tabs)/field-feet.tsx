@@ -173,13 +173,17 @@ export default function FieldFeetScreen() {
                 />
                 <Text style={styles.footStatus}>{pe.situacao}</Text>
               </View>
-              {pe.deficiencias.length > 0 && (
+              {(pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) && (
                 <View style={styles.deficienciesContainer}>
-                  {pe.deficiencias.map((deficiencia, index) => (
-                    <Text key={index} style={styles.deficiencyTag}>
-                      {deficiencia.replace('Deficiência de ', '')}
-                    </Text>
-                  ))}
+                  {pe.deficienciaCobre && (
+                    <Text style={styles.deficiencyTag}>Cobre</Text>
+                  )}
+                  {pe.deficienciaManganes && (
+                    <Text style={styles.deficiencyTag}>Manganês</Text>
+                  )}
+                  {pe.outros && (
+                    <Text style={styles.deficiencyTag}>Outros</Text>
+                  )}
                 </View>
               )}
             </View>

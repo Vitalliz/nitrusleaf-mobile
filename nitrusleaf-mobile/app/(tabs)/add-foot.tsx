@@ -1,6 +1,6 @@
 // app/(tabs)/add-foot.tsx - Cadastro de Pé
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Modal } from 'react-native';
 import { showErrorAlert, showSuccessAlert } from '@/utils/alerts';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { Background } from '@/components/ui/background';
 import { Ionicons } from '@expo/vector-icons';
 import { createPe } from '@/repositories/peRepository';
 import type { CreatePeRequest, SituacaoPe } from '@/types/pe';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export default function AddFootScreen() {
   const router = useRouter();
@@ -24,25 +25,39 @@ export default function AddFootScreen() {
     linha: '',
     coluna: '',
     situacao: 'Saudável' as SituacaoPe,
-    deficiencias: [] as string[],
+    deficienciaCobre: false,
+    deficienciaManganes: false,
+    outros: false,
     observacoes: '',
     dataPlantio: '',
     latitude: '',
     longitude: '',
   });
   const [loading, setLoading] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
-  const handleInputChange = (field: keyof typeof formData, value: string | boolean | string[]) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDeficienciaToggle = (deficiencia: string) => {
-    setFormData(prev => ({
-      ...prev,
-      deficiencias: prev.deficiencias.includes(deficiencia)
-        ? prev.deficiencias.filter(d => d !== deficiencia)
-        : [...prev.deficiencias, deficiencia]
-    }));
+  const handleMapPress = (event: any) => {
+    const { coordinate } = event.nativeEvent;
+    setSelectedLocation(coordinate);
+  };
+
+  const handleConfirmLocation = () => {
+    if (selectedLocation) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: selectedLocation.latitude.toString(),
+        longitude: selectedLocation.longitude.toString(),
+      }));
+    }
+    setShowMapModal(false);
   };
 
   const validateForm = () => {
@@ -94,7 +109,10 @@ export default function AddFootScreen() {
         linha: parseInt(formData.linha),
         coluna: parseInt(formData.coluna),
         situacao: formData.situacao,
-        deficiencias: formData.deficiencias,
+        deficienciaCobre: formData.deficienciaCobre,
+        deficienciaManganes: formData.deficienciaManganes,
+        outros: formData.outros,
+        observacoes: formData.observacoes.trim() || undefined,
         dataPlantio: formData.dataPlantio,
         latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
         longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
@@ -209,31 +227,50 @@ export default function AddFootScreen() {
         <Text style={styles.sectionTitle}>Deficiências Identificadas</Text>
 
         <View style={styles.checkboxGroup}>
-          {[
-            'Deficiência de Cobre',
-            'Deficiência de Manganês',
-            'Deficiência de Zinco',
-            'Deficiência de Ferro',
-            'Doença Fúngica',
-            'Praga',
-            'Outros'
-          ].map((deficiencia) => (
-            <TouchableOpacity
-              key={deficiencia}
-              style={styles.checkboxContainer}
-              onPress={() => handleDeficienciaToggle(deficiencia)}
-            >
-              <View style={[
-                styles.checkbox,
-                formData.deficiencias.includes(deficiencia) && styles.checkboxChecked
-              ]}>
-                {formData.deficiencias.includes(deficiencia) && (
-                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                )}
-              </View>
-              <Text style={styles.checkboxLabel}>{deficiencia}</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('deficienciaCobre', !formData.deficienciaCobre)}
+          >
+            <View style={[
+              styles.checkbox,
+              formData.deficienciaCobre && styles.checkboxChecked
+            ]}>
+              {formData.deficienciaCobre && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Deficiência de Cobre</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('deficienciaManganes', !formData.deficienciaManganes)}
+          >
+            <View style={[
+              styles.checkbox,
+              formData.deficienciaManganes && styles.checkboxChecked
+            ]}>
+              {formData.deficienciaManganes && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Deficiência de Manganês</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={() => handleInputChange('outros', !formData.outros)}
+          >
+            <View style={[
+              styles.checkbox,
+              formData.outros && styles.checkboxChecked
+            ]}>
+              {formData.outros && (
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+              )}
+            </View>
+            <Text style={styles.checkboxLabel}>Outros</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.formGroup}>
@@ -264,26 +301,42 @@ export default function AddFootScreen() {
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Latitude</Text>
-          <TextInput
-            value={formData.latitude}
-            onChangeText={(value) => handleInputChange('latitude', value)}
-            style={styles.input}
-            placeholder="Ex: -23.550520"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-          />
+          <View style={styles.inputRow}>
+            <TextInput
+              value={formData.latitude}
+              onChangeText={(value) => handleInputChange('latitude', value)}
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Ex: -23.550520"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+            <TouchableOpacity
+              style={styles.mapBtn}
+              onPress={() => setShowMapModal(true)}
+            >
+              <Ionicons name="map-outline" size={20} color="#6BC24A" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Longitude</Text>
-          <TextInput
-            value={formData.longitude}
-            onChangeText={(value) => handleInputChange('longitude', value)}
-            style={styles.input}
-            placeholder="Ex: -46.633308"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-          />
+          <View style={styles.inputRow}>
+            <TextInput
+              value={formData.longitude}
+              onChangeText={(value) => handleInputChange('longitude', value)}
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Ex: -46.633308"
+              placeholderTextColor="#999"
+              keyboardType="numeric"
+            />
+            <TouchableOpacity
+              style={styles.mapBtn}
+              onPress={() => setShowMapModal(true)}
+            >
+              <Ionicons name="map-outline" size={20} color="#6BC24A" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -298,6 +351,51 @@ export default function AddFootScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Modal do Mapa */}
+      <Modal
+        visible={showMapModal}
+        animationType="slide"
+        onRequestClose={() => setShowMapModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setShowMapModal(false)}
+              style={styles.modalCloseBtn}
+            >
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Selecionar Localização</Text>
+            <TouchableOpacity
+              onPress={handleConfirmLocation}
+              style={styles.modalConfirmBtn}
+            >
+              <Text style={styles.modalConfirmText}>Confirmar</Text>
+            </TouchableOpacity>
+          </View>
+
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: -24.68964,
+              longitude: -47.85112,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            onPress={handleMapPress}
+            provider={PROVIDER_GOOGLE}
+          >
+            {selectedLocation && (
+              <Marker
+                coordinate={selectedLocation}
+                title="Localização selecionada"
+              />
+            )}
+          </MapView>
+        </View>
+      </Modal>
+
       <Footer />
     </Background>
   );
@@ -433,5 +531,50 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mapBtn: {
+    marginLeft: 8,
+    padding: 10,
+    backgroundColor: '#F0F9F0',
+    borderRadius: 6,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalCloseBtn: {
+    padding: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  modalConfirmBtn: {
+    backgroundColor: '#6BC24A',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  modalConfirmText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  map: {
+    flex: 1,
   },
 });

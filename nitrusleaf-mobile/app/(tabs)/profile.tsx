@@ -40,16 +40,6 @@ export default function SettingsScreen() {
       text: "Dados de Propriedade",
       route: "/(tabs)/property-dates",
     },
-    {
-      icon: "people-outline",
-      text: "Permissões",
-      route: "/(tabs)/permissions",
-    },
-    {
-      icon: "key-outline",
-      text: "Segurança",
-      route: "/(tabs)/security",
-    },
   ];
 
   return (
@@ -94,7 +84,7 @@ export default function SettingsScreen() {
           onPress={() => router.push("/register")}
         >
           <Ionicons name="person-add" size={18} color="#fff" />
-          <Text style={styles.actionButtonText}>Cadastrar novo usuário</Text>
+          <Text style={styles.actionButtonText}>Cadastrar novo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

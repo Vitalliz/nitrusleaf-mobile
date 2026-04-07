@@ -7,7 +7,10 @@ export interface Pe {
   linha: number;
   coluna: number;
   situacao: SituacaoPe;
-  deficiencias: string[];
+  deficienciaCobre?: boolean;
+  deficienciaManganes?: boolean;
+  outros?: boolean;
+  observacoes?: string;
   dataPlantio: string;
   dataCadastro: string;
   dataUltimaAnalise?: string;
@@ -23,7 +26,10 @@ export interface CreatePeRequest {
   linha: number;
   coluna: number;
   situacao?: SituacaoPe;
-  deficiencias?: string[];
+  deficienciaCobre?: boolean;
+  deficienciaManganes?: boolean;
+  outros?: boolean;
+  observacoes?: string;
   dataPlantio: string;
   latitude?: number;
   longitude?: number;
@@ -35,7 +41,10 @@ export interface UpdatePeRequest {
   linha?: number;
   coluna?: number;
   situacao?: SituacaoPe;
-  deficiencias?: string[];
+  deficienciaCobre?: boolean;
+  deficienciaManganes?: boolean;
+  outros?: boolean;
+  observacoes?: string;
   dataPlantio?: string;
   latitude?: number;
   longitude?: number;

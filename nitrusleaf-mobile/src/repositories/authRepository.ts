@@ -1,6 +1,6 @@
 import * as Crypto from "expo-crypto";
 import { migrate } from "@/database/migrations";
-import { getDb } from "@/database/db";
+import { getDb, resetDb } from "@/database/db";
 import type { User } from "@/types/auth";
 
 type DbUserRow = {
@@ -31,8 +31,12 @@ function mapUser(row: DbUserRow): User {
 let didMigrate = false;
 async function ensureMigrated() {
   if (didMigrate) return;
+  console.log('Resetando banco de dados...');
+  resetDb();
+  console.log('Executando migrações do banco de dados...');
   await migrate();
   didMigrate = true;
+  console.log('Migrações concluídas!');
 }
 
 export async function registerLocal(params: {

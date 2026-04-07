@@ -17,9 +17,6 @@ function validateCreatePeRequest(params: CreatePeRequest): void {
   if (params.situacao && !['Saudável', 'Doente', 'Morto'].includes(params.situacao)) {
     throw new Error('Situação deve ser uma das opções válidas');
   }
-  if (params.deficiencias && !Array.isArray(params.deficiencias)) {
-    throw new Error('Deficiências deve ser um array');
-  }
   if (params.dataPlantio && typeof params.dataPlantio !== 'string') {
     throw new Error('Data de plantio deve ser uma string');
   }
@@ -38,7 +35,10 @@ type DbPeRow = {
   linha: number;
   coluna: number;
   situacao: string;
-  deficiencias: string;
+  deficiencia_cobre: number;
+  deficiencia_manganes: number;
+  outros: number;
+  observacoes: string | null;
   data_plantio: string;
   data_cadastro: string;
   data_ultima_analise: string | null;
@@ -56,7 +56,10 @@ function mapPe(row: DbPeRow): Pe {
     linha: row.linha,
     coluna: row.coluna,
     situacao: row.situacao as SituacaoPe,
-    deficiencias: row.deficiencias ? JSON.parse(row.deficiencias) : [],
+    deficienciaCobre: row.deficiencia_cobre === 1,
+    deficienciaManganes: row.deficiencia_manganes === 1,
+    outros: row.outros === 1,
+    observacoes: row.observacoes ?? undefined,
     dataPlantio: row.data_plantio,
     dataCadastro: row.data_cadastro,
     dataUltimaAnalise: row.data_ultima_analise ?? undefined,
@@ -73,14 +76,17 @@ export async function createPe(params: CreatePeRequest): Promise<Pe> {
   const db = getDb();
 
   const result = await db.runAsync(
-    `INSERT INTO pes (id_talhao, identificacao, linha, coluna, situacao, deficiencias, data_plantio, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    `INSERT INTO pes (id_talhao, identificacao, linha, coluna, situacao, deficiencia_cobre, deficiencia_manganes, outros, observacoes, data_plantio, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     [
       Number(params.talhaoId),
       params.identificacao,
       params.linha,
       params.coluna,
       params.situacao ?? 'Saudável',
-      JSON.stringify(params.deficiencias ?? []),
+      params.deficienciaCobre ? 1 : 0,
+      params.deficienciaManganes ? 1 : 0,
+      params.outros ? 1 : 0,
+      params.observacoes ?? null,
       params.dataPlantio,
       params.latitude ?? null,
       params.longitude ?? null,
@@ -144,9 +150,21 @@ export async function updatePe(id: string, params: UpdatePeRequest): Promise<Pe>
     updates.push('situacao = ?');
     values.push(params.situacao);
   }
-  if (params.deficiencias !== undefined) {
-    updates.push('deficiencias = ?');
-    values.push(JSON.stringify(params.deficiencias));
+  if (params.deficienciaCobre !== undefined) {
+    updates.push('deficiencia_cobre = ?');
+    values.push(params.deficienciaCobre ? 1 : 0);
+  }
+  if (params.deficienciaManganes !== undefined) {
+    updates.push('deficiencia_manganes = ?');
+    values.push(params.deficienciaManganes ? 1 : 0);
+  }
+  if (params.outros !== undefined) {
+    updates.push('outros = ?');
+    values.push(params.outros ? 1 : 0);
+  }
+  if (params.observacoes !== undefined) {
+    updates.push('observacoes = ?');
+    values.push(params.observacoes);
   }
   if (params.dataPlantio !== undefined) {
     updates.push('data_plantio = ?');

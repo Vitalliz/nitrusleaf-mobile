@@ -10,7 +10,16 @@ export async function migrate(): Promise<void> {
   await db.execAsync(`
     PRAGMA foreign_keys = ON;
 
-    CREATE TABLE IF NOT EXISTS usuarios (
+    -- Recriar tabelas se necessário para garantir estrutura atualizada
+    DROP TABLE IF EXISTS relatorios;
+    DROP TABLE IF EXISTS foto;
+    DROP TABLE IF EXISTS pes;
+    DROP TABLE IF EXISTS talhoes;
+    DROP TABLE IF EXISTS alqueires;
+    DROP TABLE IF EXISTS propriedades;
+    DROP TABLE IF EXISTS usuarios;
+
+    CREATE TABLE usuarios (
       id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
       foto_perfil TEXT,
       nome TEXT NOT NULL,
@@ -33,7 +42,7 @@ export async function migrate(): Promise<void> {
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS propriedades (
+    CREATE TABLE propriedades (
       id_propriedade INTEGER PRIMARY KEY AUTOINCREMENT,
       id_usuario INTEGER,
       nome TEXT NOT NULL,
@@ -54,7 +63,7 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS alqueires (
+    CREATE TABLE alqueires (
       id_alqueire INTEGER PRIMARY KEY AUTOINCREMENT,
       id_propriedade INTEGER NOT NULL,
       nome TEXT NOT NULL,
@@ -67,7 +76,7 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_propriedade) REFERENCES propriedades (id_propriedade) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS talhoes (
+    CREATE TABLE talhoes (
       id_talhao INTEGER PRIMARY KEY AUTOINCREMENT,
       id_propriedade INTEGER,
       id_alqueire INTEGER,
@@ -85,15 +94,20 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_alqueire) REFERENCES alqueires (id_alqueire) ON DELETE SET NULL
     );
 
-    CREATE TABLE IF NOT EXISTS pes (
+    CREATE TABLE pes (
       id_pe INTEGER PRIMARY KEY AUTOINCREMENT,
       id_talhao INTEGER,
-      nome TEXT NOT NULL,
-      situacao TEXT DEFAULT 'Sem-informações' CHECK (situacao IN ('Tratado', 'Não-Tratado', 'Sem-informações')),
+      identificacao TEXT NOT NULL,
+      linha INTEGER NOT NULL,
+      coluna INTEGER NOT NULL,
+      situacao TEXT DEFAULT 'Saudável' CHECK (situacao IN ('Saudável', 'Doente', 'Morto')),
       deficiencia_cobre INTEGER DEFAULT 0,
       deficiencia_manganes INTEGER DEFAULT 0,
       outros INTEGER DEFAULT 0,
       observacoes TEXT,
+      data_plantio TEXT NOT NULL,
+      data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+      data_ultima_analise TEXT,
       latitude REAL,
       longitude REAL,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
@@ -101,7 +115,7 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_talhao) REFERENCES talhoes (id_talhao) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS foto (
+    CREATE TABLE foto (
       id_foto INTEGER PRIMARY KEY AUTOINCREMENT,
       id_pe INTEGER,
       id_talhao INTEGER,
@@ -114,7 +128,7 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_talhao) REFERENCES talhoes (id_talhao) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS relatorios (
+    CREATE TABLE relatorios (
       id_relatorio INTEGER PRIMARY KEY AUTOINCREMENT,
       id_pe INTEGER,
       id_foto INTEGER,
@@ -129,7 +143,7 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_foto) REFERENCES foto (id_foto) ON DELETE SET NULL
     );
 
-    CREATE TABLE IF NOT EXISTS historico (
+    CREATE TABLE historico (
       id_historico INTEGER PRIMARY KEY AUTOINCREMENT,
       id_talhao TEXT NOT NULL,
       descricao TEXT NOT NULL,
@@ -137,7 +151,7 @@ export async function migrate(): Promise<void> {
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS histal (
+    CREATE TABLE histal (
       id_pe INTEGER PRIMARY KEY AUTOINCREMENT,
       id_talhao INTEGER,
       nome TEXT NOT NULL,
@@ -148,7 +162,7 @@ export async function migrate(): Promise<void> {
       FOREIGN KEY (id_talhao) REFERENCES talhoes (id_talhao)
     );
 
-    CREATE TABLE IF NOT EXISTS deficiencia (
+    CREATE TABLE deficiencia (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       p TEXT NOT NULL,
       s INTEGER NOT NULL,
@@ -156,30 +170,30 @@ export async function migrate(): Promise<void> {
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS home (
+    CREATE TABLE home (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome INTEGER NOT NULL,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
-    CREATE INDEX IF NOT EXISTS idx_propriedades_usuario ON propriedades(id_usuario);
-    CREATE INDEX IF NOT EXISTS idx_alqueires_propriedade ON alqueires(id_propriedade);
-    CREATE INDEX IF NOT EXISTS idx_talhoes_propriedade ON talhoes(id_propriedade);
-    CREATE INDEX IF NOT EXISTS idx_talhoes_alqueire ON talhoes(id_alqueire);
-    CREATE INDEX IF NOT EXISTS idx_pes_talhao ON pes(id_talhao);
-    CREATE INDEX IF NOT EXISTS idx_foto_pe ON foto(id_pe);
-    CREATE INDEX IF NOT EXISTS idx_foto_talhao ON foto(id_talhao);
-    CREATE INDEX IF NOT EXISTS idx_relatorios_pe ON relatorios(id_pe);
-    CREATE INDEX IF NOT EXISTS idx_relatorios_foto ON relatorios(id_foto);
+    CREATE INDEX idx_usuarios_email ON usuarios(email);
+    CREATE INDEX idx_propriedades_usuario ON propriedades(id_usuario);
+    CREATE INDEX idx_alqueires_propriedade ON alqueires(id_propriedade);
+    CREATE INDEX idx_talhoes_propriedade ON talhoes(id_propriedade);
+    CREATE INDEX idx_talhoes_alqueire ON talhoes(id_alqueire);
+    CREATE INDEX idx_pes_talhao ON pes(id_talhao);
+    CREATE INDEX idx_foto_pe ON foto(id_pe);
+    CREATE INDEX idx_foto_talhao ON foto(id_talhao);
+    CREATE INDEX idx_relatorios_pe ON relatorios(id_pe);
+    CREATE INDEX idx_relatorios_foto ON relatorios(id_foto);
   `);
 
-  // Adicionar colunas se não existirem (para compatibilidade)
+  // Adicionar colunas se não existirem (para compatibilidade futura)
   try {
     await db.execAsync(`ALTER TABLE usuarios ADD COLUMN cpf TEXT;`);
   } catch {
-    // ignora
+    // ignora se já existe
   }
 }
 

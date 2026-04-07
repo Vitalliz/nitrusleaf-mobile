@@ -55,14 +55,18 @@ export default function MapsScreen() {
               <Text style={styles.optionLabel}>Satélite</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.mapOption}>
+            <TouchableOpacity style={styles.mapOption}
+            onPress={() => router.push('/(tabs)/maps-heat')}
+            >
               <View style={styles.optionIcon}>
                 <Ionicons name="flame-outline" size={20} color="#6BC24A" />
               </View>
               <Text style={styles.optionLabel}>Mapa de Calor</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.mapOption}>
+            <TouchableOpacity style={styles.mapOption}
+            onPress={() => router.push('/(tabs)/maps-location')}
+            >
               <View style={styles.optionIcon}>
                 <Ionicons name="location-outline" size={20} color="#6BC24A" />
               </View>
