@@ -147,11 +147,6 @@ npx expo start
 - Validação de coordenadas GPS
 - Verificação de formatos de data
 
-## � Homenagem
-
-Este projeto é dedicado com muito carinho a **Maria Cecilia Gomes Domingues**, avó do desenvolvedor Lucas Gomes Fagundes. Sua memória e ensinamentos são a inspiração por trás deste trabalho, representando o amor pela família, pela terra e pela dedicação ao próximo.
-
-*"Em memória de Maria Cecilia Gomes Domingues - Uma mulher que ensinou o valor do trabalho árduo, do amor incondicional e da força familiar."*
 
 ## �📱 Funcionalidades Planejadas
 
@@ -169,6 +164,14 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## 👥 Autores
 
 - **Equipe Vitalliz** - Desenvolvimento inicial
+
+## 🌹 Homenagem
+
+Este projeto é dedicado à memória de Maria Cecilia Gomes Domingues, avó do desenvolvedor Lucas Gomes Fagundes. Sua vida foi marcada pela fé, pelo bom coração e pelo amor ao próximo, sendo reconhecida e querida por todos, independentemente de laços de sangue.
+
+Seus ensinamentos e seu constante apoio foram fundamentais, inclusive durante o desenvolvimento deste trabalho, tornando-se uma fonte de inspiração e valores que aqui se refletem.
+
+"Em memória de Maria Cecilia Gomes Domingues — exemplo de dedicação, amor e força familiar."
 
 ## 🙏 Agradecimentos
 
