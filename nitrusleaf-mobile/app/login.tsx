@@ -1,13 +1,15 @@
 // app/login.tsx - LOGIN PAGE
 import { Background } from "@/components/ui/background";
-import { WelcomeTitle } from "@/components/ui/label";
+import { WelcomeTitle, WelcomeSubtitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
-import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Text, Image, TouchableOpacity } from "react-native";
-// Footer removido nesta tela
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
+import React, { useEffect, useState } from "react";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import WaveBg from "@/assets/images/wave-bg.svg";
+import Leaf from "@/assets/images/leaf.svg";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -45,18 +47,21 @@ export default function LoginScreen() {
   return (
     <Background>
       <View style={styles.container}>
-        <Image
-          source={require("@/assets/images/icons/leaf.png")}
-          style={{ width: 115, height: 125, marginBottom: 20 }}
-        />
-        <WelcomeTitle text="Bem vindo!" />
-        <Text style={styles.subtitle}>Entre na sua conta</Text>
+
+        <View style={styles.titleBox}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={24} color="black" />
+          </TouchableOpacity>
+          <Leaf width={58} height={64} />  
+          <WelcomeTitle text="Bem vindo!" style={{ fontSize: 28, fontWeight: "700" }} />
+          <WelcomeSubtitle text="Entre na sua conta" style={{ fontSize: 20, color: "#777" }} />
+        </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>E-mail ou número:</Text>
+          <Text style={styles.subtitle}>E-mail ou número de telefone:</Text>
           <Input
             placeholder="Email ou número de telefone"
-            size="size-327"
+            size="full"
             variant="default"
             value={email}
             onChangeText={setEmail}
@@ -65,32 +70,51 @@ export default function LoginScreen() {
           <Text style={styles.label}>Senha:</Text>
           <Input
             placeholder="Digite sua senha"
-            size="size-327"
+            size="full"
             variant="default"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={true}
           />
 
-          <LoginButton onPress={handleLogin} disabled={isLoading} />
-          <GoogleButton2 onPress={handleGoogleLogin} />
+          <View style={styles.optionsRow}>
+            <View style={styles.rememberMe}>
+              <TouchableOpacity style={styles.checkbox} />
+              <Text style={styles.rememberText}>Lembre-se de mim</Text>
+            </View>
 
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>
-              Não possui uma conta?{" "}
-            </Text>
-            <TouchableOpacity onPress={handleRegister}>
-              <Text style={styles.registerLink}>Fazer cadastro</Text>
+            <TouchableOpacity>
+              <Text style={styles.forgotPassword}>Esqueci a senha</Text>
             </TouchableOpacity>
           </View>
+
         </View>
+
+        <View style={{ width: "100%" }}>
+          <LoginButton  onPress={handleLogin} disabled={isLoading} />
+          <View style={styles.divider}>
+            <View style={styles.line} />
+            <Text style={styles.orText}>ou</Text>
+            <View style={styles.line} />
+          </View>
+          <GoogleButton2 onPress={handleGoogleLogin} />
+        </View>
+          
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerText}>
+            Não possui uma conta?{" "}
+          </Text>
+          <TouchableOpacity onPress={handleRegister}>
+            <Text style={styles.registerLink}>Fazer cadastro</Text>
+          </TouchableOpacity>
+        </View>
+      
       </View>
       {/* Onda laranja na base (ao fundo) */}
-      <Image
-        source={require("@/assets/images/icons/wave-laranja.png")}
-        style={styles.wave}
-        resizeMode="cover"
-      />
+      <View style={styles.waveContainer}>
+        <WaveBg width="100%" height={140} />
+      </View>
+
     </Background>
   );
 }
@@ -99,25 +123,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
+    paddingHorizontal: 38,
     paddingTop: 60,
-    paddingHorizontal: 24,
-    justifyContent: "flex-start",
   },
-  wave: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 140,
-    width: '100%',
-    zIndex: -1,
-    pointerEvents: 'none',
+  titleBox: {
+    width: "100%",
+    alignItems: "flex-start",
+    marginBottom: 30,
+    gap: 10
   },
   subtitle: {
     fontSize: 16,
     color: "#666",
     marginTop: 8,
-    marginBottom: 40,
+    marginBottom: 10,
   },
   form: {
     width: "100%",
@@ -144,5 +163,66 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6BC24A",
     fontWeight: "600",
+  },
+
+  // Divider dos botões
+  divider: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginVertical: 16,
+  width: "100%",
+  },
+
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+
+  orText: {
+    marginHorizontal: 10,
+    color: "#999",
+  },
+
+  // Select "Lembre-se de mim" e "Esqueci a senha"
+  optionsRow: {
+  width: "100%",
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: 10,
+  paddingHorizontal: 10,
+  },
+
+  rememberMe: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderWidth: 1,
+    borderColor: "#999",
+    borderRadius: 4,
+  },
+
+  rememberText: {
+    fontSize: 14,
+    color: "#666",
+  },
+
+  forgotPassword: {
+    fontSize: 14,
+    color: "#2F80ED",
+  },
+  // Footer
+  waveContainer: {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  bottom: -10
   },
 });

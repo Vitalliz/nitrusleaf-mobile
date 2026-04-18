@@ -271,7 +271,7 @@ export const GoogleButton2 = ({ onPress }: { onPress?: () => void }) => (
   <Button 
     title="Entrar com o Google" 
     variant="googleTwo" 
-    size="328" 
+    size="full" 
     onPress={onPress}
     icon="logo-google"
   />
@@ -289,7 +289,7 @@ export const LoginButton = ({
   <Button 
     title={title}
     variant="primary" 
-    size="328" 
+    size="full" 
     onPress={onPress} 
     disabled={disabled}
   />

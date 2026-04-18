@@ -54,17 +54,28 @@ export const Input = ({
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 30,
+    width: "100%",
+    height: 48,
+    backgroundColor: "white",   // fundo cinza claro
+    borderRadius: 6,             // arredondamento mais moderno
     paddingHorizontal: 16,
-    fontSize: 16,
+    fontSize: 15,
     color: "#2B2B2B",
+
     borderWidth: 1,
-    borderColor: "#A3D99F",
-    marginVertical: 6,
-    textAlignVertical: "center",
-  },
+    borderColor: "#2B2B2B",
+
+    marginTop: 6,
+    marginBottom: 16,
+    },
+
+    inputFocused: {
+      borderColor: "#6BC24A",       // verde quando ativo
+      backgroundColor: "#FFFFFF",
+    },
 });
+
+
 
 // Variantes de tamanho com medidas específicas
 const inputSizes = StyleSheet.create({

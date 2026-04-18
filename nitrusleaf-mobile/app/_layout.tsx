@@ -3,12 +3,23 @@ import { Stack } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
+import { Text } from 'react-native';
 import React from "react";
 
 export default function RootLayout() {
   const theme = useColorScheme() ?? "light";
   const bg = Colors[theme].background;
+  const [fontsLoaded] = useFonts({
+    Roboto_400Regular,
+    Roboto_500Medium,
+    Roboto_700Bold,
+  });
 
+  if (!fontsLoaded) {
+    return null;
+  }
+  
   return (
     <AuthProvider>
       <Stack
