@@ -48,35 +48,54 @@ export default function LoginScreen() {
     <Background>
       <View style={styles.container}>
 
-        <View style={styles.titleBox}>
+        <View style={styles.iconsBox}>
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color="black" />
+          <Ionicons name="chevron-back" size={24} color="black"/>
           </TouchableOpacity>
           <Leaf width={58} height={64} />  
-          <WelcomeTitle text="Bem vindo!" style={{ fontSize: 28, fontWeight: "700" }} />
-          <WelcomeSubtitle text="Entre na sua conta" style={{ fontSize: 20, color: "#777" }} />
         </View>
+        
+    
 
         <View style={styles.form}>
-          <Text style={styles.subtitle}>E-mail ou número de telefone:</Text>
-          <Input
-            placeholder="Email ou número de telefone"
-            size="full"
-            variant="default"
-            value={email}
-            onChangeText={setEmail}
-          />
+          <View style={styles.titleBox}>
+            <WelcomeTitle text="Bem vindo!" style={{ fontSize: 28, fontWeight: "700" }} />
+            <WelcomeSubtitle text="Entre na sua conta" style={{ fontSize: 20, color: "#777" }} />
+          </View>
+          
+          <View style={styles.form}>
+            <View style={styles.formInput}>
+              <Text style={styles.label}>E-mail ou número de telefone</Text>
+              <Input
+                placeholder="Insira seu e-mail ou número de telefone"
+                size="full"
+                variant="default"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+            
+            <View style={styles.formInput}>
+              <Text style={styles.label}>Senha</Text>
+            <Input
+              placeholder="Digite sua senha"
+              size="full"
+              variant="default"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={true}
+            />
+            </View>
+            
+          </View>
+          
 
-          <Text style={styles.label}>Senha:</Text>
-          <Input
-            placeholder="Digite sua senha"
-            size="full"
-            variant="default"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={true}
-          />
+          
 
+        </View>
+
+        
+        <View style={{ width: "100%" }}>
           <View style={styles.optionsRow}>
             <View style={styles.rememberMe}>
               <TouchableOpacity style={styles.checkbox} />
@@ -87,17 +106,18 @@ export default function LoginScreen() {
               <Text style={styles.forgotPassword}>Esqueci a senha</Text>
             </TouchableOpacity>
           </View>
-
-        </View>
-
-        <View style={{ width: "100%" }}>
+          
           <LoginButton  onPress={handleLogin} disabled={isLoading} />
+
           <View style={styles.divider}>
             <View style={styles.line} />
             <Text style={styles.orText}>ou</Text>
             <View style={styles.line} />
           </View>
+
+        
           <GoogleButton2 onPress={handleGoogleLogin} />
+
         </View>
           
         <View style={styles.registerContainer}>
@@ -108,7 +128,7 @@ export default function LoginScreen() {
             <Text style={styles.registerLink}>Fazer cadastro</Text>
           </TouchableOpacity>
         </View>
-      
+        
       </View>
       {/* Onda laranja na base (ao fundo) */}
       <View style={styles.waveContainer}>
@@ -125,29 +145,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 38,
     paddingTop: 60,
+    gap: 10
   },
   titleBox: {
     width: "100%",
     alignItems: "flex-start",
-    marginBottom: 30,
-    gap: 10
+    gap: 5,
+    marginBottom: 25
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 8,
-    marginBottom: 10,
+  iconsBox: {
+    width: "100%",
+    alignItems: "flex-start",
+    gap: 35,
+    marginBottom: 25
   },
   form: {
     width: "100%",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: 5
+  },
+  formInput: {
+    width: "100%",
+    alignItems: "flex-start"
+    
   },
   label: {
     fontSize: 16,
     color: "#2B2B2B",
-    marginBottom: 8,
     alignSelf: "flex-start",
-    marginLeft: 16,
+    marginLeft: 6,
     fontWeight: "500",
   },
   registerContainer: {
@@ -176,22 +202,22 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#ccc",
+    backgroundColor: "#98979F",
   },
 
   orText: {
     marginHorizontal: 10,
-    color: "#999",
+    color: "#98979F",
   },
 
   // Select "Lembre-se de mim" e "Esqueci a senha"
   optionsRow: {
-  width: "100%",
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginTop: 10,
-  paddingHorizontal: 10,
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 5,
+    marginBottom: 25
   },
 
   rememberMe: {
@@ -204,7 +230,8 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderWidth: 1,
-    borderColor: "#999",
+    borderColor: "#a39a9a",
+    backgroundColor: "white",
     borderRadius: 4,
   },
 
@@ -219,10 +246,10 @@ const styles = StyleSheet.create({
   },
   // Footer
   waveContainer: {
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  right: 0,
-  bottom: -10
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    bottom: -10
   },
 });

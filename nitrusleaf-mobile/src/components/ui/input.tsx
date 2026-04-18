@@ -40,7 +40,7 @@ export const Input = ({
     <TextInput
       style={[styles.input, sizeStyle, inputVariants[variant], customWidth]}
       placeholder={placeholder}
-      placeholderTextColor="#8B5E3C"
+      placeholderTextColor="#747474"
       value={value}
       onChangeText={onChangeText}
       editable={variant !== "readonly"}
