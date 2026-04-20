@@ -62,12 +62,13 @@ export const Button = ({
           }
           color={
             variant === "google" || variant === "googleTwo"
-              ? "secondary"
+              ? "secondary" 
+              : variant === "secondary" || variant === "outline" || variant === "text"
+              ? "accent" 
               : "white"
           }
           style={[styles.text, disabled && styles.disabledText]}
         />
-
       </View>
     </TouchableOpacity>
   );
@@ -399,5 +400,23 @@ export const ViewMapsButton = ({ onPress }: { onPress?: () => void }) => (
     variant="text" 
     size="auto" 
     onPress={onPress} 
+  />
+);
+
+export const SignUpButton = ({
+  onPress,
+  disabled = false,
+  title = "Cadastrar-se",
+}: {
+  onPress?: () => void;
+  disabled?: boolean;
+  title?: string;
+}) => (
+  <Button 
+    title={title}
+    variant="secondary" 
+    size="full" 
+    onPress={onPress} 
+    disabled={disabled}
   />
 );
