@@ -43,6 +43,10 @@ export const WelcomeTitle = ({ text }: { text: string }) => (
   <Label text={text} size={32} variant="bold" color="primary" />
 );
 
+export const WelcomeSubtitle = ({ text }: { text: string }) => (
+  <Label text={text} size={24} variant="bold" color="secondary" />
+);
+
 export const ScreenTitle = ({ text }: { text: string }) => (
   <Label text={text} size={24} variant="bold" color="primary" />
 );
@@ -142,19 +146,19 @@ const sizeStyles = StyleSheet.create({
 
 const variantStyles = StyleSheet.create({
   default: {
-    fontWeight: '400',
+    fontFamily: 'Roboto_400Regular',
   },
   regular: {
-    fontWeight: '400',
+    fontFamily: 'Roboto_400Regular',
   },
   medium: {
-    fontWeight: '500',
+    fontFamily: 'Roboto_500Medium',
   },
   semibold: {
-    fontWeight: '600',
+    fontFamily: 'Roboto_500Medium', // Roboto não tem semibold nativo
   },
   bold: {
-    fontWeight: '700',
+    fontFamily: 'Roboto_700Bold',
   },
 });
 
@@ -175,3 +179,9 @@ const colorStyles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+
+export const fonts = {
+  regular: 'Roboto_400Regular',
+  medium: 'Roboto_500Medium',
+  bold: 'Roboto_700Bold',
+};

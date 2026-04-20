@@ -1,5 +1,6 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import { Image , TouchableOpacity, StyleSheet, View } from 'react-native';
+import { Label } from "@/components/ui/label";
 import { Ionicons } from "@expo/vector-icons";
 
 type Variant = "primary" | "secondary" | "accent" | "text" | "outline" | "google" | "googleTwo" | "navigation" | "solid-green";
@@ -35,8 +36,39 @@ export const Button = ({
       disabled={disabled}
     >
       <View style={styles.content}>
-        {icon && <Ionicons name={icon} size={20} color={textColor.color} style={styles.icon} />}
-        <Text style={[styles.text, textColor, disabled && styles.disabledText]}>{title}</Text>
+        {(variant === "google" || variant === "googleTwo") ? (
+          <Image
+            source={require("@/assets/images/google-logo.png")}
+            style={styles.googleIcon}
+          />
+        ) : (
+          icon && (
+            <Ionicons
+              name={icon}
+              size={20}
+              color={textColor.color}
+              style={styles.icon}
+            />
+          )
+        )}
+
+        <Label
+          text={title}
+          size={15}
+          variant={
+            variant === "google" || variant === "googleTwo"
+              ? "regular"
+              : "semibold"
+          }
+          color={
+            variant === "google" || variant === "googleTwo"
+              ? "secondary" 
+              : variant === "secondary" || variant === "outline" || variant === "text"
+              ? "accent" 
+              : "white"
+          }
+          style={[styles.text, disabled && styles.disabledText]}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -46,10 +78,6 @@ const buttonStyles = StyleSheet.create({
   primary: {
     backgroundColor: "#6BC24A",
     borderWidth: 0,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
   secondary: {
@@ -64,10 +92,6 @@ const buttonStyles = StyleSheet.create({
   text: {
     backgroundColor: "transparent",
     borderWidth: 0,
-    shadowColor: "transparent",
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
     elevation: 0,
   },
   outline: {
@@ -79,43 +103,28 @@ const buttonStyles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D1D1D1",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
   googleTwo: {
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D1D1",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
+    borderWidth: 0.9,
+    borderColor: "#d1d1d1",
     elevation: 2,
+    fontWeight: "200"
   },
   navigation: {
     backgroundColor: "#6BC24A",
     borderWidth: 0,
     alignSelf: "flex-start",
     paddingHorizontal: 16,
-    marginVertical: 4,
+    marginVertical: 2,
     borderRadius: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
   "solid-green": {
     backgroundColor: "#6BC24A",
     borderWidth: 0,
     borderRadius: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
     elevation: 2,
   },
 });
@@ -205,7 +214,7 @@ const sizeStyles = StyleSheet.create({
   },
   "full": {
     width: "100%",
-    height: 50,
+    height: 44,
     borderRadius: 25,
   },
   "auto": {
@@ -219,11 +228,17 @@ const sizeStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   button: {
-    paddingVertical: 12,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 6,
+    margin: 0
+  },
+  googleIcon: {
+    position: "absolute",
+    left: -10,
+    width: 20,
+    height: 20,
+    marginRight: 10,
   },
   text: {
     fontSize: 16,
@@ -233,6 +248,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+    width: "100%",
   },
   icon: {
     marginRight: 10,
@@ -261,7 +278,7 @@ export const GoogleButton = ({ onPress }: { onPress?: () => void }) => (
   <Button 
     title="Cadastrar-se com o Google" 
     variant="google" 
-    size="328" 
+    size="full" 
     onPress={onPress}
     icon="logo-google"
   />
@@ -271,7 +288,7 @@ export const GoogleButton2 = ({ onPress }: { onPress?: () => void }) => (
   <Button 
     title="Entrar com o Google" 
     variant="googleTwo" 
-    size="328" 
+    size="full" 
     onPress={onPress}
     icon="logo-google"
   />
@@ -289,7 +306,7 @@ export const LoginButton = ({
   <Button 
     title={title}
     variant="primary" 
-    size="328" 
+    size="full" 
     onPress={onPress} 
     disabled={disabled}
   />
@@ -383,5 +400,23 @@ export const ViewMapsButton = ({ onPress }: { onPress?: () => void }) => (
     variant="text" 
     size="auto" 
     onPress={onPress} 
+  />
+);
+
+export const SignUpButton = ({
+  onPress,
+  disabled = false,
+  title = "Cadastrar-se",
+}: {
+  onPress?: () => void;
+  disabled?: boolean;
+  title?: string;
+}) => (
+  <Button 
+    title={title}
+    variant="secondary" 
+    size="full" 
+    onPress={onPress} 
+    disabled={disabled}
   />
 );
