@@ -44,7 +44,7 @@ export const WelcomeTitle = ({ text }: { text: string }) => (
 );
 
 export const WelcomeSubtitle = ({ text }: { text: string }) => (
-  <Label text={text} size={32} variant="bold" color="secondary" />
+  <Label text={text} size={24} variant="bold" color="secondary" />
 );
 
 export const ScreenTitle = ({ text }: { text: string }) => (
