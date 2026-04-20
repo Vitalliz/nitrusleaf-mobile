@@ -49,8 +49,12 @@ export default function LoginScreen() {
       <View style={styles.container}>
 
         <View style={styles.iconsBox}>
-          <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color="black"/>
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            // Aumenta a área de clique em 20px para cada lado
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+            <Ionicons name="chevron-back" size={24} color="black"/>
           </TouchableOpacity>
           <Leaf width={58} height={64} />  
         </View>
