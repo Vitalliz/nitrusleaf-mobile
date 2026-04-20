@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "flex-start",
     gap: 35,
-    marginBottom: 25
+    marginVertical: 25
   },
   form: {
     width: "100%",

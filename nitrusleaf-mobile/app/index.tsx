@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import NitrusleafLogo from '@/assets/images/nitrusleaf-logo.svg';
+import WaveBgBig from '@/assets/images/wave-bg-big.svg';
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -11,23 +13,17 @@ export default function SplashScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.replace(isSignedIn ? '/(tabs)/home' : '/welcome');
-    }, 900);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [router, isSignedIn]);
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('@/assets/images/icons/Logo.png')}
-        style={styles.logo}
-      />
-      {/* Onda laranja na base da splash (ao fundo) */}
-      <Image
-        source={require('@/assets/images/icons/wave-laranja.png')}
-        style={styles.wave}
-        resizeMode="cover"
-      />
+      <NitrusleafLogo width={316} height={100} />
+      <View style={styles.waveContainer}>
+        <WaveBgBig width="100%" height={200} preserveAspectRatio="none" />
+      </View>
     </View>
   );
 }
@@ -44,14 +40,11 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: 'contain',
   },
-  wave: {
-    position: 'absolute',
+  waveContainer: {
+    position: 'absolute', 
+    bottom: -1,         
     left: 0,
     right: 0,
-    bottom: 0,
-    height: 140,
     width: '100%',
-    zIndex: -1,
-    pointerEvents: 'none',
   },
 });

@@ -129,7 +129,7 @@ export default function RegisterScreen() {
               <View style={styles.stepContainer}>
                 <WelcomeTitle text="Cadastro"/>
                 <WelcomeSubtitle text="Dados da Propriedade"/>
-                <Text style={styles.label}>CEP</Text>
+                <Text style={[styles.label, { marginTop: 25 }]}>CEP</Text>
                 <Input placeholder="00000-000" value={cep} onChangeText={setCep}/>
                 <Text style={styles.label}>Cidade</Text>
                 <Input placeholder="Sua cidade" value={city} onChangeText={setCity}/>
@@ -155,7 +155,7 @@ export default function RegisterScreen() {
               <View style={styles.stepContainer}>
                 <WelcomeTitle text="Bem vindo!"/>
                 <WelcomeSubtitle text="Cadastre-se"/>
-                <Text style={styles.label}>E-mail</Text>
+                <Text style={[styles.label, { marginTop: 25 }]}>E-mail</Text>
                 <Input placeholder="email@exemplo.com" value={email} onChangeText={setEmail}/>
                 <Text style={styles.label}>Senha</Text>
                 <Input placeholder="Mínimo 8 caracteres" value={password} onChangeText={setPassword} secureTextEntry/>
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "flex-start",
     gap: 35,
-    marginBottom: 25
+    marginVertical: 25
   },
   stepContainer: {
     width: "100%",
