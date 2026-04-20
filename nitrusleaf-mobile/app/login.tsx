@@ -81,21 +81,21 @@ export default function LoginScreen() {
           >
             <Ionicons name="chevron-back" size={24} color="black"/>
           </TouchableOpacity>
-          <Leaf width={58} height={64} />  
+          <Leaf width={45} height={45} />  
         </View>
         
         {/* Formulário de login */}
         <View style={styles.form}>
           <View style={styles.titleBox}>
-            <WelcomeTitle text="Bem vindo!" style={{ fontSize: 28, fontWeight: "700" }} />
-            <WelcomeSubtitle text="Entre na sua conta" style={{ fontSize: 20, color: "#777" }} />
+            <WelcomeTitle text="Bem vindo!"/>
+            <WelcomeSubtitle text="Entre na sua conta"/>
           </View>
           
           <View style={styles.form}>
             <View style={styles.formInput}>
               <Text style={styles.label}>E-mail ou número de telefone</Text>
               <Input
-                placeholder="Insira seu e-mail ou número de telefone"
+                placeholder="Digite seu e-mail ou número de telefone"
                 size="full"
                 variant="default"
                 value={email}
@@ -197,7 +197,6 @@ const styles = StyleSheet.create({
   formInput: {
     width: "100%",
     alignItems: "flex-start"
-    
   },
   label: {
     fontSize: 16,
