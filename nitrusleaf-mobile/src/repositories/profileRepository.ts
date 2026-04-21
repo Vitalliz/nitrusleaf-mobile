@@ -1,4 +1,4 @@
-import { getDb } from "@/database/db";
+import { getSupabase } from "@/services/supabase";
 
 type UsuarioRow = {
   id_usuario: number;
@@ -21,7 +21,8 @@ export type UsuarioDetails = {
 };
 
 function mapRow(row: UsuarioRow): UsuarioDetails {
-  const last = row.sobrenome ? ` ${row.sobrenome}` : "";
+  const sobrenome = row.sobrenome ?? "";
+  const last = sobrenome ? ` ${sobrenome}` : "";
   return {
     id: String(row.id_usuario),
     fullName: `${row.nome}${last}`.trim(),
@@ -32,29 +33,26 @@ function mapRow(row: UsuarioRow): UsuarioDetails {
   };
 }
 
+function throwIfError(error: { message: string } | null) {
+  if (error) throw new Error(error.message);
+}
+
 export async function getUsuarioDetails(
   id_usuario: string
 ): Promise<UsuarioDetails | null> {
-  const db = getDb();
-  const row = await db.getFirstAsync<UsuarioRow>(
-    `
-      SELECT
-        id_usuario,
-        nome,
-        sobrenome,
-        email,
-        telefone,
-        celular,
-        cpf,
-        data_nascimento
-      FROM usuarios
-      WHERE id_usuario = ?;
-    `,
-    [Number(id_usuario)]
-  );
+  const supabase = getSupabase();
 
-  if (!row) return null;
-  return mapRow(row);
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select(
+      "id_usuario, nome, sobrenome, email, telefone, celular, cpf, data_nascimento"
+    )
+    .eq("id_usuario", Number(id_usuario))
+    .maybeSingle();
+
+  throwIfError(error);
+  if (!data) return null;
+  return mapRow(data as UsuarioRow);
 }
 
 export async function updateUsuarioDetails(
@@ -67,34 +65,24 @@ export async function updateUsuarioDetails(
     birthDate?: string;
   }
 ): Promise<void> {
-  const db = getDb();
+  const supabase = getSupabase();
 
   const trimmedName = payload.fullName.trim();
   const [nome, ...rest] = trimmedName.split(/\s+/);
-  const sobrenome = rest.length ? rest.join(" ") : null;
+  const sobrenome = rest.length ? rest.join(" ") : "";
 
-  await db.runAsync(
-    `
-      UPDATE usuarios
-      SET
-        nome = ?,
-        sobrenome = ?,
-        email = ?,
-        telefone = ?,
-        cpf = ?,
-        data_nascimento = ?,
-        updatedAt = datetime('now')
-      WHERE id_usuario = ?;
-    `,
-    [
-      nome || trimmedName,
+  const { error } = await supabase
+    .from("usuarios")
+    .update({
+      nome: nome || trimmedName,
       sobrenome,
-      payload.email.trim().toLowerCase(),
-      payload.phone ?? null,
-      payload.cpf ?? null,
-      payload.birthDate ?? null,
-      Number(id_usuario),
-    ]
-  );
-}
+      email: payload.email.trim().toLowerCase(),
+      telefone: payload.phone ?? null,
+      cpf: payload.cpf ?? null,
+      data_nascimento: payload.birthDate ?? null,
+      updatedat: new Date().toISOString(),
+    })
+    .eq("id_usuario", Number(id_usuario));
 
+  throwIfError(error);
+}

@@ -7,10 +7,6 @@ export interface Property {
   numero: number;
   bairro: string;
   cidade: string;
-  talhoesRegistrados: number;
-  totalPes: number;
-  pesAnalisados: number;
-  pesDiagnosticados: number;
   latitude?: number;
   longitude?: number;
   regiao?: string;

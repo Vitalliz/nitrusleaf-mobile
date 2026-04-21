@@ -76,8 +76,8 @@ export default function HistoryScreen() {
       for (const talhao of talhoes) {
         const pes = await getPesByTalhao(talhao.id.toString());
         totalPes += pes.length;
-        diagnosticados += pes.filter(pe => pe.situacao === 'Doente').length;
-        analisados += pes.filter(pe => pe.dataUltimaAnalise).length;
+        diagnosticados += pes.filter((pe) => pe.situacao === "Não-Tratado").length;
+        analisados += pes.filter((pe) => pe.situacao === "Tratado").length;
       }
 
       setSummary({

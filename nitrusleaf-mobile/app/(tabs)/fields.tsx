@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPropertiesByUser } from '@/repositories/propertyRepository';
 import { getTalhoesByProperty } from '@/repositories/talhaoRepository';
+import { getPesByTalhao } from '@/repositories/peRepository';
 import type { Property } from '@/types/property';
 import type { Talhao } from '@/types/talhao';
 
@@ -22,6 +23,9 @@ export default function FieldsScreen() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
+  const [pesByTalhao, setPesByTalhao] = useState<
+    Record<string, { total: number; tratados: number }>
+  >({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
 
@@ -34,6 +38,28 @@ export default function FieldsScreen() {
       loadTalhoes(selectedProperty.id);
     }
   }, [selectedProperty]);
+
+  useEffect(() => {
+    if (!talhoes.length) {
+      setPesByTalhao({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, { total: number; tratados: number }> = {};
+      for (const t of talhoes) {
+        const pes = await getPesByTalhao(t.id);
+        next[t.id] = {
+          total: pes.length,
+          tratados: pes.filter((p) => p.situacao === "Tratado").length,
+        };
+      }
+      if (!cancelled) setPesByTalhao(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [talhoes]);
 
   const loadProperties = async () => {
     if (!user?.id) return;
@@ -196,7 +222,8 @@ export default function FieldsScreen() {
             <View>
               <Text style={styles.fieldName}>{talhao.name}</Text>
               <Text style={styles.fieldSubtitle}>
-                {talhao.pesAnalisados}/{talhao.totalPes} pés analisados
+                {(pesByTalhao[talhao.id]?.tratados ?? 0)}/
+                {(pesByTalhao[talhao.id]?.total ?? 0)} pés (tratados/total)
               </Text>
               <Text style={styles.fieldFruit}>{talhao.especieFruta}</Text>
             </View>

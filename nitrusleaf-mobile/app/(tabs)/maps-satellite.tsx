@@ -64,8 +64,9 @@ export default function SatelliteMapScreen() {
   };
 
   const getMarkerColor = (pe: any) => {
-    if (pe.situacao === 'Morto') return '#6B7280';
-    if (pe.situacao === 'Doente') return '#EF4444';
+    if (pe.situacao === 'Sem-informações') return '#6B7280';
+    if (pe.situacao === 'Não-Tratado') return '#EF4444';
+    if (pe.situacao === 'Tratado') return '#8B5CF6';
     if (pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) return '#F59E0B';
     return '#10B981';
   };
@@ -110,7 +111,7 @@ export default function SatelliteMapScreen() {
               styles.propertyChipText,
               selectedProperty?.id === property.id && styles.propertyChipTextSelected
             ]}>
-              {property.nome}
+              {property.name}
             </Text>
           </TouchableOpacity>
         ))}
@@ -119,7 +120,7 @@ export default function SatelliteMapScreen() {
       {/* Title */}
       <Text style={styles.title}>Mapa de Satélite</Text>
       <Text style={styles.subtitle}>
-        {selectedProperty ? `Propriedade: ${selectedProperty.nome}` : 'Selecione uma propriedade'}
+        {selectedProperty ? `Propriedade: ${selectedProperty.name}` : 'Selecione uma propriedade'}
       </Text>
       <View style={styles.divider}></View>
 
@@ -143,7 +144,7 @@ export default function SatelliteMapScreen() {
                 latitude: selectedProperty.latitude || -24.68964,
                 longitude: selectedProperty.longitude || -47.85112
               }}
-              title={selectedProperty.nome}
+              title={selectedProperty.name}
               description="Centro da propriedade"
             />
 
@@ -155,7 +156,7 @@ export default function SatelliteMapScreen() {
                   latitude: pe.latitude,
                   longitude: pe.longitude,
                 }}
-                title={`Pé ${pe.identificacao}`}
+                title={`Pé ${pe.nome}`}
                 description={`Situação: ${pe.situacao}${pe.deficienciaCobre ? ' - Def. Cobre' : ''}${pe.deficienciaManganes ? ' - Def. Manganês' : ''}${pe.outros ? ' - Outros' : ''}`}
                 pinColor={getMarkerColor(pe)}
               />

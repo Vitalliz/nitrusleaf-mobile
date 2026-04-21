@@ -14,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, isLoading, isSignedIn } = useAuth();
+  const { login, isAuthPending, isSignedIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -138,7 +138,7 @@ export default function LoginScreen() {
           </View>
           
           {/* Botão de login (Entrar) */}
-          <LoginButton  onPress={handleLogin} disabled={isLoading} />
+          <LoginButton onPress={handleLogin} disabled={isAuthPending} />
 
           <View style={styles.divider}>
             <View style={styles.line} />
@@ -278,9 +278,8 @@ const styles = StyleSheet.create({
   // Footer
   waveContainer: {
     position: "absolute",
-    bottom: 0,
+    bottom: -10,
     left: 0,
     right: 0,
-    bottom: -10
   },
 });

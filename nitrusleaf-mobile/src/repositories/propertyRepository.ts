@@ -1,7 +1,8 @@
-import { getDb } from "@/database/db";
+import { getSupabase } from "@/services/supabase";
 import type { Property, CreatePropertyRequest, UpdatePropertyRequest } from "@/types/property";
+import { readCreatedUpdated } from "@/utils/postgresRow";
 
-type DbPropertyRow = {
+type DbPropertyRow = Record<string, unknown> & {
   id_propriedade: number;
   id_usuario: number;
   nome: string;
@@ -10,18 +11,13 @@ type DbPropertyRow = {
   numero: number;
   bairro: string;
   cidade: string;
-  talhoes_registrados: number;
-  total_pes: number;
-  pes_analisados: number;
-  pes_diagnosticados: number;
   latitude: number | null;
   longitude: number | null;
   regiao: string | null;
-  createdAt: string;
-  updatedAt: string;
 };
 
 function mapProperty(row: DbPropertyRow): Property {
+  const ts = readCreatedUpdated(row);
   return {
     id: String(row.id_propriedade),
     userId: String(row.id_usuario),
@@ -31,166 +27,106 @@ function mapProperty(row: DbPropertyRow): Property {
     numero: row.numero,
     bairro: row.bairro,
     cidade: row.cidade,
-    talhoesRegistrados: row.talhoes_registrados,
-    totalPes: row.total_pes,
-    pesAnalisados: row.pes_analisados,
-    pesDiagnosticados: row.pes_diagnosticados,
     latitude: row.latitude ?? undefined,
     longitude: row.longitude ?? undefined,
     regiao: row.regiao ?? undefined,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: ts.createdAt,
+    updatedAt: ts.updatedAt,
   };
 }
 
+function throwIfError(error: { message: string } | null) {
+  if (error) throw new Error(error.message);
+}
+
+/** Colunas existentes na tabela (sem timestamps CamelCase que o PostgREST não encontra no PG). */
+const PROP_COLUMNS =
+  "id_propriedade, id_usuario, nome, cep, logradouro, numero, bairro, cidade, latitude, longitude, regiao";
+
 export async function createProperty(params: CreatePropertyRequest): Promise<Property> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const result = await db.runAsync(
-    `INSERT INTO propriedades (id_usuario, nome, cep, logradouro, numero, bairro, cidade, latitude, longitude, regiao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-    [
-      Number(params.userId),
-      params.name,
-      params.cep,
-      params.logradouro,
-      params.numero,
-      params.bairro,
-      params.cidade,
-      params.latitude ?? null,
-      params.longitude ?? null,
-      params.regiao ?? null,
-    ]
-  );
+  const { data, error } = await supabase
+    .from("propriedades")
+    .insert({
+      id_usuario: Number(params.userId),
+      nome: params.name,
+      cep: params.cep,
+      logradouro: params.logradouro,
+      numero: params.numero,
+      bairro: params.bairro,
+      cidade: params.cidade,
+      latitude: params.latitude ?? null,
+      longitude: params.longitude ?? null,
+      regiao: params.regiao ?? null,
+    })
+    .select(PROP_COLUMNS)
+    .single();
 
-  const row = await db.getFirstAsync<DbPropertyRow>(
-    `SELECT * FROM propriedades WHERE id_propriedade = ?;`,
-    [result.lastInsertRowId]
-  );
-
-  if (!row) throw new Error("Falha ao criar propriedade.");
-  return mapProperty(row);
+  throwIfError(error);
+  if (!data) throw new Error("Falha ao criar propriedade.");
+  return mapProperty(data as DbPropertyRow);
 }
 
 export async function getPropertiesByUser(userId: string): Promise<Property[]> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const rows = await db.getAllAsync<DbPropertyRow>(
-    `SELECT * FROM propriedades WHERE id_usuario = ? ORDER BY createdAt DESC;`,
-    [Number(userId)]
-  );
+  const { data, error } = await supabase
+    .from("propriedades")
+    .select(PROP_COLUMNS)
+    .eq("id_usuario", Number(userId))
+    .order("id_propriedade", { ascending: false });
 
-  return rows.map(mapProperty);
+  throwIfError(error);
+  return (data as DbPropertyRow[]).map(mapProperty);
 }
 
 export async function getPropertyById(id: string): Promise<Property | null> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const row = await db.getFirstAsync<DbPropertyRow>(
-    `SELECT * FROM propriedades WHERE id_propriedade = ?;`,
-    [Number(id)]
-  );
+  const { data, error } = await supabase
+    .from("propriedades")
+    .select(PROP_COLUMNS)
+    .eq("id_propriedade", Number(id))
+    .maybeSingle();
 
-  return row ? mapProperty(row) : null;
+  throwIfError(error);
+  return data ? mapProperty(data as DbPropertyRow) : null;
 }
 
 export async function updateProperty(id: string, params: UpdatePropertyRequest): Promise<void> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const updates: string[] = [];
-  const values: any[] = [];
+  const patch: Record<string, unknown> = {};
 
-  if (params.name !== undefined) {
-    updates.push("nome = ?");
-    values.push(params.name);
-  }
-  if (params.cep !== undefined) {
-    updates.push("cep = ?");
-    values.push(params.cep);
-  }
-  if (params.logradouro !== undefined) {
-    updates.push("logradouro = ?");
-    values.push(params.logradouro);
-  }
-  if (params.numero !== undefined) {
-    updates.push("numero = ?");
-    values.push(params.numero);
-  }
-  if (params.bairro !== undefined) {
-    updates.push("bairro = ?");
-    values.push(params.bairro);
-  }
-  if (params.cidade !== undefined) {
-    updates.push("cidade = ?");
-    values.push(params.cidade);
-  }
-  if (params.latitude !== undefined) {
-    updates.push("latitude = ?");
-    values.push(params.latitude);
-  }
-  if (params.longitude !== undefined) {
-    updates.push("longitude = ?");
-    values.push(params.longitude);
-  }
-  if (params.regiao !== undefined) {
-    updates.push("regiao = ?");
-    values.push(params.regiao);
-  }
+  if (params.name !== undefined) patch.nome = params.name;
+  if (params.cep !== undefined) patch.cep = params.cep;
+  if (params.logradouro !== undefined) patch.logradouro = params.logradouro;
+  if (params.numero !== undefined) patch.numero = params.numero;
+  if (params.bairro !== undefined) patch.bairro = params.bairro;
+  if (params.cidade !== undefined) patch.cidade = params.cidade;
+  if (params.latitude !== undefined) patch.latitude = params.latitude;
+  if (params.longitude !== undefined) patch.longitude = params.longitude;
+  if (params.regiao !== undefined) patch.regiao = params.regiao;
 
-  if (updates.length === 0) return;
+  if (Object.keys(patch).length === 0) return;
+  patch.updatedat = new Date().toISOString();
 
-  updates.push("updatedAt = datetime('now')");
-  values.push(Number(id));
+  const { error } = await supabase
+    .from("propriedades")
+    .update(patch)
+    .eq("id_propriedade", Number(id));
 
-  await db.runAsync(
-    `UPDATE propriedades SET ${updates.join(", ")} WHERE id_propriedade = ?;`,
-    values
-  );
+  throwIfError(error);
 }
 
 export async function deleteProperty(id: string): Promise<void> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  await db.runAsync(
-    `DELETE FROM propriedades WHERE id_propriedade = ?;`,
-    [Number(id)]
-  );
-}
+  const { error } = await supabase
+    .from("propriedades")
+    .delete()
+    .eq("id_propriedade", Number(id));
 
-export async function updatePropertyStats(id: string, stats: {
-  talhoesRegistrados?: number;
-  totalPes?: number;
-  pesAnalisados?: number;
-  pesDiagnosticados?: number;
-}): Promise<void> {
-  const db = getDb();
-
-  const updates: string[] = [];
-  const values: any[] = [];
-
-  if (stats.talhoesRegistrados !== undefined) {
-    updates.push("talhoes_registrados = ?");
-    values.push(stats.talhoesRegistrados);
-  }
-  if (stats.totalPes !== undefined) {
-    updates.push("total_pes = ?");
-    values.push(stats.totalPes);
-  }
-  if (stats.pesAnalisados !== undefined) {
-    updates.push("pes_analisados = ?");
-    values.push(stats.pesAnalisados);
-  }
-  if (stats.pesDiagnosticados !== undefined) {
-    updates.push("pes_diagnosticados = ?");
-    values.push(stats.pesDiagnosticados);
-  }
-
-  if (updates.length === 0) return;
-
-  updates.push("updatedAt = datetime('now')");
-  values.push(Number(id));
-
-  await db.runAsync(
-    `UPDATE propriedades SET ${updates.join(", ")} WHERE id_propriedade = ?;`,
-    values
-  );
+  throwIfError(error);
 }

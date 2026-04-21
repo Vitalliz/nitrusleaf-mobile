@@ -54,7 +54,7 @@ export default function PeDetailsScreen() {
 
     Alert.alert(
       'Excluir Pé',
-      `Tem certeza que deseja excluir o pé "${pe.identificacao}"? Esta ação não pode ser desfeita.`,
+      `Tem certeza que deseja excluir o pé "${pe.nome}"? Esta ação não pode ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -81,19 +81,25 @@ export default function PeDetailsScreen() {
 
   const getSituacaoColor = (situacao: string) => {
     switch (situacao) {
-      case 'Saudável': return '#10B981';
-      case 'Doente': return '#EF4444';
-      case 'Morto': return '#6B7280';
-      default: return '#6B7280';
+      case 'Tratado':
+        return '#8B5CF6';
+      case 'Não-Tratado':
+        return '#FACC15';
+      case 'Sem-informações':
+      default:
+        return '#6B7280';
     }
   };
 
   const getSituacaoIcon = (situacao: string) => {
     switch (situacao) {
-      case 'Saudável': return 'checkmark-circle';
-      case 'Doente': return 'warning';
-      case 'Morto': return 'close-circle';
-      default: return 'help-circle';
+      case 'Tratado':
+        return 'checkmark-circle';
+      case 'Não-Tratado':
+        return 'alert-circle';
+      case 'Sem-informações':
+      default:
+        return 'help-circle';
     }
   };
 
@@ -160,7 +166,7 @@ export default function PeDetailsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.peCard}>
           <View style={styles.peHeader}>
-            <Text style={styles.peIdentificacao}>{pe.identificacao}</Text>
+            <Text style={styles.peIdentificacao}>{pe.nome}</Text>
             <View style={[styles.situacaoBadge, { backgroundColor: getSituacaoColor(pe.situacao) + '20' }]}>
               <Ionicons
                 name={getSituacaoIcon(pe.situacao)}
@@ -176,14 +182,13 @@ export default function PeDetailsScreen() {
           <Text style={styles.talhaoInfo}>Talhão: {talhaoName}</Text>
 
           <View style={styles.locationSection}>
-            <Text style={styles.sectionTitle}>Localização no Talhão</Text>
-            <Text style={styles.locationText}>
-              Linha: {pe.linha}, Coluna: {pe.coluna}
-            </Text>
-            {pe.latitude && pe.longitude && (
+            <Text style={styles.sectionTitle}>Localização</Text>
+            {pe.latitude != null && pe.longitude != null ? (
               <Text style={styles.locationText}>
                 GPS: {pe.latitude.toFixed(6)}, {pe.longitude.toFixed(6)}
               </Text>
+            ) : (
+              <Text style={styles.locationText}>Coordenadas não informadas</Text>
             )}
           </View>
 
@@ -216,18 +221,13 @@ export default function PeDetailsScreen() {
           </View>
 
           <View style={styles.datesSection}>
-            <Text style={styles.sectionTitle}>Datas</Text>
+            <Text style={styles.sectionTitle}>Registro</Text>
             <Text style={styles.dateText}>
-              Plantio: {new Date(pe.dataPlantio).toLocaleDateString('pt-BR')}
+              Criado em: {new Date(pe.createdAt).toLocaleString('pt-BR')}
             </Text>
             <Text style={styles.dateText}>
-              Cadastro: {new Date(pe.dataCadastro).toLocaleDateString('pt-BR')}
+              Atualizado em: {new Date(pe.updatedAt).toLocaleString('pt-BR')}
             </Text>
-            {pe.dataUltimaAnalise && (
-              <Text style={styles.dateText}>
-                Última Análise: {new Date(pe.dataUltimaAnalise).toLocaleDateString('pt-BR')}
-              </Text>
-            )}
           </View>
         </View>
 
@@ -262,7 +262,7 @@ export default function PeDetailsScreen() {
                   style={styles.fotoCard}
                   onPress={() => {
                     // TODO: Implementar visualização de foto em tela cheia
-                    Alert.alert('Foto', `Data: ${new Date(foto.dataFoto).toLocaleDateString('pt-BR')}\nTipo: ${foto.tipo}`);
+                    Alert.alert('Foto', `Data: ${foto.dataFoto ? new Date(foto.dataFoto).toLocaleDateString('pt-BR') : '—'}\nTipo: ${foto.tipo || '—'}`);
                   }}
                 >
                   <Image
@@ -272,7 +272,7 @@ export default function PeDetailsScreen() {
                   />
                   <View style={styles.fotoOverlay}>
                     <Text style={styles.fotoDate}>
-                      {new Date(foto.dataFoto).toLocaleDateString('pt-BR')}
+                      {foto.dataFoto ? new Date(foto.dataFoto).toLocaleDateString('pt-BR') : '—'}
                     </Text>
                     <Text style={styles.fotoType}>{foto.tipo}</Text>
                   </View>

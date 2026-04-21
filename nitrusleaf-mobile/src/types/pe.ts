@@ -1,19 +1,21 @@
-export type SituacaoPe = 'Saudável' | 'Doente' | 'Morto';
+/** Alinhado ao enum `situacao_pe` do PostgreSQL */
+export type SituacaoPe = "Tratado" | "Não-Tratado" | "Sem-informações";
+
+export const SITUACOES_PE: SituacaoPe[] = [
+  "Tratado",
+  "Não-Tratado",
+  "Sem-informações",
+];
 
 export interface Pe {
   id: string;
   talhaoId: string;
-  identificacao: string;
-  linha: number;
-  coluna: number;
+  nome: string;
   situacao: SituacaoPe;
   deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
   observacoes?: string;
-  dataPlantio: string;
-  dataCadastro: string;
-  dataUltimaAnalise?: string;
   latitude?: number;
   longitude?: number;
   createdAt: string;
@@ -22,30 +24,24 @@ export interface Pe {
 
 export interface CreatePeRequest {
   talhaoId: string;
-  identificacao: string;
-  linha: number;
-  coluna: number;
+  nome: string;
   situacao?: SituacaoPe;
   deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
   observacoes?: string;
-  dataPlantio: string;
   latitude?: number;
   longitude?: number;
 }
 
 export interface UpdatePeRequest {
   talhaoId?: string;
-  identificacao?: string;
-  linha?: number;
-  coluna?: number;
+  nome?: string;
   situacao?: SituacaoPe;
   deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
   observacoes?: string;
-  dataPlantio?: string;
   latitude?: number;
   longitude?: number;
 }

@@ -8,6 +8,7 @@ import { Background } from '@/components/ui/background';
 import { Ionicons } from '@expo/vector-icons';
 import { getPropertyById, deleteProperty } from '@/repositories/propertyRepository';
 import { getTalhoesByProperty } from '@/repositories/talhaoRepository';
+import { getPesByTalhao } from '@/repositories/peRepository';
 import type { Property } from '@/types/property';
 import type { Talhao } from '@/types/talhao';
 
@@ -18,6 +19,9 @@ export default function PropertyDetailsScreen() {
 
   const [property, setProperty] = useState<Property | null>(null);
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
+  const [pesByTalhao, setPesByTalhao] = useState<
+    Record<string, { total: number; tratados: number }>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +29,28 @@ export default function PropertyDetailsScreen() {
       loadPropertyDetails();
     }
   }, [propertyId]);
+
+  useEffect(() => {
+    if (!talhoes.length) {
+      setPesByTalhao({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, { total: number; tratados: number }> = {};
+      for (const t of talhoes) {
+        const pes = await getPesByTalhao(t.id);
+        next[t.id] = {
+          total: pes.length,
+          tratados: pes.filter((p) => p.situacao === "Tratado").length,
+        };
+      }
+      if (!cancelled) setPesByTalhao(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [talhoes]);
 
   const loadPropertyDetails = async () => {
     if (!propertyId) return;
@@ -186,15 +212,15 @@ export default function PropertyDetailsScreen() {
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>
-                {talhoes.reduce((sum, t) => sum + t.totalPes, 0)}
+                {talhoes.reduce((sum, t) => sum + (pesByTalhao[t.id]?.total ?? 0), 0)}
               </Text>
               <Text style={styles.statLabel}>Total de Pés</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>
-                {talhoes.reduce((sum, t) => sum + t.pesAnalisados, 0)}
+                {talhoes.reduce((sum, t) => sum + (pesByTalhao[t.id]?.tratados ?? 0), 0)}
               </Text>
-              <Text style={styles.statLabel}>Pés Analisados</Text>
+              <Text style={styles.statLabel}>Pés tratados</Text>
             </View>
           </View>
         </View>
@@ -232,7 +258,8 @@ export default function PropertyDetailsScreen() {
                 <View style={styles.talhaoInfo}>
                   <Text style={styles.talhaoName}>{talhao.name}</Text>
                   <Text style={styles.talhaoStats}>
-                    {talhao.pesAnalisados}/{talhao.totalPes} pés analisados
+                    {(pesByTalhao[talhao.id]?.tratados ?? 0)}/
+                    {(pesByTalhao[talhao.id]?.total ?? 0)} pés (tratados/total)
                   </Text>
                   <Text style={styles.talhaoFruit}>{talhao.especieFruta}</Text>
                 </View>
