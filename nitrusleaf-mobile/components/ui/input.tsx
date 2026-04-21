@@ -4,7 +4,7 @@ import { TextInput, StyleSheet, DimensionValue, KeyboardTypeOptions } from "reac
 
 type InputVariant = "default" | "error" | "readonly";
 type InputSize =
-  | "size-327"
+  | "size-352"
   | "size-199"
   | "size-364"
   | "size-287"
@@ -40,7 +40,7 @@ export const Input = ({
     <TextInput
       style={[styles.input, sizeStyle, inputVariants[variant], customWidth]}
       placeholder={placeholder}
-      placeholderTextColor="#8B5E3C"
+      placeholderTextColor="#000000"
       value={value}
       onChangeText={onChangeText}
       editable={variant !== "readonly"}
@@ -55,12 +55,12 @@ export const Input = ({
 const styles = StyleSheet.create({
   input: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 30,
+    borderRadius: 10,
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#2B2B2B",
     borderWidth: 1,
-    borderColor: "#A3D99F",
+    borderColor: "#000000",
     marginVertical: 6,
     textAlignVertical: "center",
   },
@@ -69,11 +69,11 @@ const styles = StyleSheet.create({
 // Variantes de tamanho com medidas específicas
 const inputSizes = StyleSheet.create({
   // Tamanhos específicos solicitados
-  "size-327": {
+  "size-352": {
     height: 48,
     paddingVertical: 12,
     fontSize: 16,
-    width: 327,
+    width: 352,
   },
   "size-199": {
     height: 48,
@@ -118,7 +118,7 @@ const inputSizes = StyleSheet.create({
 
 const inputVariants = StyleSheet.create({
   default: {
-    borderColor: "#A3D99F",
+    borderColor: "#000000",
     backgroundColor: "#FFFFFF",
   },
   error: {

@@ -21,13 +21,13 @@ export default function ExploreScreen() {
 
         <View style={styles.form}>
           <Text style={styles.label}>Nome:</Text>
-          <Input placeholder="Nome" size="size-327" variant="default" />
+          <Input placeholder="Nome" size="size-352" variant="default" />
 
           <Text style={styles.label}>Sobrenome:</Text>
-          <Input placeholder="Sobrenome" size="size-327" variant="default" />
+          <Input placeholder="Sobrenome" size="size-352" variant="default" />
 
           <Text style={styles.label}>Telefone:</Text>
-          <Input placeholder="Telefone" size="size-327" variant="default" />
+          <Input placeholder="Telefone" size="size-352" variant="default" />
 
           <LoginButton onPress={() => console.log("Entrar pressionado")} />
           <GoogleButton onPress={() => console.log("Google pressionado")} />
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     color: "#2B2B2B",
     marginBottom: 8,
     alignSelf: "flex-start",
-    marginLeft: 16,
+    marginLeft: 35,
     fontWeight: "500",
   },
   registerText: {

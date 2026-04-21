@@ -264,7 +264,7 @@ export default function MenuScreen() {
   };
 
   const handleLocation = () => {
-    router.push('/(tabs)/analysis');
+    router.push('/(tabs)/AI/analysis');
   };
 
   return (

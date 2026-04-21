@@ -59,7 +59,7 @@ export default function AnalysisFormScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.cta} onPress={() => router.replace('/(tabs)/home')}>
+        <TouchableOpacity style={styles.cta} onPress={() => router.replace('/analysis')}>
           <Text style={styles.ctaText}>Finalizar</Text>
         </TouchableOpacity>
       </View>

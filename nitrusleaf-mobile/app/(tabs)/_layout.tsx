@@ -8,11 +8,11 @@ import React from 'react';
          headerShown: false,
        }}
      >
-       <Stack.Screen name='index' />
-       <Stack.Screen name='explore' />
+       <Stack.Screen name='AI/analysis' />
+       {/* <Stack.Screen name='home' />
        <Stack.Screen name='maps' />
-       <Stack.Screen name='history' />
-       <Stack.Screen name='profile' />
+       <Stack.Screen name='profile-edit' />
+       <Stack.Screen name='profile' /> */}
     </Stack>
    );
  }
