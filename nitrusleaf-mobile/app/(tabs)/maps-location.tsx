@@ -23,9 +23,9 @@ export default function LocationMapScreen() {
   const [loading, setLoading] = useState(true);
 
   // Filtros
-  const [filterSaudavel, setFilterSaudavel] = useState(true);
-  const [filterDoente, setFilterDoente] = useState(true);
-  const [filterMorto, setFilterMorto] = useState(true);
+  const [filterTratado, setFilterTratado] = useState(true);
+  const [filterNaoTratado, setFilterNaoTratado] = useState(true);
+  const [filterSemInfo, setFilterSemInfo] = useState(true);
   const [filterDeficienciaCobre, setFilterDeficienciaCobre] = useState(true);
   const [filterDeficienciaManganes, setFilterDeficienciaManganes] = useState(true);
   const [filterOutros, setFilterOutros] = useState(true);
@@ -48,7 +48,7 @@ export default function LocationMapScreen() {
 
   useEffect(() => {
     applyFilters();
-  }, [pes, filterSaudavel, filterDoente, filterMorto, filterDeficienciaCobre, filterDeficienciaManganes, filterOutros]);
+  }, [pes, filterTratado, filterNaoTratado, filterSemInfo, filterDeficienciaCobre, filterDeficienciaManganes, filterOutros]);
 
   const loadProperties = async () => {
     if (!user?.id) return;
@@ -96,9 +96,9 @@ export default function LocationMapScreen() {
     const filtered = pes.filter(pe => {
       // Filtro por situação
       const situacaoMatch = (
-        (filterSaudavel && pe.situacao === 'Saudável') ||
-        (filterDoente && pe.situacao === 'Doente') ||
-        (filterMorto && pe.situacao === 'Morto')
+        (filterTratado && pe.situacao === 'Tratado') ||
+        (filterNaoTratado && pe.situacao === 'Não-Tratado') ||
+        (filterSemInfo && pe.situacao === 'Sem-informações')
       );
 
       // Filtro por deficiências
@@ -116,15 +116,17 @@ export default function LocationMapScreen() {
   };
 
   const getMarkerColor = (pe: any) => {
-    if (pe.situacao === 'Morto') return '#6B7280'; // Cinza
-    if (pe.situacao === 'Doente') return '#EF4444'; // Vermelho
-    if (pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) return '#F59E0B'; // Amarelo
-    return '#10B981'; // Verde
+    if (pe.situacao === 'Sem-informações') return '#6B7280';
+    if (pe.situacao === 'Não-Tratado') return '#EF4444';
+    if (pe.situacao === 'Tratado') return '#8B5CF6';
+    if (pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) return '#F59E0B';
+    return '#10B981';
   };
 
   const getMarkerIcon = (pe: any) => {
-    if (pe.situacao === 'Morto') return 'close-circle';
-    if (pe.situacao === 'Doente') return 'warning';
+    if (pe.situacao === 'Sem-informações') return 'help-circle';
+    if (pe.situacao === 'Não-Tratado') return 'warning';
+    if (pe.situacao === 'Tratado') return 'checkmark-circle';
     return 'leaf';
   };
 
@@ -194,7 +196,7 @@ export default function LocationMapScreen() {
                 styles.selectorChipText,
                 selectedTalhao?.id === talhao.id && styles.selectorChipTextSelected
               ]}>
-                {talhao.nome}
+                {talhao.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -204,27 +206,27 @@ export default function LocationMapScreen() {
       {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
         <TouchableOpacity
-          style={[styles.filterChip, filterSaudavel && styles.filterChipActive]}
-          onPress={() => setFilterSaudavel(!filterSaudavel)}
+          style={[styles.filterChip, filterTratado && styles.filterChipActive]}
+          onPress={() => setFilterTratado(!filterTratado)}
         >
-          <Ionicons name="leaf" size={16} color={filterSaudavel ? "#FFFFFF" : "#10B981"} />
-          <Text style={[styles.filterChipText, filterSaudavel && styles.filterChipTextActive]}>Saudável</Text>
+          <Ionicons name="checkmark-circle" size={16} color={filterTratado ? "#FFFFFF" : "#8B5CF6"} />
+          <Text style={[styles.filterChipText, filterTratado && styles.filterChipTextActive]}>Tratado</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterChip, filterDoente && styles.filterChipActive]}
-          onPress={() => setFilterDoente(!filterDoente)}
+          style={[styles.filterChip, filterNaoTratado && styles.filterChipActive]}
+          onPress={() => setFilterNaoTratado(!filterNaoTratado)}
         >
-          <Ionicons name="warning" size={16} color={filterDoente ? "#FFFFFF" : "#EF4444"} />
-          <Text style={[styles.filterChipText, filterDoente && styles.filterChipTextActive]}>Doente</Text>
+          <Ionicons name="warning" size={16} color={filterNaoTratado ? "#FFFFFF" : "#EF4444"} />
+          <Text style={[styles.filterChipText, filterNaoTratado && styles.filterChipTextActive]}>Não tratado</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.filterChip, filterMorto && styles.filterChipActive]}
-          onPress={() => setFilterMorto(!filterMorto)}
+          style={[styles.filterChip, filterSemInfo && styles.filterChipActive]}
+          onPress={() => setFilterSemInfo(!filterSemInfo)}
         >
-          <Ionicons name="close-circle" size={16} color={filterMorto ? "#FFFFFF" : "#6B7280"} />
-          <Text style={[styles.filterChipText, filterMorto && styles.filterChipTextActive]}>Morto</Text>
+          <Ionicons name="help-circle" size={16} color={filterSemInfo ? "#FFFFFF" : "#6B7280"} />
+          <Text style={[styles.filterChipText, filterSemInfo && styles.filterChipTextActive]}>Sem info</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -273,7 +275,7 @@ export default function LocationMapScreen() {
                   latitude: pe.latitude,
                   longitude: pe.longitude,
                 }}
-                title={`Pé ${pe.identificacao}`}
+                title={`Pé ${pe.nome}`}
                 description={`Situação: ${pe.situacao}${pe.deficienciaCobre ? ' - Def. Cobre' : ''}${pe.deficienciaManganes ? ' - Def. Manganês' : ''}${pe.outros ? ' - Outros' : ''}`}
                 pinColor={getMarkerColor(pe)}
               >

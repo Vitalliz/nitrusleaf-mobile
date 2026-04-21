@@ -1,168 +1,117 @@
-import { getDb } from "@/database/db";
+import { getSupabase } from "@/services/supabase";
 import type { Talhao, CreateTalhaoRequest, UpdateTalhaoRequest } from "@/types/talhao";
+import { readCreatedUpdated } from "@/utils/postgresRow";
 
-type DbTalhaoRow = {
+type DbTalhaoRow = Record<string, unknown> & {
   id_talhao: number;
   id_propriedade: number;
   id_alqueire: number | null;
   nome: string;
   especie_fruta: string;
-  total_pes: number;
-  pes_analisados: number;
-  pes_diagnosticados: number;
   latitude: number | null;
   longitude: number | null;
   coordenadas_poligono: string | null;
-  createdAt: string;
-  updatedAt: string;
 };
 
 function mapTalhao(row: DbTalhaoRow): Talhao {
+  const ts = readCreatedUpdated(row);
   return {
     id: String(row.id_talhao),
     propertyId: String(row.id_propriedade),
     alqueireId: row.id_alqueire ? String(row.id_alqueire) : undefined,
     name: row.nome,
     especieFruta: row.especie_fruta,
-    totalPes: row.total_pes,
-    pesAnalisados: row.pes_analisados,
-    pesDiagnosticados: row.pes_diagnosticados,
     latitude: row.latitude ?? undefined,
     longitude: row.longitude ?? undefined,
     coordenadasPoligono: row.coordenadas_poligono ?? undefined,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: ts.createdAt,
+    updatedAt: ts.updatedAt,
   };
 }
 
+function throwIfError(error: { message: string } | null) {
+  if (error) throw new Error(error.message);
+}
+
 export async function createTalhao(params: CreateTalhaoRequest): Promise<Talhao> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const result = await db.runAsync(
-    `INSERT INTO talhoes (id_propriedade, id_alqueire, nome, especie_fruta, latitude, longitude, coordenadas_poligono) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-    [
-      Number(params.propertyId),
-      params.alqueireId ? Number(params.alqueireId) : null,
-      params.name,
-      params.especieFruta,
-      params.latitude ?? null,
-      params.longitude ?? null,
-      params.coordenadasPoligono ?? null,
-    ]
-  );
+  const { data, error } = await supabase
+    .from("talhoes")
+    .insert({
+      id_propriedade: Number(params.propertyId),
+      id_alqueire: params.alqueireId ? Number(params.alqueireId) : null,
+      nome: params.name,
+      especie_fruta: params.especieFruta,
+      latitude: params.latitude ?? null,
+      longitude: params.longitude ?? null,
+      coordenadas_poligono: params.coordenadasPoligono ?? null,
+    })
+    .select("*")
+    .single();
 
-  const row = await db.getFirstAsync<DbTalhaoRow>(
-    `SELECT * FROM talhoes WHERE id_talhao = ?;`,
-    [result.lastInsertRowId]
-  );
-
-  if (!row) throw new Error("Falha ao criar talhão.");
-  return mapTalhao(row);
+  throwIfError(error);
+  if (!data) throw new Error("Falha ao criar talhão.");
+  return mapTalhao(data as DbTalhaoRow);
 }
 
 export async function getTalhoesByProperty(propertyId: string): Promise<Talhao[]> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const rows = await db.getAllAsync<DbTalhaoRow>(
-    `SELECT * FROM talhoes WHERE id_propriedade = ? ORDER BY createdAt DESC;`,
-    [Number(propertyId)]
-  );
+  const { data, error } = await supabase
+    .from("talhoes")
+    .select("*")
+    .eq("id_propriedade", Number(propertyId))
+    .order("id_talhao", { ascending: false });
 
-  return rows.map(mapTalhao);
+  throwIfError(error);
+  return (data as DbTalhaoRow[]).map(mapTalhao);
 }
 
 export async function getTalhaoById(id: string): Promise<Talhao | null> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const row = await db.getFirstAsync<DbTalhaoRow>(
-    `SELECT * FROM talhoes WHERE id_talhao = ?;`,
-    [Number(id)]
-  );
+  const { data, error } = await supabase
+    .from("talhoes")
+    .select("*")
+    .eq("id_talhao", Number(id))
+    .maybeSingle();
 
-  return row ? mapTalhao(row) : null;
+  throwIfError(error);
+  return data ? mapTalhao(data as DbTalhaoRow) : null;
 }
 
 export async function updateTalhao(id: string, params: UpdateTalhaoRequest): Promise<void> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const updates: string[] = [];
-  const values: any[] = [];
+  const patch: Record<string, unknown> = {};
 
   if (params.alqueireId !== undefined) {
-    updates.push("id_alqueire = ?");
-    values.push(params.alqueireId ? Number(params.alqueireId) : null);
+    patch.id_alqueire = params.alqueireId ? Number(params.alqueireId) : null;
   }
-  if (params.name !== undefined) {
-    updates.push("nome = ?");
-    values.push(params.name);
-  }
-  if (params.especieFruta !== undefined) {
-    updates.push("especie_fruta = ?");
-    values.push(params.especieFruta);
-  }
-  if (params.latitude !== undefined) {
-    updates.push("latitude = ?");
-    values.push(params.latitude);
-  }
-  if (params.longitude !== undefined) {
-    updates.push("longitude = ?");
-    values.push(params.longitude);
-  }
+  if (params.name !== undefined) patch.nome = params.name;
+  if (params.especieFruta !== undefined) patch.especie_fruta = params.especieFruta;
+  if (params.latitude !== undefined) patch.latitude = params.latitude;
+  if (params.longitude !== undefined) patch.longitude = params.longitude;
   if (params.coordenadasPoligono !== undefined) {
-    updates.push("coordenadas_poligono = ?");
-    values.push(params.coordenadasPoligono);
+    patch.coordenadas_poligono = params.coordenadasPoligono;
   }
 
-  if (updates.length === 0) return;
+  if (Object.keys(patch).length === 0) return;
+  patch.updatedat = new Date().toISOString();
 
-  updates.push("updatedAt = datetime('now')");
-  values.push(Number(id));
+  const { error } = await supabase
+    .from("talhoes")
+    .update(patch)
+    .eq("id_talhao", Number(id));
 
-  await db.runAsync(
-    `UPDATE talhoes SET ${updates.join(", ")} WHERE id_talhao = ?;`,
-    values
-  );
+  throwIfError(error);
 }
 
 export async function deleteTalhao(id: string): Promise<void> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  await db.runAsync(
-    `DELETE FROM talhoes WHERE id_talhao = ?;`,
-    [Number(id)]
-  );
-}
+  const { error } = await supabase.from("talhoes").delete().eq("id_talhao", Number(id));
 
-export async function updateTalhaoStats(id: string, stats: {
-  totalPes?: number;
-  pesAnalisados?: number;
-  pesDiagnosticados?: number;
-}): Promise<void> {
-  const db = getDb();
-
-  const updates: string[] = [];
-  const values: any[] = [];
-
-  if (stats.totalPes !== undefined) {
-    updates.push("total_pes = ?");
-    values.push(stats.totalPes);
-  }
-  if (stats.pesAnalisados !== undefined) {
-    updates.push("pes_analisados = ?");
-    values.push(stats.pesAnalisados);
-  }
-  if (stats.pesDiagnosticados !== undefined) {
-    updates.push("pes_diagnosticados = ?");
-    values.push(stats.pesDiagnosticados);
-  }
-
-  if (updates.length === 0) return;
-
-  updates.push("updatedAt = datetime('now')");
-  values.push(Number(id));
-
-  await db.runAsync(
-    `UPDATE talhoes SET ${updates.join(", ")} WHERE id_talhao = ?;`,
-    values
-  );
+  throwIfError(error);
 }

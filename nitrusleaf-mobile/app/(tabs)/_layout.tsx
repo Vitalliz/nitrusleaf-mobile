@@ -3,9 +3,9 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
  export default function TabsLayout() {
-   const { isLoading, isSignedIn } = useAuth();
+   const { isInitializing, isSignedIn } = useAuth();
 
-   if (!isLoading && !isSignedIn) {
+   if (!isInitializing && !isSignedIn) {
      return <Redirect href="/login" />;
    }
 

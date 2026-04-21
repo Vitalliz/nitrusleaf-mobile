@@ -4,12 +4,9 @@ export interface Talhao {
   alqueireId?: string;
   name: string;
   especieFruta: string;
-  totalPes: number;
-  pesAnalisados: number;
-  pesDiagnosticados: number;
   latitude?: number;
   longitude?: number;
-  coordenadasPoligono?: string; // JSON string
+  coordenadasPoligono?: string;
   createdAt: string;
   updatedAt: string;
 }

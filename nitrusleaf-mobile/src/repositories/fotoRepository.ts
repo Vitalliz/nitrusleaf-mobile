@@ -1,113 +1,115 @@
-import { getDb } from "@/database/db";
+import { getSupabase } from "@/services/supabase";
 import type { Foto, CreateFotoRequest, UpdateFotoRequest } from "@/types/foto";
+import { readCreatedUpdated } from "@/utils/postgresRow";
 
-type DbFotoRow = {
+/**
+ * Compatível com schema MySQL (`url`, `data_tiragem`, `resultado_analise`) e
+ * com colunas alternativas (`caminho_foto`, `data_foto`, `tipo`) se existirem no Supabase.
+ */
+type DbFotoRow = Record<string, unknown> & {
   id_foto: number;
   id_pe: number;
-  caminho_foto: string;
-  data_foto: string;
-  tipo: string;
-  createdAt: string;
-  updatedAt: string;
+  caminho_foto?: string | null;
+  url?: string | null;
+  data_foto?: string | null;
+  data_tiragem?: string | null;
+  tipo?: string | null;
+  resultado_analise?: string | null;
 };
 
 function mapFoto(row: DbFotoRow): Foto {
+  const ts = readCreatedUpdated(row);
+  const caminho =
+    row.caminho_foto ?? row.url ?? "";
+  const data =
+    row.data_foto ?? row.data_tiragem ?? "";
+  const tipo =
+    row.tipo ?? row.resultado_analise ?? "";
   return {
     id: String(row.id_foto),
     peId: String(row.id_pe),
-    caminhoFoto: row.caminho_foto,
-    dataFoto: row.data_foto,
-    tipo: row.tipo,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    caminhoFoto: caminho,
+    dataFoto: data,
+    tipo,
+    createdAt: ts.createdAt,
+    updatedAt: ts.updatedAt,
   };
 }
 
+function throwIfError(error: { message: string } | null) {
+  if (error) throw new Error(error.message);
+}
+
 export async function createFoto(params: CreateFotoRequest): Promise<Foto> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const result = await db.runAsync(
-    `INSERT INTO foto (id_pe, caminho_foto, data_foto, tipo) VALUES (?, ?, ?, ?);`,
-    [
-      Number(params.peId),
-      params.caminhoFoto,
-      params.dataFoto,
-      params.tipo,
-    ]
-  );
+  const { data, error } = await supabase
+    .from("foto")
+    .insert({
+      id_pe: Number(params.peId),
+      url: params.caminhoFoto,
+      data_tiragem: params.dataFoto,
+      resultado_analise: params.tipo,
+    })
+    .select("*")
+    .single();
 
-  const lastId = result.lastInsertRowId;
-  const rows = await db.getAllAsync<DbFotoRow>(
-    'SELECT * FROM foto WHERE id_foto = ?;',
-    [lastId]
-  );
-
-  if (rows.length === 0) {
-    throw new Error('Failed to create foto');
-  }
-
-  return mapFoto(rows[0] as DbFotoRow);
+  throwIfError(error);
+  if (!data) throw new Error("Failed to create foto");
+  return mapFoto(data as DbFotoRow);
 }
 
 export async function getFotosByPe(peId: string): Promise<Foto[]> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const rows = await db.getAllAsync<DbFotoRow>(
-    `SELECT * FROM foto WHERE id_pe = ? ORDER BY createdAt DESC;`,
-    [Number(peId)]
-  );
+  const { data, error } = await supabase
+    .from("foto")
+    .select("*")
+    .eq("id_pe", Number(peId))
+    .order("id_foto", { ascending: false });
 
-  return rows.map(mapFoto);
+  throwIfError(error);
+  return (data as DbFotoRow[]).map(mapFoto);
 }
 
 export async function getFotoById(id: string): Promise<Foto | null> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const row = await db.getFirstAsync<DbFotoRow>(
-    `SELECT * FROM foto WHERE id_foto = ?;`,
-    [Number(id)]
-  );
+  const { data, error } = await supabase
+    .from("foto")
+    .select("*")
+    .eq("id_foto", Number(id))
+    .maybeSingle();
 
-  return row ? mapFoto(row) : null;
+  throwIfError(error);
+  return data ? mapFoto(data as DbFotoRow) : null;
 }
 
 export async function updateFoto(id: string, params: UpdateFotoRequest): Promise<Foto> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  const updates: string[] = [];
-  const values: any[] = [];
+  const patch: Record<string, unknown> = {
+    updatedat: new Date().toISOString(),
+  };
 
-  if (params.caminhoFoto !== undefined) {
-    updates.push('caminho_foto = ?');
-    values.push(params.caminhoFoto);
-  }
-  if (params.dataFoto !== undefined) {
-    updates.push('data_foto = ?');
-    values.push(params.dataFoto);
-  }
-  if (params.tipo !== undefined) {
-    updates.push('tipo = ?');
-    values.push(params.tipo);
-  }
+  if (params.caminhoFoto !== undefined) patch.url = params.caminhoFoto;
+  if (params.dataFoto !== undefined) patch.data_tiragem = params.dataFoto;
+  if (params.tipo !== undefined) patch.resultado_analise = params.tipo;
 
-  updates.push('updatedAt = CURRENT_TIMESTAMP');
+  const { error } = await supabase.from("foto").update(patch).eq("id_foto", Number(id));
 
-  const sql = `UPDATE foto SET ${updates.join(', ')} WHERE id_foto = ?;`;
-  values.push(Number(id));
-
-  await db.runAsync(sql, values);
+  throwIfError(error);
 
   const updated = await getFotoById(id);
-  if (!updated) throw new Error('Failed to update foto');
+  if (!updated) throw new Error("Failed to update foto");
 
   return updated;
 }
 
 export async function deleteFoto(id: string): Promise<void> {
-  const db = getDb();
+  const supabase = getSupabase();
 
-  await db.runAsync(
-    `DELETE FROM foto WHERE id_foto = ?;`,
-    [Number(id)]
-  );
+  const { error } = await supabase.from("foto").delete().eq("id_foto", Number(id));
+
+  throwIfError(error);
 }

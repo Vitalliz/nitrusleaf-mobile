@@ -9,6 +9,7 @@ import { Background } from '@/components/ui/background';
 import { Ionicons } from '@expo/vector-icons';
 import { createPe } from '@/repositories/peRepository';
 import type { CreatePeRequest, SituacaoPe } from '@/types/pe';
+import { SITUACOES_PE } from '@/types/pe';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export default function AddFootScreen() {
@@ -21,15 +22,12 @@ export default function AddFootScreen() {
   }>();
 
   const [formData, setFormData] = useState({
-    identificacao: '',
-    linha: '',
-    coluna: '',
-    situacao: 'Saudável' as SituacaoPe,
+    nome: '',
+    situacao: 'Sem-informações' as SituacaoPe,
     deficienciaCobre: false,
     deficienciaManganes: false,
     outros: false,
     observacoes: '',
-    dataPlantio: '',
     latitude: '',
     longitude: '',
   });
@@ -61,30 +59,8 @@ export default function AddFootScreen() {
   };
 
   const validateForm = () => {
-    if (!formData.identificacao.trim()) {
-      showErrorAlert('Identificação do pé é obrigatória');
-      return false;
-    }
-    if (!formData.linha.trim()) {
-      showErrorAlert('Linha é obrigatória');
-      return false;
-    }
-    const linhaNum = parseInt(formData.linha);
-    if (isNaN(linhaNum) || linhaNum <= 0) {
-      showErrorAlert('Linha deve ser um número positivo');
-      return false;
-    }
-    if (!formData.coluna.trim()) {
-      showErrorAlert('Coluna é obrigatória');
-      return false;
-    }
-    const colunaNum = parseInt(formData.coluna);
-    if (isNaN(colunaNum) || colunaNum <= 0) {
-      showErrorAlert('Coluna deve ser um número positivo');
-      return false;
-    }
-    if (formData.dataPlantio && !/^\d{4}-\d{2}-\d{2}$/.test(formData.dataPlantio)) {
-      showErrorAlert('Data de plantio deve estar no formato AAAA-MM-DD');
+    if (!formData.nome.trim()) {
+      showErrorAlert('Nome do pé é obrigatório');
       return false;
     }
     if (formData.latitude && (isNaN(parseFloat(formData.latitude)) || parseFloat(formData.latitude) < -90 || parseFloat(formData.latitude) > 90)) {
@@ -105,15 +81,12 @@ export default function AddFootScreen() {
     try {
       const peData: CreatePeRequest = {
         talhaoId,
-        identificacao: formData.identificacao.trim(),
-        linha: parseInt(formData.linha),
-        coluna: parseInt(formData.coluna),
+        nome: formData.nome.trim(),
         situacao: formData.situacao,
         deficienciaCobre: formData.deficienciaCobre,
         deficienciaManganes: formData.deficienciaManganes,
         outros: formData.outros,
         observacoes: formData.observacoes.trim() || undefined,
-        dataPlantio: formData.dataPlantio,
         latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
         longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
       };
@@ -167,44 +140,20 @@ export default function AddFootScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Identificação do Pé *</Text>
+          <Text style={styles.label}>Nome do pé *</Text>
           <TextInput
-            value={formData.identificacao}
-            onChangeText={(value) => handleInputChange('identificacao', value)}
+            value={formData.nome}
+            onChangeText={(value) => handleInputChange('nome', value)}
             style={styles.input}
-            placeholder="Ex: Pé 1, Árvore Norte"
+            placeholder="Ex: Pé 1, Linha A"
             placeholderTextColor="#999"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Linha *</Text>
-          <TextInput
-            value={formData.linha}
-            onChangeText={(value) => handleInputChange('linha', value)}
-            style={styles.input}
-            placeholder="Ex: 1"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Coluna *</Text>
-          <TextInput
-            value={formData.coluna}
-            onChangeText={(value) => handleInputChange('coluna', value)}
-            style={styles.input}
-            placeholder="Ex: 1"
-            placeholderTextColor="#999"
-            keyboardType="numeric"
           />
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Situação</Text>
           <View style={styles.pickerContainer}>
-            {(['Saudável', 'Doente', 'Morto'] as SituacaoPe[]).map((situacao) => (
+            {SITUACOES_PE.map((situacao) => (
               <TouchableOpacity
                 key={situacao}
                 style={[
@@ -283,17 +232,6 @@ export default function AddFootScreen() {
             placeholderTextColor="#999"
             multiline
             numberOfLines={3}
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Data de Plantio</Text>
-          <TextInput
-            value={formData.dataPlantio}
-            onChangeText={(value) => handleInputChange('dataPlantio', value)}
-            style={styles.input}
-            placeholder="AAAA-MM-DD"
-            placeholderTextColor="#999"
           />
         </View>
 

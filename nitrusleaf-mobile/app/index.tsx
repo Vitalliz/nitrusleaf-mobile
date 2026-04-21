@@ -8,7 +8,7 @@ import WaveBgBig from '@/assets/images/wave-bg-big.svg';
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { isLoading, isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {

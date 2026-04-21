@@ -59,7 +59,7 @@ export default function FieldFeetScreen() {
   };
 
   const filteredPes = pes.filter(pe =>
-    pe.identificacao.toLowerCase().includes(query.toLowerCase())
+    pe.nome.toLowerCase().includes(query.toLowerCase())
   );
 
   const handlePePress = (pe: Pe) => {
@@ -161,7 +161,7 @@ export default function FieldFeetScreen() {
             onPress={() => handlePePress(pe)}
           >
             <View style={{ flex: 1 }}>
-              <Text style={styles.footName}>{pe.identificacao}</Text>
+              <Text style={styles.footName}>{pe.nome}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
                 <View
                   style={{
