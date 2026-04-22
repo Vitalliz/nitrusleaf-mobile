@@ -8,7 +8,7 @@ import React from 'react';
          headerShown: false,
        }}
      >
-       <Stack.Screen name='AI/analysis' />
+       <Stack.Screen name='History/field-three' />
        {/* <Stack.Screen name='home' />
        <Stack.Screen name='maps' />
        <Stack.Screen name='profile-edit' />

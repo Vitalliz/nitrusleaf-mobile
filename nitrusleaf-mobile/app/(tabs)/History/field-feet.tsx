@@ -1,122 +1,365 @@
-// // app/(tabs)/field-feet.tsx - Lista de pés de um Talhão
-// import Footer from '@/components/footer';
-// import { Ionicons } from '@expo/vector-icons';
-// import { Background } from '@/components/ui/background';
-// import { useLocalSearchParams, useRouter } from 'expo-router';
-// import React, { useEffect, useState } from 'react';
-// import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-// import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// import React, { useState } from "react";
+// import {
+//   View,
+//   Text,
+//   StyleSheet,
+//   ScrollView,
+//   SafeAreaView,
+//   StatusBar,
+//   TouchableOpacity,
+//   TextInput,
+// } from "react-native";
+// import { Ionicons } from "@expo/vector-icons";
 
-// export default function FieldFeetScreen() {
-//   const router = useRouter();
-//   const insets = useSafeAreaInsets();
-//   const { field, newFoot } = useLocalSearchParams<{ field?: string; newFoot?: string }>();
+// import { Background } from "@/components/ui/background";
+// import { Header } from "@/components/header";
+// import { Button } from "@/components/ui/button";
+// import BottomNavbar from "@/components/ui/menu";
+// import { CustomCard } from "@/components/card";
 
-//   const [query, setQuery] = useState('');
-//   const [feet, setFeet] = useState([
-//     { name: 'Pé 1', status: 'Não-Tratado', color: '#FACC15' },
-//     { name: 'Pé 2', status: 'Tratado', color: '#8B5CF6' },
-//     { name: 'Pé 3', status: 'Tratado', color: '#8B5CF6' },
-//   ]);
+// export default function TalhaoDetailScreen() {
+//   const [searchText, setSearchText] = useState("");
+//   const [sortOrder, setSortOrder] = useState("asc");
 
-//   useEffect(() => {
-//     if (newFoot) {
-//       try {
-//         const footData = JSON.parse(newFoot);
-//         setFeet(prevFeet => [...prevFeet, footData]);
-//       } catch (error) {
-//         console.error('Erro ao parsear dados do pé:', error);
-//       }
+//   const arvores = [
+//     {
+//       id: "01",
+//       name: "Árvore #01",
+//       deficiency: "Cobre",
+//       status: "Não tratado",
+//       date: "10 Nov, 2025",
+//     },
+//     {
+//       id: "02",
+//       name: "Árvore #02",
+//       deficiency: null,
+//       status: "Tratado",
+//       date: "12 Nov, 2025",
+//     },
+//     {
+//       id: "03",
+//       name: "Árvore #03",
+//       deficiency: "Cobre",
+//       status: "Não informado",
+//       date: "13 Nov, 2025",
+//     },
+//     {
+//       id: "04",
+//       name: "Árvore #04",
+//       deficiency: "Manganês",
+//       status: "Não tratado",
+//       date: "10 Nov, 2025",
+//     },
+//     {
+//       id: "05",
+//       name: "Árvore #05",
+//       deficiency: "Ferro",
+//       status: "Tratado",
+//       date: "15 Nov, 2025",
+//     },
+//     {
+//       id: "06",
+//       name: "Árvore #06",
+//       deficiency: "Cobre",
+//       status: "Em tratamento",
+//       date: "18 Nov, 2025",
+//     },
+//   ];
+
+//   const filteredArvores = arvores.filter(arvore =>
+//     arvore.name.toLowerCase().includes(searchText.toLowerCase())
+//   );
+
+//   const getStatusColor = (status: string) => {
+//     switch (status) {
+//       case "Tratado":
+//         return "#4CAF50";
+//       case "Não tratado":
+//         return "#F44336";
+//       case "Em tratamento":
+//         return "#FF9800";
+//       default:
+//         return "#9E9E9E";
 //     }
-//   }, [newFoot]);
+//   };
 
-//   const filtered = feet.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
+//   const getStatusBgColor = (status: string) => {
+//     switch (status) {
+//       case "Tratado":
+//         return "#E8F5E9";
+//       case "Não tratado":
+//         return "#FFEBEE";
+//       case "Em tratamento":
+//         return "#FFF3E0";
+//       default:
+//         return "#F5F5F5";
+//     }
+//   };
 
 //   return (
-// <Background>
-//       {/* Header */}
-//       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-//         <View style={styles.headerLeft}>
-//            <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
-//           <View style={styles.headerText}><Text style={styles.greeting}>Olá, João Silva!</Text></View>
-//         </View>
-//         <TouchableOpacity style={styles.menuButton} onPress={() => router.push('/(tabs)/profile')}>
-//           <Ionicons name="menu" size={24} color="#333" />
-//         </TouchableOpacity>
-//       </View>
+//     <Background>
+//       <SafeAreaView style={styles.safeArea}>
+//         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
-//       <View style={styles.content}>
-//         {/* Título e voltar */}
-//         <View style={styles.titleRowBetween}>
-//           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-//             <Text style={styles.title}>{field ?? 'Talhão'}</Text>
-//             <Ionicons name="settings-outline" size={16} color="#6B7280" />
+//         <Header
+//           title="Roberto Almeida"
+//           subtitle="Sítio Santa Aurora"
+//           onMenuPress={() => console.log("Menu pressed")}
+//           onAvatarPress={() => console.log("Avatar pressed")}
+//         />
+
+//         <ScrollView contentContainerStyle={styles.container}>
+//           {/* Título do Talhão */}
+//           <View style={styles.titleRow}>
+//             <TouchableOpacity onPress={() => console.log("Voltar")}>
+//               <Ionicons name="arrow-back" size={24} color="#1A2C3E" />
+//             </TouchableOpacity>
+//             <Text style={styles.title}>Talhão #01</Text>
+//             <View style={{ width: 24 }} />
 //           </View>
-//           <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/fields')}>
-//             <Ionicons name="return-down-back" size={20} color="#FFFFFF" />
-//             <Text style={styles.backBtnText}>Voltar</Text>
-//           </TouchableOpacity>
-//         </View>
 
-//         {/* Busca */}
-//         <View style={styles.searchRow}>
-//           <TextInput
-//             placeholder="Pesquisar na tabela"
-//             placeholderTextColor="#6BC24A"
-//             style={styles.searchInput}
-//             value={query}
-//             onChangeText={setQuery}
-//           />
-//           <Ionicons name="search" size={20} color="#6BC24A" style={{ marginLeft: -36 }} />
-//         </View>
+//           {/* CARD - Lista de Árvores (White Large) */}
+//           <CustomCard variant="white-large-feet">
+//             <View style={styles.cardContent}>
+//               {/* Busca e Cadastro */}
+//               <View style={styles.searchContainer}>
+//                 <View style={styles.searchBox}>
+//                   <Ionicons name="search-outline" size={20} color="#999" />
+//                   <TextInput
+//                     style={styles.searchInput}
+//                     placeholder="Buscar árvore"
+//                     placeholderTextColor="#999"
+//                     value={searchText}
+//                     onChangeText={setSearchText}
+//                   />
+//                 </View>
 
-//         {/* Adicionar pé */}
-//         <TouchableOpacity style={styles.addBtn} onPress={() => router.push({ pathname: '/Register/add-foot', params: { field: String(field || '') } })}>
-//           <Ionicons name="add" size={20} color="#FFFFFF" />
-//           <Text style={styles.addBtnText}>Adicionar pé</Text>
-//         </TouchableOpacity>
-
-//         {/* Lista de pés */}
-//         {filtered.map((p, idx) => (
-//           <View key={idx} style={styles.footCard}>
-//             <View style={{ flex: 1 }}>
-//               <Text style={styles.footName}>{p.name}</Text>
-//               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
-//                 <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: p.color }} />
-//                 <Text style={styles.footStatus}>{p.status}</Text>
+//                 <TouchableOpacity style={styles.addButton}>
+//                   <Ionicons name="add-circle-outline" size={24} color="#6BC24A" />
+//                   <Text style={styles.addButtonText}>Cadastrar Árvore</Text>
+//                 </TouchableOpacity>
 //               </View>
-//             </View>
-//             <Ionicons name="chevron-forward" size={24} color="#1A1A1A" />
-//           </View>
-//         ))}
 
-//         <View style={{ height: 40 }} />
-//       </View>
-//       <Footer />
+//               {/* Lista de Árvores */}
+//               <View style={styles.listHeader}>
+//                 <Text style={styles.listCount}>
+//                   {filteredArvores.length} Árvores cadastradas
+//                 </Text>
+//                 <TouchableOpacity
+//                   style={styles.sortButton}
+//                   onPress={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+//                 >
+//                   <Text style={styles.sortText}>Ordenar</Text>
+//                   <Ionicons
+//                     name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
+//                     size={14}
+//                     color="#666"
+//                   />
+//                 </TouchableOpacity>
+//               </View>
+
+//               {filteredArvores.map((arvore) => (
+//                 <TouchableOpacity key={arvore.id} style={styles.arvoreCard}>
+//                   <View style={styles.arvoreHeader}>
+//                     <Text style={styles.arvoreName}>{arvore.name}</Text>
+//                     {arvore.deficiency && (
+//                       <View style={styles.deficiencyBadge}>
+//                         <Text style={styles.deficiencyText}>{arvore.deficiency}</Text>
+//                       </View>
+//                     )}
+//                   </View>
+
+//                   <View style={styles.arvoreInfo}>
+//                     <View style={[
+//                       styles.statusBadge,
+//                       { backgroundColor: getStatusBgColor(arvore.status) }
+//                     ]}>
+//                       <Text style={[styles.statusText, { color: getStatusColor(arvore.status) }]}>
+//                         {arvore.status}
+//                       </Text>
+//                     </View>
+
+//                     <View style={styles.dateInfo}>
+//                       <Ionicons name="calendar-outline" size={12} color="#888" />
+//                       <Text style={styles.arvoreDate}>
+//                         Criado em: {arvore.date}
+//                       </Text>
+//                     </View>
+//                   </View>
+//                 </TouchableOpacity>
+//               ))}
+
+//               {/* Botão Ver Análises Detalhadas */}
+//               <Button
+//                 title="Ver análises detalhadas"
+//                 variant="primary"
+//                 size="full"
+//                 onPress={() => console.log("Ver análises detalhadas")}
+//               />
+//             </View>
+//           </CustomCard>
+//         </ScrollView>
+
+//         <BottomNavbar />
+//       </SafeAreaView>
 //     </Background>
 //   );
 // }
 
 // const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: '#FAF6F0' },
-//   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EFEFEF', paddingBottom: 18 },
-//   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-//   avatar: { width: 48, height: 48, borderRadius: 24 },
-//   headerText: { justifyContent: 'center' },
-//   greeting: { fontSize: 16, fontWeight: '600', color: '#1A1A1A' },
-//   menuButton: { padding: 8 },
-//   content: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
-//   titleRowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-//   title: { fontSize: 20, fontWeight: '800', color: '#1A1A1A' },
-//   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#6BC24A', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 22 },
-//   backBtnText: { color: '#FFFFFF', fontWeight: '700' },
-//   searchRow: { marginBottom: 12 },
-//   searchInput: { borderWidth: 1, borderColor: '#6BC24A', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 14, color: '#1A1A1A', backgroundColor: '#FFFFFF' },
-//   addBtn: { alignSelf: 'flex-start', backgroundColor: '#6BC24A', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-//   addBtnText: { color: '#FFFFFF', fontWeight: '700' },
-//   footCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 12, borderWidth: 1, borderColor: '#6BC24A' },
-//   footName: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
-//   footStatus: { fontSize: 14, color: '#6B7280' },
+//   safeArea: {
+//     flex: 1,
+//   },
+
+//   container: {
+//     padding: 16,
+//     paddingBottom: 40,
+//   },
+
+//   titleRow: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     marginBottom: 20,
+//   },
+
+//   title: {
+//     fontSize: 22,
+//     fontWeight: "700",
+//     color: "#1A2C3E",
+//   },
+
+//   cardContent: {
+//     padding: 16,
+//     paddingTop: 650,
+//   },
+
+//   searchContainer: {
+//     flexDirection: "row",
+//     gap: 12,
+//     marginBottom: 20,
+//   },
+
+//   searchBox: {
+//     flex: 1,
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#F5F5F5",
+//     borderRadius: 12,
+//     paddingHorizontal: 12,
+//     paddingVertical: 10,
+//   },
+
+//   searchInput: {
+//     flex: 1,
+//     marginLeft: 8,
+//     fontSize: 14,
+//     color: "#1A2C3E",
+//   },
+
+//   addButton: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     backgroundColor: "#F5F5F5",
+//     borderRadius: 12,
+//     paddingHorizontal: 12,
+//     paddingVertical: 10,
+//     gap: 6,
+//   },
+
+//   addButtonText: {
+//     fontSize: 14,
+//     fontWeight: "500",
+//     color: "#6BC24A",
+//   },
+
+//   listHeader: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     marginBottom: 16,
+//     paddingBottom: 12,
+//     borderBottomWidth: 1,
+//     borderBottomColor: "#E5E5E5",
+//   },
+
+//   listCount: {
+//     fontSize: 14,
+//     fontWeight: "600",
+//     color: "#1A2C3E",
+//   },
+
+//   sortButton: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 4,
+//   },
+
+//   sortText: {
+//     fontSize: 12,
+//     color: "#666",
+//   },
+
+//   arvoreCard: {
+//     backgroundColor: "#F9F9F9",
+//     borderRadius: 12,
+//     padding: 16,
+//     marginBottom: 12,
+//   },
+
+//   arvoreHeader: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     marginBottom: 12,
+//   },
+
+//   arvoreName: {
+//     fontSize: 16,
+//     fontWeight: "600",
+//     color: "#1A2C3E",
+//   },
+
+//   deficiencyBadge: {
+//     backgroundColor: "#FFEBEE",
+//     paddingHorizontal: 10,
+//     paddingVertical: 4,
+//     borderRadius: 12,
+//   },
+
+//   deficiencyText: {
+//     fontSize: 12,
+//     fontWeight: "500",
+//     color: "#D84315",
+//   },
+
+//   arvoreInfo: {
+//     flexDirection: "row",
+//     justifyContent: "space-between",
+//     alignItems: "center",
+//     flexWrap: "wrap",
+//     gap: 8,
+//   },
+
+//   statusBadge: {
+//     paddingHorizontal: 10,
+//     paddingVertical: 4,
+//     borderRadius: 12,
+//   },
+
+//   statusText: {
+//     fontSize: 12,
+//     fontWeight: "500",
+//   },
+
+//   dateInfo: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: 6,
+//   },
+
+//   arvoreDate: {
+//     fontSize: 12,
+//     color: "#888",
+//   },
 // });
-
-
