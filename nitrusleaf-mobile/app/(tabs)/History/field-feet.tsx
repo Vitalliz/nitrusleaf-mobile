@@ -1,365 +1,405 @@
-// import React, { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   ScrollView,
-//   SafeAreaView,
-//   StatusBar,
-//   TouchableOpacity,
-//   TextInput,
-// } from "react-native";
-// import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-// import { Background } from "@/components/ui/background";
-// import { Header } from "@/components/header";
-// import { Button } from "@/components/ui/button";
-// import BottomNavbar from "@/components/ui/menu";
-// import { CustomCard } from "@/components/card";
+import { Background } from "@/components/ui/background";
+import { Header } from "@/components/header";
+import { Button } from "@/components/ui/button";
+import BottomNavbar from "@/components/ui/menu";
+import { CustomCard } from "@/components/cards/card";
 
-// export default function TalhaoDetailScreen() {
-//   const [searchText, setSearchText] = useState("");
-//   const [sortOrder, setSortOrder] = useState("asc");
+export default function TalhaoDetailScreen() {
+  const router = useRouter();
+  const [searchText, setSearchText] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
 
-//   const arvores = [
-//     {
-//       id: "01",
-//       name: "Árvore #01",
-//       deficiency: "Cobre",
-//       status: "Não tratado",
-//       date: "10 Nov, 2025",
-//     },
-//     {
-//       id: "02",
-//       name: "Árvore #02",
-//       deficiency: null,
-//       status: "Tratado",
-//       date: "12 Nov, 2025",
-//     },
-//     {
-//       id: "03",
-//       name: "Árvore #03",
-//       deficiency: "Cobre",
-//       status: "Não informado",
-//       date: "13 Nov, 2025",
-//     },
-//     {
-//       id: "04",
-//       name: "Árvore #04",
-//       deficiency: "Manganês",
-//       status: "Não tratado",
-//       date: "10 Nov, 2025",
-//     },
-//     {
-//       id: "05",
-//       name: "Árvore #05",
-//       deficiency: "Ferro",
-//       status: "Tratado",
-//       date: "15 Nov, 2025",
-//     },
-//     {
-//       id: "06",
-//       name: "Árvore #06",
-//       deficiency: "Cobre",
-//       status: "Em tratamento",
-//       date: "18 Nov, 2025",
-//     },
-//   ];
+  const arvores = [
+    {
+      id: "01",
+      name: "Árvore #01",
+      deficiency: "Cobre",
+      status: "Não tratado",
+      date: "10 Nov, 2025",
+    },
+    {
+      id: "02",
+      name: "Árvore #02",
+      deficiency: null,
+      status: "Tratado",
+      date: "12 Nov, 2025",
+    },
+    {
+      id: "03",
+      name: "Árvore #03",
+      deficiency: "Cobre",
+      status: "Não informado",
+      date: "13 Nov, 2025",
+    },
+    {
+      id: "04",
+      name: "Árvore #04",
+      deficiency: "Manganês",
+      status: "Não tratado",
+      date: "10 Nov, 2025",
+    },
+    {
+      id: "05",
+      name: "Árvore #05",
+      deficiency: "Ferro",
+      status: "Tratado",
+      date: "15 Nov, 2025",
+    },
+    {
+      id: "06",
+      name: "Árvore #06",
+      deficiency: "Cobre",
+      status: "Em tratamento",
+      date: "18 Nov, 2025",
+    },
+  ];
 
-//   const filteredArvores = arvores.filter(arvore =>
-//     arvore.name.toLowerCase().includes(searchText.toLowerCase())
-//   );
+  const filteredArvores = arvores.filter(arvore =>
+    arvore.name.toLowerCase().includes(searchText.toLowerCase())
+  );
 
-//   const getStatusColor = (status: string) => {
-//     switch (status) {
-//       case "Tratado":
-//         return "#4CAF50";
-//       case "Não tratado":
-//         return "#F44336";
-//       case "Em tratamento":
-//         return "#FF9800";
-//       default:
-//         return "#9E9E9E";
-//     }
-//   };
+  // Ordenar árvores
+  const sortedArvores = [...filteredArvores].sort((a, b) => {
+    const numA = parseInt(a.id);
+    const numB = parseInt(b.id);
+    return sortOrder === "asc" ? numA - numB : numB - numA;
+  });
 
-//   const getStatusBgColor = (status: string) => {
-//     switch (status) {
-//       case "Tratado":
-//         return "#E8F5E9";
-//       case "Não tratado":
-//         return "#FFEBEE";
-//       case "Em tratamento":
-//         return "#FFF3E0";
-//       default:
-//         return "#F5F5F5";
-//     }
-//   };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Tratado":
+        return "#4CAF50";
+      case "Não tratado":
+        return "#F44336";
+      case "Em tratamento":
+        return "#FF9800";
+      default:
+        return "#9E9E9E";
+    }
+  };
 
-//   return (
-//     <Background>
-//       <SafeAreaView style={styles.safeArea}>
-//         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+  const getStatusBgColor = (status: string) => {
+    switch (status) {
+      case "Tratado":
+        return "#E8F5E9";
+      case "Não tratado":
+        return "#FFEBEE";
+      case "Em tratamento":
+        return "#FFF3E0";
+      default:
+        return "#F5F5F5";
+    }
+  };
 
-//         <Header
-//           title="Roberto Almeida"
-//           subtitle="Sítio Santa Aurora"
-//           onMenuPress={() => console.log("Menu pressed")}
-//           onAvatarPress={() => console.log("Avatar pressed")}
-//         />
+  const handleBackPress = useCallback(() => {
+    router.back();
+  }, [router]);
 
-//         <ScrollView contentContainerStyle={styles.container}>
-//           {/* Título do Talhão */}
-//           <View style={styles.titleRow}>
-//             <TouchableOpacity onPress={() => console.log("Voltar")}>
-//               <Ionicons name="arrow-back" size={24} color="#1A2C3E" />
-//             </TouchableOpacity>
-//             <Text style={styles.title}>Talhão #01</Text>
-//             <View style={{ width: 24 }} />
-//           </View>
+  const handleArvorePress = useCallback((arvoreId: string) => {
+    console.log("Navigate to tree details:", arvoreId);
+    router.push({
+      pathname: '/(tabs)/History/field-three',
+      params: { treeId: arvoreId },
+    });
+  }, [router]);
 
-//           {/* CARD - Lista de Árvores (White Large) */}
-//           <CustomCard variant="white-large-feet">
-//             <View style={styles.cardContent}>
-//               {/* Busca e Cadastro */}
-//               <View style={styles.searchContainer}>
-//                 <View style={styles.searchBox}>
-//                   <Ionicons name="search-outline" size={20} color="#999" />
-//                   <TextInput
-//                     style={styles.searchInput}
-//                     placeholder="Buscar árvore"
-//                     placeholderTextColor="#999"
-//                     value={searchText}
-//                     onChangeText={setSearchText}
-//                   />
-//                 </View>
+  const handleAddArvore = useCallback(() => {
+    console.log("Add new tree");
+  }, []);
 
-//                 <TouchableOpacity style={styles.addButton}>
-//                   <Ionicons name="add-circle-outline" size={24} color="#6BC24A" />
-//                   <Text style={styles.addButtonText}>Cadastrar Árvore</Text>
-//                 </TouchableOpacity>
-//               </View>
+  const handleVerAnalises = useCallback(() => {
+    console.log("Ver análises detalhadas");
+  }, []);
 
-//               {/* Lista de Árvores */}
-//               <View style={styles.listHeader}>
-//                 <Text style={styles.listCount}>
-//                   {filteredArvores.length} Árvores cadastradas
-//                 </Text>
-//                 <TouchableOpacity
-//                   style={styles.sortButton}
-//                   onPress={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-//                 >
-//                   <Text style={styles.sortText}>Ordenar</Text>
-//                   <Ionicons
-//                     name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
-//                     size={14}
-//                     color="#666"
-//                   />
-//                 </TouchableOpacity>
-//               </View>
+  const handleSortToggle = useCallback(() => {
+    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+  }, []);
 
-//               {filteredArvores.map((arvore) => (
-//                 <TouchableOpacity key={arvore.id} style={styles.arvoreCard}>
-//                   <View style={styles.arvoreHeader}>
-//                     <Text style={styles.arvoreName}>{arvore.name}</Text>
-//                     {arvore.deficiency && (
-//                       <View style={styles.deficiencyBadge}>
-//                         <Text style={styles.deficiencyText}>{arvore.deficiency}</Text>
-//                       </View>
-//                     )}
-//                   </View>
+  return (
+    <Background>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
-//                   <View style={styles.arvoreInfo}>
-//                     <View style={[
-//                       styles.statusBadge,
-//                       { backgroundColor: getStatusBgColor(arvore.status) }
-//                     ]}>
-//                       <Text style={[styles.statusText, { color: getStatusColor(arvore.status) }]}>
-//                         {arvore.status}
-//                       </Text>
-//                     </View>
+        <Header
+          title="Roberto Almeida"
+          subtitle="Sítio Santa Aurora"
+          onMenuPress={() => console.log("Menu pressed")}
+          onAvatarPress={() => console.log("Avatar pressed")}
+        />
 
-//                     <View style={styles.dateInfo}>
-//                       <Ionicons name="calendar-outline" size={12} color="#888" />
-//                       <Text style={styles.arvoreDate}>
-//                         Criado em: {arvore.date}
-//                       </Text>
-//                     </View>
-//                   </View>
-//                 </TouchableOpacity>
-//               ))}
+        <ScrollView contentContainerStyle={styles.container}>
+          {/* Título do Talhão */}
+          <View style={styles.titleRow}>
+            <TouchableOpacity onPress={handleBackPress}>
+              <Ionicons name="arrow-back" size={24} color="#1A2C3E" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Talhão #01</Text>
+            <View style={{ width: 24 }} />
+          </View>
 
-//               {/* Botão Ver Análises Detalhadas */}
-//               <Button
-//                 title="Ver análises detalhadas"
-//                 variant="primary"
-//                 size="full"
-//                 onPress={() => console.log("Ver análises detalhadas")}
-//               />
-//             </View>
-//           </CustomCard>
-//         </ScrollView>
+          {/* CARD - Lista de Árvores (White Large) - CORRIGIDO */}
+          <CustomCard
+            variant="white-large-feet"
+            bottomContent={
+              <View style={styles.cardContent}>
+                {/* Busca e Cadastro */}
+                <View style={styles.searchContainer}>
+                  <View style={styles.searchBox}>
+                    <Ionicons name="search-outline" size={20} color="#999" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Buscar árvore"
+                      placeholderTextColor="#999"
+                      value={searchText}
+                      onChangeText={setSearchText}
+                    />
+                  </View>
 
-//         <BottomNavbar />
-//       </SafeAreaView>
-//     </Background>
-//   );
-// }
+                  <TouchableOpacity style={styles.addButton} onPress={handleAddArvore}>
+                    <Ionicons name="add-circle-outline" size={24} color="#6BC24A" />
+                    <Text style={styles.addButtonText}>Cadastrar Árvore</Text>
+                  </TouchableOpacity>
+                </View>
 
-// const styles = StyleSheet.create({
-//   safeArea: {
-//     flex: 1,
-//   },
+                {/* Lista de Árvores */}
+                <View style={styles.listHeader}>
+                  <Text style={styles.listCount}>
+                    {sortedArvores.length} Árvores cadastradas
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.sortButton}
+                    onPress={handleSortToggle}
+                  >
+                    <Text style={styles.sortText}>Ordenar</Text>
+                    <Ionicons
+                      name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
+                      size={14}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
+                </View>
 
-//   container: {
-//     padding: 16,
-//     paddingBottom: 40,
-//   },
+                {sortedArvores.map((arvore) => (
+                  <TouchableOpacity 
+                    key={arvore.id} 
+                    style={styles.arvoreCard}
+                    onPress={() => handleArvorePress(arvore.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.arvoreHeader}>
+                      <Text style={styles.arvoreName}>{arvore.name}</Text>
+                      {arvore.deficiency && (
+                        <View style={styles.deficiencyBadge}>
+                          <Text style={styles.deficiencyText}>{arvore.deficiency}</Text>
+                        </View>
+                      )}
+                    </View>
 
-//   titleRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     marginBottom: 20,
-//   },
+                    <View style={styles.arvoreInfo}>
+                      <View style={[
+                        styles.statusBadge,
+                        { backgroundColor: getStatusBgColor(arvore.status) }
+                      ]}>
+                        <Text style={[styles.statusText, { color: getStatusColor(arvore.status) }]}>
+                          {arvore.status}
+                        </Text>
+                      </View>
 
-//   title: {
-//     fontSize: 22,
-//     fontWeight: "700",
-//     color: "#1A2C3E",
-//   },
+                      <View style={styles.dateInfo}>
+                        <Ionicons name="calendar-outline" size={12} color="#888" />
+                        <Text style={styles.arvoreDate}>
+                          Criado em: {arvore.date}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
 
-//   cardContent: {
-//     padding: 16,
-//     paddingTop: 650,
-//   },
+                {/* Botão Ver Análises Detalhadas */}
+                <Button
+                  title="Ver análises detalhadas"
+                  variant="primary"
+                  size="full"
+                  onPress={handleVerAnalises}
+                />
+              </View>
+            }
+          />
+        </ScrollView>
 
-//   searchContainer: {
-//     flexDirection: "row",
-//     gap: 12,
-//     marginBottom: 20,
-//   },
+        <BottomNavbar />
+      </SafeAreaView>
+    </Background>
+  );
+}
 
-//   searchBox: {
-//     flex: 1,
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#F5F5F5",
-//     borderRadius: 12,
-//     paddingHorizontal: 12,
-//     paddingVertical: 10,
-//   },
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
 
-//   searchInput: {
-//     flex: 1,
-//     marginLeft: 8,
-//     fontSize: 14,
-//     color: "#1A2C3E",
-//   },
+  container: {
+    padding: 16,
+    paddingBottom: 40,
+  },
 
-//   addButton: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#F5F5F5",
-//     borderRadius: 12,
-//     paddingHorizontal: 12,
-//     paddingVertical: 10,
-//     gap: 6,
-//   },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
 
-//   addButtonText: {
-//     fontSize: 14,
-//     fontWeight: "500",
-//     color: "#6BC24A",
-//   },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1A2C3E",
+  },
 
-//   listHeader: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     marginBottom: 16,
-//     paddingBottom: 12,
-//     borderBottomWidth: 1,
-//     borderBottomColor: "#E5E5E5",
-//   },
+  cardContent: {
+    padding: 16,
+  },
 
-//   listCount: {
-//     fontSize: 14,
-//     fontWeight: "600",
-//     color: "#1A2C3E",
-//   },
+  searchContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
 
-//   sortButton: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     gap: 4,
-//   },
+  searchBox: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
 
-//   sortText: {
-//     fontSize: 12,
-//     color: "#666",
-//   },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#1A2C3E",
+  },
 
-//   arvoreCard: {
-//     backgroundColor: "#F9F9F9",
-//     borderRadius: 12,
-//     padding: 16,
-//     marginBottom: 12,
-//   },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
+  },
 
-//   arvoreHeader: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     marginBottom: 12,
-//   },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6BC24A",
+  },
 
-//   arvoreName: {
-//     fontSize: 16,
-//     fontWeight: "600",
-//     color: "#1A2C3E",
-//   },
+  listHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+  },
 
-//   deficiencyBadge: {
-//     backgroundColor: "#FFEBEE",
-//     paddingHorizontal: 10,
-//     paddingVertical: 4,
-//     borderRadius: 12,
-//   },
+  listCount: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1A2C3E",
+  },
 
-//   deficiencyText: {
-//     fontSize: 12,
-//     fontWeight: "500",
-//     color: "#D84315",
-//   },
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
 
-//   arvoreInfo: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     flexWrap: "wrap",
-//     gap: 8,
-//   },
+  sortText: {
+    fontSize: 12,
+    color: "#666",
+  },
 
-//   statusBadge: {
-//     paddingHorizontal: 10,
-//     paddingVertical: 4,
-//     borderRadius: 12,
-//   },
+  arvoreCard: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
 
-//   statusText: {
-//     fontSize: 12,
-//     fontWeight: "500",
-//   },
+  arvoreHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
 
-//   dateInfo: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     gap: 6,
-//   },
+  arvoreName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1A2C3E",
+  },
 
-//   arvoreDate: {
-//     fontSize: 12,
-//     color: "#888",
-//   },
-// });
+  deficiencyBadge: {
+    backgroundColor: "#FFEBEE",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  deficiencyText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#D84315",
+  },
+
+  arvoreInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  statusText: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+
+  dateInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  arvoreDate: {
+    fontSize: 12,
+    color: "#888",
+  },
+});

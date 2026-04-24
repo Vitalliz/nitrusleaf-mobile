@@ -3,7 +3,7 @@ import { Colors } from '@/constants/theme';
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 
-type CardVariant = 'yellow' | 'gray' | 'white' | 'red' | 'red-large';
+type CardVariant = 'yellow' | 'gray' | 'white' | 'red' | 'red-large' | 'yellow-large' | 'white-large-analysis' | 'white-large-feet';
 
 interface CustomCardProps {
   variant: CardVariant;
@@ -13,14 +13,15 @@ interface CustomCardProps {
 }
 
 const variantConfig = {
-  yellow: { height: 134, color: '#FFD700', textColor: '#000000' },
+  yellow: { height: 200, color: '#FFD700', textColor: '#000000' },
   gray: { height: 178, color: '#9CA3AF', textColor: '#FFFFFF' },
   white: { height: 274, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
   red: { height: 10, color: '#EF4444', textColor: '#FFFFFF' },
   'red-large': { height: 1200, color: '#EF4444', textColor: '#FFFFFF', alignItems: 'center'},
-  'yellow-large': { height: 260, color: '#FFD700', textColor: '#000000' },
-  'white-large': { height: 500, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
+  'yellow-large': { height: 200, color: '#FFD700', textColor: '#000000' },
+  'white-large-analysis': { height: 1000, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
   'white-large-feet': { height: 900, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
+  'white-large': { height: 500, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
   
 };
 
@@ -30,7 +31,7 @@ export const CustomCard = ({ variant, children, bottomContent, onPress }: Custom
   const CardContainer = onPress ? TouchableOpacity : View;
   
   return (
-    <CardContainer 
+    <CardContainer
       style={styles.card}
       onPress={onPress}
       activeOpacity={0.9}

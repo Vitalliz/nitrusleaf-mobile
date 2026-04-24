@@ -14,35 +14,35 @@ export default function BottomNavbar() {
       
       <TouchableOpacity
         style={[styles.button, isActive("Home") && styles.active]}
-        onPress={() => navigation.navigate("Home")}
+        onPress={() => navigation.navigate("(tabs)/AI/home")}
       >
         <Ionicons name="home-outline" size={24} color="#000" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, isActive("History") && styles.active]}
-        onPress={() => navigation.navigate("History")}
+        onPress={() => navigation.navigate("/(tabs)/History/fields")}
       >
         <Ionicons name="time-outline" size={24} color="#000" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.centerButton}
-        onPress={() => navigation.navigate("scan")}
+        onPress={() => navigation.navigate("(tabs)/AI/scan")}
       >
         <Ionicons name="camera-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, isActive("Map") && styles.active]}
-        onPress={() => navigation.navigate("Map")}
+        onPress={() => navigation.navigate("(tabs)/Map/maps")}
       >
         <Ionicons name="map-outline" size={24} color="#000" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, isActive("Profile") && styles.active]}
-        onPress={() => navigation.navigate("Profile")}
+        onPress={() => navigation.navigate("(tabs)/Profile/profile")}
       >
         <Ionicons name="person-outline" size={24} color="#000" />
       </TouchableOpacity>

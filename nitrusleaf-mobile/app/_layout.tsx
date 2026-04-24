@@ -29,7 +29,7 @@ export default function RootLayout() {
         }}
       >
         {/* Rotas Públicas (antes de login) */}
-        <Stack.Screen name="History/field-three" options={{ headerShown: false }} />
+        <Stack.Screen name="AI/home" options={{ headerShown: false }} />
         {/* <Stack.Screen name="login" options={{ headerShown: false }} /> */}
         <Stack.Screen
           name="analysis-form"
