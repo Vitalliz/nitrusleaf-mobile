@@ -8,10 +8,10 @@ import React from 'react';
          headerShown: false,
        }}
      >
-       <Stack.Screen name='AI/home' />
+       <Stack.Screen name='home' />
        <Stack.Screen name='fields' />
        <Stack.Screen name='maps' />
-       <Stack.Screen name='profile-edit' />
+        <Stack.Screen name='scan' />
        <Stack.Screen name='profile' />
     </Stack>
    );

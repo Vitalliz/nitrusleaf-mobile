@@ -3,7 +3,7 @@ import { Colors } from '@/constants/theme';
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 
-type CardVariant = 'yellow' | 'gray' | 'white' | 'red' | 'red-large' | 'yellow-large' | 'white-large-analysis' | 'white-large-feet';
+type CardVariant = 'yellow' | 'gray' | 'white' | 'red' | 'red-large' | 'yellow-large' | 'white-large-analysis' | 'white-large-feet' | 'white-large';
 
 interface CustomCardProps {
   variant: CardVariant;
@@ -21,7 +21,7 @@ const variantConfig = {
   'yellow-large': { height: 200, color: '#FFD700', textColor: '#000000' },
   'white-large-analysis': { height: 1000, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
   'white-large-feet': { height: 900, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
-  'white-large': { height: 500, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
+  'white-large': { height: 600, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
   
 };
 

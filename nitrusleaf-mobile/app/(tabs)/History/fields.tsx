@@ -283,7 +283,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    marginBottom: 12,
+    marginTop: 250,
+    marginBottom: 20,
+    
   },
   searchInput: {
     flex: 1,
@@ -299,7 +301,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     marginBottom: 20,
-    gap: 8,
+    gap: 20,
   },
   addButtonText: {
     fontSize: 16,

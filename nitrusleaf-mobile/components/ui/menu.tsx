@@ -1,48 +1,50 @@
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useRouter, usePathname } from "expo-router";
 
 export default function BottomNavbar() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const isActive = (routeName: string) => route.name === routeName;
+  const isActive = (route: string) => {
+    return pathname === `/${route}`;
+  };
 
   return (
     <View style={styles.container}>
       
       <TouchableOpacity
-        style={[styles.button, isActive("Home") && styles.active]}
-        onPress={() => navigation.navigate("(tabs)/AI/home")}
+        style={[styles.button, isActive("tabs/home") && styles.active]}
+        onPress={() => router.push("/(tabs)/AI/home")}
       >
         <Ionicons name="home-outline" size={24} color="#000" />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, isActive("History") && styles.active]}
-        onPress={() => navigation.navigate("/(tabs)/History/fields")}
+        style={[styles.button, isActive("tabs/fields") && styles.active]}
+        onPress={() => router.push("/(tabs)/History/fields")}
       >
         <Ionicons name="time-outline" size={24} color="#000" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.centerButton}
-        onPress={() => navigation.navigate("(tabs)/AI/scan")}
+        onPress={() => router.push("/(tabs)/AI/scan")}
       >
         <Ionicons name="camera-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, isActive("Map") && styles.active]}
-        onPress={() => navigation.navigate("(tabs)/Map/maps")}
+        style={[styles.button, isActive("tabs/maps") && styles.active]}
+        onPress={() => router.push("/(tabs)/Maps/maps")}
       >
         <Ionicons name="map-outline" size={24} color="#000" />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, isActive("Profile") && styles.active]}
-        onPress={() => navigation.navigate("(tabs)/Profile/profile")}
+        style={[styles.button, isActive("tabs/profile") && styles.active]}
+        onPress={() => router.push("/(tabs)/Settings/profile")}
       >
         <Ionicons name="person-outline" size={24} color="#000" />
       </TouchableOpacity>
@@ -58,6 +60,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
     alignItems: "center",
     justifyContent: "space-around",
+    position: "relative",
   },
 
   button: {
@@ -66,21 +69,22 @@ const styles = StyleSheet.create({
   },
 
   active: {
-    backgroundColor: "#EAD2B7", // tom bege do botão ativo
+    backgroundColor: "#EAD2B7",
   },
 
   centerButton: {
     position: "absolute",
     top: -25,
-    alignSelf: "center",
-    backgroundColor: "#4CAF50", // verde
+    left: "50%",
+    marginLeft: -35,
+    backgroundColor: "#4CAF50",
     width: 70,
     height: 70,
     borderRadius: 35,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 5, // sombra Android
-    shadowColor: "#000", // sombra iOS
+    elevation: 5,
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 5,
   },

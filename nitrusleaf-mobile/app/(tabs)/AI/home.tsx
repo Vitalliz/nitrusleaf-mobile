@@ -205,8 +205,11 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   cardContent: {
+    padding: 16,
     width: '100%',
-    alignItems: 'center',
+    // justifyContent: 'center',
+    // display: 'flex',
+   
   },
   cardTitle: {
     fontSize: 16,
