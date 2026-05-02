@@ -77,15 +77,15 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatar: {
-    width: 52,
-    height: 52,
+    width: 40,
+    height: 40,
     borderRadius: 26,
     borderWidth: 2,
     borderColor: '#E0E0E0',
   },
   avatarPlaceholder: {
-    width: 52,
-    height: 52,
+    width: 40,
+    height: 40,
     borderRadius: 26,
     borderWidth: 2,
     borderColor: '#E0E0E0',
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarInitial: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '600',
     color: '#555',
   },
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700',
     color: '#1A1A1A',
   },
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     marginRight: 3,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#888888',
   },
   menuButton: {

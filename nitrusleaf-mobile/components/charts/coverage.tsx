@@ -19,28 +19,29 @@ export const CoverageCard: React.FC<CoverageCardProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Cobertura das Análises</Text>
-      
-      <View style={styles.coverageValue}>
-        <Text style={styles.coverageNumber}>
-          {analyzed}/{total}
-        </Text>
-        <Text style={styles.coverageLabel}>árvores analisadas</Text>
-      </View>
 
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBarBackground}>
-          <View 
-            style={[
-              styles.progressBarFill,
-              { width: `${coveragePercentage}%` }
-            ]} 
-          />
+      <View style={styles.mainRow}>
+        <View style={styles.leftContent}>
+          <View style={styles.countRow}>
+            <Text style={styles.analyzedNumber}>{analyzed}</Text>
+            <Text style={styles.totalText}>/{total} árvores analisadas</Text>
+          </View>
+
+          <View style={styles.warningRow}>
+            <Ionicons name="warning" size={16} color="#F5A623" />
+            <Text style={styles.warningText}>
+              {notAnalyzed} árvores não analisadas
+            </Text>
+          </View>
         </View>
-        <Text style={styles.progressPercentage}>
-          {Math.round(coveragePercentage)}% de cobertura
-        </Text>
       </View>
 
+      {/* Barra de progresso */}
+      <View style={styles.progressBarBackground}>
+        <View style={[styles.progressBarFill, { width: `${coveragePercentage}%` }]} />
+      </View>
+
+      {/* Summary original mantido */}
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
           <View style={[styles.summaryDot, { backgroundColor: '#6BC24A' }]} />
@@ -63,46 +64,62 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderTopWidth: 4,
+    borderTopColor: '#98979F',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#1A2C3E',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  coverageValue: {
+  mainRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  coverageNumber: {
-    fontSize: 32,
+  leftContent: {
+    flex: 1,
+    gap: 10,
+  },
+  countRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
+  analyzedNumber: {
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#1A2C3E',
-    marginBottom: 4,
   },
-  coverageLabel: {
-    fontSize: 14,
-    color: '#666',
+  totalText: {
+    fontSize: 18,
+    color: '#1A2C3E',
+    fontWeight: '500',
   },
-  progressContainer: {
-    marginBottom: 16,
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  warningText: {
+    fontSize: 13,
+    color: '#888',
   },
   progressBarBackground: {
     height: 10,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#E0E0E0',
     borderRadius: 5,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 16, 
   },
   progressBarFill: {
     height: 10,
-    backgroundColor: '#6BC24A',
+    backgroundColor: '#F5A623',
     borderRadius: 5,
-  },
-  progressPercentage: {
-    fontSize: 12,
-    color: '#888',
-    textAlign: 'center',
   },
   summaryContainer: {
     flexDirection: 'row',

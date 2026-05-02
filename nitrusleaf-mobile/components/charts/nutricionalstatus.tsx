@@ -16,16 +16,23 @@ export const NutritionalStatusCard: React.FC<NutritionalStatusProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Status Nutricional da Propriedade</Text>
-      
+
       <View style={styles.statusRow}>
         <View style={styles.statusItem}>
           <Text style={styles.statusValue}>{manganesPercentage}%</Text>
-          <Text style={styles.statusLabel}>Manganês</Text>
+          <View style={[styles.badge, { backgroundColor: '#F5A623' }]}>
+            <Text style={styles.badgeText}>Manganês</Text>
+          </View>
         </View>
-        
+
+        {/* Divisória vertical */}
+        <View style={styles.divider} />
+
         <View style={styles.statusItem}>
           <Text style={styles.statusValue}>{cobrePercentage}%</Text>
-          <Text style={styles.statusLabel}>Cobre</Text>
+          <View style={[styles.badge, { backgroundColor: '#E65723' }]}>
+            <Text style={styles.badgeText}>Cobre</Text>
+          </View>
         </View>
       </View>
 
@@ -42,40 +49,55 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
     padding: 20,
     marginBottom: 16,
+    borderTopWidth: 4,
+    borderTopColor: '#F5A623',
   },
   title: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-    marginBottom: 24,
-    textAlign: 'center',
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 20,
   },
   statusRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  statusItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statusValue: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#1A2C3E',
     marginBottom: 8,
   },
-  statusLabel: {
-    fontSize: 14,
-    color: '#666',
+  statusItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1A2C3E',
+  },
+  badge: {
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  badgeText: {
+    color: '#000000',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  divider: {
+    width: 1,
+    height: 70,
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: 8,
   },
   footerText: {
     fontSize: 13,
     color: '#6BC24A',
     fontWeight: '500',
     textAlign: 'center',
+    marginTop: 8,
   },
 });

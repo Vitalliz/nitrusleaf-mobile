@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 70,
-    paddingHorizontal: 38,
+    paddingHorizontal: 25,
   },
   iconsBox: {
     width: "100%",

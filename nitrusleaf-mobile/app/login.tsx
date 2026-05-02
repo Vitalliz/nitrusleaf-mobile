@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
 container: {
     flex: 1,
     alignItems: "center",
-    paddingHorizontal: 38,
+    paddingHorizontal: 25,
     paddingTop: 70,
     gap: 10
 },

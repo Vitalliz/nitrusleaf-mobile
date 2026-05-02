@@ -14,11 +14,10 @@ import {
   View,
 } from "react-native";
 
-import { Badge } from "@/components/badgeprops";
 import { CustomCard } from "@/components/cards/card";
 import { Background } from "@/components/ui/background";
 import { Button } from "@/components/ui/button";
-import BottomNavbar from "@/components/ui/menu";
+import BottomNavbar from "@/components/ui/tab-bar";
 
 // Tipagem para os parâmetros
 interface SummaryParams {
@@ -55,9 +54,24 @@ export default function SummaryScreen() {
   };
 
   const statusOptions = [
-    { label: "Em tratamento", value: "treatment", color: "#FBBF24", bgColor: "#FEFCE8" },
-    { label: "Concluído", value: "completed", color: "#58B741", bgColor: "#F0FDF4" },
-    { label: "Pendente", value: "pending", color: "#9CA3AF", bgColor: "#F3F4F6" },
+    {
+      label: "Em tratamento",
+      value: "treatment",
+      color: "#FBBF24",
+      bgColor: "#FEFCE8",
+    },
+    {
+      label: "Concluído",
+      value: "completed",
+      color: "#58B741",
+      bgColor: "#F0FDF4",
+    },
+    {
+      label: "Pendente",
+      value: "pending",
+      color: "#9CA3AF",
+      bgColor: "#F3F4F6",
+    },
   ];
 
   const getStatusDisplay = () => {
@@ -138,13 +152,19 @@ export default function SummaryScreen() {
               {/* Deficiência Detectada */}
               <View style={styles.infoBlock}>
                 <Text style={styles.infoLabel}>Deficiência detectada:</Text>
-                <Text style={styles.infoValueBold}>{analysisData.deficiency}</Text>
+                <Text style={styles.infoValueBold}>
+                  {analysisData.deficiency}
+                </Text>
               </View>
 
               {/* Probabilidade */}
               <View style={styles.infoBlock}>
-                <Text style={styles.infoLabel}>Probabilidade estimada da IA:</Text>
-                <Text style={styles.infoValueBold}>{analysisData.probability}%</Text>
+                <Text style={styles.infoLabel}>
+                  Probabilidade estimada da IA:
+                </Text>
+                <Text style={styles.infoValueBold}>
+                  {analysisData.probability}%
+                </Text>
               </View>
 
               {/* Linha divisória */}
@@ -160,7 +180,9 @@ export default function SummaryScreen() {
               <View style={styles.infoBlock}>
                 <Text style={styles.infoLabel}>Status:</Text>
                 {status === null ? (
-                  <TouchableOpacity onPress={() => setShowStatusOptions(!showStatusOptions)}>
+                  <TouchableOpacity
+                    onPress={() => setShowStatusOptions(!showStatusOptions)}
+                  >
                     <Text style={styles.addStatusText}>+ Adicionar status</Text>
                   </TouchableOpacity>
                 ) : (
@@ -221,8 +243,12 @@ export default function SummaryScreen() {
               <View style={styles.locationSection}>
                 <Text style={styles.sectionTitle}>Localização da amostra</Text>
                 <View style={styles.locationList}>
-                  <Text style={styles.locationItem}>{analysisData.location.talhao}</Text>
-                  <Text style={styles.locationItem}>{analysisData.location.tree}</Text>
+                  <Text style={styles.locationItem}>
+                    {analysisData.location.talhao}
+                  </Text>
+                  <Text style={styles.locationItem}>
+                    {analysisData.location.tree}
+                  </Text>
                 </View>
                 <TouchableOpacity onPress={handleEditLocation}>
                   <Text style={styles.linkText}>Alterar localização</Text>
@@ -244,7 +270,9 @@ export default function SummaryScreen() {
                 {/* Botões do relatório - só aparecem após adicionar status */}
                 {showReportActions && (
                   <View style={styles.reportActions}>
-                    <TouchableOpacity onPress={() => console.log("Editar relatório")}>
+                    <TouchableOpacity
+                      onPress={() => console.log("Editar relatório")}
+                    >
                       <Text style={styles.reportAction}>Editar relatório</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={handleExportPDF}>

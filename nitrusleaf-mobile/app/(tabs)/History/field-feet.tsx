@@ -1,22 +1,22 @@
-import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  TouchableOpacity,
-  TextInput,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
+import {
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { Background } from "@/components/ui/background";
-import { Header } from "@/components/header";
-import { Button } from "@/components/ui/button";
-import BottomNavbar from "@/components/ui/menu";
 import { CustomCard } from "@/components/cards/card";
+import { Background } from "@/components/ui/background";
+import { Button } from "@/components/ui/button";
+import BottomNavbar from "@/components/ui/tab-bar";
+import { Header } from "@/components/ui/user-header";
 
 export default function TalhaoDetailScreen() {
   const router = useRouter();
@@ -68,8 +68,8 @@ export default function TalhaoDetailScreen() {
     },
   ];
 
-  const filteredArvores = arvores.filter(arvore =>
-    arvore.name.toLowerCase().includes(searchText.toLowerCase())
+  const filteredArvores = arvores.filter((arvore) =>
+    arvore.name.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   // Ordenar árvores
@@ -109,13 +109,16 @@ export default function TalhaoDetailScreen() {
     router.back();
   }, [router]);
 
-  const handleArvorePress = useCallback((arvoreId: string) => {
-    console.log("Navigate to tree details:", arvoreId);
-    router.push({
-      pathname: '/(tabs)/History/field-three',
-      params: { treeId: arvoreId },
-    });
-  }, [router]);
+  const handleArvorePress = useCallback(
+    (arvoreId: string) => {
+      console.log("Navigate to tree details:", arvoreId);
+      router.push({
+        pathname: "/(tabs)/History/field-three",
+        params: { treeId: arvoreId },
+      });
+    },
+    [router],
+  );
 
   const handleAddArvore = useCallback(() => {
     console.log("Add new tree");
@@ -126,7 +129,7 @@ export default function TalhaoDetailScreen() {
   }, []);
 
   const handleSortToggle = useCallback(() => {
-    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   }, []);
 
   return (
@@ -169,8 +172,15 @@ export default function TalhaoDetailScreen() {
                     />
                   </View>
 
-                  <TouchableOpacity style={styles.addButton} onPress={handleAddArvore}>
-                    <Ionicons name="add-circle-outline" size={24} color="#6BC24A" />
+                  <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={handleAddArvore}
+                  >
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={24}
+                      color="#6BC24A"
+                    />
                     <Text style={styles.addButtonText}>Cadastrar Árvore</Text>
                   </TouchableOpacity>
                 </View>
@@ -194,8 +204,8 @@ export default function TalhaoDetailScreen() {
                 </View>
 
                 {sortedArvores.map((arvore) => (
-                  <TouchableOpacity 
-                    key={arvore.id} 
+                  <TouchableOpacity
+                    key={arvore.id}
                     style={styles.arvoreCard}
                     onPress={() => handleArvorePress(arvore.id)}
                     activeOpacity={0.7}
@@ -204,23 +214,36 @@ export default function TalhaoDetailScreen() {
                       <Text style={styles.arvoreName}>{arvore.name}</Text>
                       {arvore.deficiency && (
                         <View style={styles.deficiencyBadge}>
-                          <Text style={styles.deficiencyText}>{arvore.deficiency}</Text>
+                          <Text style={styles.deficiencyText}>
+                            {arvore.deficiency}
+                          </Text>
                         </View>
                       )}
                     </View>
 
                     <View style={styles.arvoreInfo}>
-                      <View style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusBgColor(arvore.status) }
-                      ]}>
-                        <Text style={[styles.statusText, { color: getStatusColor(arvore.status) }]}>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          { backgroundColor: getStatusBgColor(arvore.status) },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusText,
+                            { color: getStatusColor(arvore.status) },
+                          ]}
+                        >
                           {arvore.status}
                         </Text>
                       </View>
 
                       <View style={styles.dateInfo}>
-                        <Ionicons name="calendar-outline" size={12} color="#888" />
+                        <Ionicons
+                          name="calendar-outline"
+                          size={12}
+                          color="#888"
+                        />
                         <Text style={styles.arvoreDate}>
                           Criado em: {arvore.date}
                         </Text>

@@ -4,12 +4,12 @@ import React from 'react';
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="AI" options={{ title: 'Home' }} />
-      <Tabs.Screen name="History" options={{ title: 'Histórico' }} />
-      <Tabs.Screen name="Maps" options={{ title: 'Mapas' }} />
-      <Tabs.Screen name="Register" options={{ title: 'Cadastro' }} />
-      <Tabs.Screen name="Settings" options={{ title: 'Config' }} />
+    <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
+      <Tabs.Screen name="home" />
+      <Tabs.Screen name="AI" />        
+      <Tabs.Screen name="History" />  
+      <Tabs.Screen name="Maps" />     
+      <Tabs.Screen name="Settings" />  
     </Tabs>
   );
 }

@@ -1,25 +1,25 @@
 // app/HistoryScreen.tsx
-import React, { useState, useMemo, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
+import {
+  FlatList,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { Background } from "@/components/ui/background";
-import { Header } from "@/components/header";
-import { Button } from "@/components/ui/button";
-import BottomNavbar from "@/components/ui/menu";
+import { CustomCard } from "@/components/cards/card";
 import StatCard from "@/components/cards/statcard";
 import TalhaoCard, { TalhaoData } from "@/components/cards/talhaocard";
-import { CustomCard } from "@/components/cards/card";
+import { Background } from "@/components/ui/background";
+import { Button } from "@/components/ui/button";
+import BottomNavbar from "@/components/ui/tab-bar";
+import { Header } from "@/components/ui/user-header";
 
 // Mock data
 const talhoesData: TalhaoData[] = [
@@ -55,41 +55,44 @@ export default function HistoryScreen() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const filteredTalhoes = useMemo(() => {
-    let filtered = talhoesData.filter(talhao =>
-      talhao.name.toLowerCase().includes(searchText.toLowerCase())
+    let filtered = talhoesData.filter((talhao) =>
+      talhao.name.toLowerCase().includes(searchText.toLowerCase()),
     );
-    
+
     if (sortOrder === "asc") {
       filtered = filtered.sort((a, b) => a.name.localeCompare(b.name));
     } else {
       filtered = filtered.sort((a, b) => b.name.localeCompare(a.name));
     }
-    
+
     return filtered;
   }, [searchText, sortOrder]);
 
-  const handleTalhaoPress = useCallback((talhaoId: string) => {
-    console.log("Navigate to talhao details:", talhaoId);
-    router.push({
-      pathname: '/(tabs)/History/field-feet',
-      params: { talhaoId: talhaoId },
-    });
-  }, [router]);
+  const handleTalhaoPress = useCallback(
+    (talhaoId: string) => {
+      console.log("Navigate to talhao details:", talhaoId);
+      router.push({
+        pathname: "/(tabs)/History/field-feet",
+        params: { talhaoId: talhaoId },
+      });
+    },
+    [router],
+  );
 
   const handleAddTalhao = useCallback(() => {
     console.log("Add new talhao");
   }, []);
 
   const handleSortToggle = useCallback(() => {
-    setSortOrder(prev => prev === "asc" ? "desc" : "asc");
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   }, []);
 
-  const renderTalhaoItem = useCallback(({ item }: { item: TalhaoData }) => (
-    <TalhaoCard 
-      talhao={item} 
-      onPress={() => handleTalhaoPress(item.id)}
-    />
-  ), [handleTalhaoPress]);
+  const renderTalhaoItem = useCallback(
+    ({ item }: { item: TalhaoData }) => (
+      <TalhaoCard talhao={item} onPress={() => handleTalhaoPress(item.id)} />
+    ),
+    [handleTalhaoPress],
+  );
 
   const keyExtractor = useCallback((item: TalhaoData) => item.id, []);
 
@@ -98,8 +101,8 @@ export default function HistoryScreen() {
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
-        <Header 
-          title="Roberto Almeida" 
+        <Header
+          title="Roberto Almeida"
           subtitle="Sítio Santa Aurora"
           onMenuPress={() => console.log("Menu pressed")}
           onAvatarPress={() => console.log("Avatar pressed")}
@@ -150,7 +153,7 @@ export default function HistoryScreen() {
               <CustomCard variant="white-large-feet">
                 <View style={styles.cardInnerContent}>
                   <Text style={styles.cardTitle}>Talhões</Text>
-                  
+
                   {/* Search Box */}
                   <View style={styles.searchBox}>
                     <Ionicons name="search-outline" size={20} color="#999" />
@@ -164,16 +167,20 @@ export default function HistoryScreen() {
                       accessibilityHint="Digite o nome do talhão para filtrar"
                     />
                   </View>
-                  
+
                   {/* Botão Cadastrar */}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.addButton}
                     onPress={handleAddTalhao}
                     activeOpacity={0.8}
                     accessibilityLabel="Cadastrar novo talhão"
                     accessibilityHint="Abre o formulário para cadastrar um novo talhão"
                   >
-                    <Ionicons name="add-circle-outline" size={24} color="#6BC24A" />
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={24}
+                      color="#6BC24A"
+                    />
                     <Text style={styles.addButtonText}>Cadastrar Talhão</Text>
                   </TouchableOpacity>
 
@@ -182,17 +189,21 @@ export default function HistoryScreen() {
                     <Text style={styles.listCount}>
                       {filteredTalhoes.length} Talhões cadastrados
                     </Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.sortButton}
                       onPress={handleSortToggle}
                       accessibilityLabel="Ordenar talhões"
-                      accessibilityHint={sortOrder === "asc" ? "Ordenação crescente" : "Ordenação decrescente"}
+                      accessibilityHint={
+                        sortOrder === "asc"
+                          ? "Ordenação crescente"
+                          : "Ordenação decrescente"
+                      }
                     >
                       <Text style={styles.sortText}>Ordenar</Text>
-                      <Ionicons 
-                        name={sortOrder === "asc" ? "arrow-up" : "arrow-down"} 
-                        size={14} 
-                        color="#666" 
+                      <Ionicons
+                        name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
+                        size={14}
+                        color="#666"
                       />
                     </TouchableOpacity>
                   </View>
@@ -209,7 +220,7 @@ export default function HistoryScreen() {
                   />
                 </View>
               </CustomCard>
-              
+
               {/* Botão Ver Análises */}
               <View style={styles.buttonContainer}>
                 <Button
@@ -260,7 +271,6 @@ const styles = StyleSheet.create({
   },
   cardInnerContent: {
     width: "100%",
-    
   },
   cardTitle: {
     fontSize: 16,
@@ -285,7 +295,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginTop: 250,
     marginBottom: 20,
-    
   },
   searchInput: {
     flex: 1,
