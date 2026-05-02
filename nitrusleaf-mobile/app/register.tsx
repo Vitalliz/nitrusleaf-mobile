@@ -35,7 +35,7 @@ export default function RegisterScreen() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
   useEffect(() => {
-    if (isSignedIn) router.replace("/(tabs)/home");
+    if (isSignedIn) router.replace("/(tabs)/AI/home");
   }, [isSignedIn, router]);
 
   // Lógica para avançar ou finalizar
@@ -67,7 +67,7 @@ export default function RegisterScreen() {
         name, lastName, email, phone, cpf, password, passwordConfirmation,
         // adicione propName, cep, etc, se o seu context suportar
       });
-      router.replace("/(tabs)/home");
+      router.replace("/(tabs)/AI/home");
     } catch (e: any) {
       alert(e?.message ?? "Erro ao cadastrar.");
     }

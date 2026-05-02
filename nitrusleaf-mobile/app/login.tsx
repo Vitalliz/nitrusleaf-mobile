@@ -20,7 +20,7 @@ export default function LoginScreen() {
     const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
-        if (isSignedIn) router.replace("/(tabs)/home");
+        if (isSignedIn) router.replace("/(tabs)/AI/home");
     }, [isSignedIn, router]);
 
     useEffect(() => {
@@ -53,7 +53,7 @@ export default function LoginScreen() {
         }
 
         await login(email, password);
-        router.replace("/(tabs)/home");
+        router.replace("/(tabs)/AI/home");
         } catch (e: any) {
         alert(e?.message ?? "Falha ao entrar.");
         }
