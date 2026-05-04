@@ -46,7 +46,7 @@ export const CustomCard = ({ variant, children, bottomContent, onPress }: Custom
         }
       ]}>
         {(
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           {children ? children : (
             <>
               {variant === 'yellow' && <Text style={{ color: '#000' }}></Text>}

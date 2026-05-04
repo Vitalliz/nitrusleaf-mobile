@@ -143,7 +143,28 @@ export default function HomeScreen() {
           />
 
           {/* Ocorrências totais de deficiências em % */}
-          
+          <CustomCard variant="white-large">
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>
+                Ocorrências totais de deficiências em %
+              </Text>
+              
+              <DonutChart
+                data={donutData}
+                size={200}
+                innerRadius={60}
+                centerText={`${coverageData.analyzed}/${coverageData.total}`}
+                showLabels={true}
+              />
+              
+              <Button
+                title="Ver detalhes"
+                variant="primary"
+                size="full"
+                onPress={handleVerDetalhes}
+              />
+            </View>
+          </CustomCard>
 
           {/* Deficiência por talhão */}
           <GroupedColumnChart
