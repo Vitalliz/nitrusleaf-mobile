@@ -14,7 +14,7 @@ type TabItem = {
 const TABS: TabItem[] = [
   { route: '/(tabs)/AI/home',    icon: 'home-outline' },
   { route: '/(tabs)/History/fields', icon: 'time-outline' },
-  { route: '/(tabs)/menu',    icon: 'camera-outline', isCamera: true },
+  { route: '/(tabs)/AI/scan',    icon: 'camera-outline', isCamera: true },
   { route: '/(tabs)/Maps/maps',    icon: 'map-outline' },
   { route: '/(tabs)/Settings/profile', icon: 'person-outline' },
 ];

@@ -71,7 +71,7 @@ export default function RealCameraScreen() {
   };
 
   const handleLocation = () => {
-    router.push('/(tabs)/AI/analysis-summary');
+    router.push('/(tabs)/AI/result');
   };
 
   const toggleCameraFacing = () => {
@@ -168,11 +168,11 @@ export default function RealCameraScreen() {
             onPress={handleCapture}
             disabled={!isCameraReady || isProcessing}
           >
-            <Ionicons name="camera" size={36} color="#FFFFFF" />
+            <Ionicons name="camera-outline" size={36} color="#FFFFFF" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.sideButton} onPress={handleLocation}>
-            <Ionicons name="map-outline" size={28} color="#2B2B2B" />
+            <Ionicons name="images-outline" size={28} color="#2B2B2B" />
           </TouchableOpacity>
         </View>
       </CameraView>
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   gridCornerBL: {
     position: 'absolute',
-    bottom: -20,
+    bottom: -5,
     left: -20,
     width: 40,
     height: 40,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   gridCornerBR: {
     position: 'absolute',
-    bottom: -20,
+    bottom: -5,
     right: -20,
     width: 40,
     height: 40,
@@ -316,6 +316,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
+    marginBottom: 20,
     overflow: 'hidden',
   },
   processingOverlay: {
@@ -360,8 +361,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   captureButton: {
-    width: 84,
-    height: 84,
+    width: 75,
+    height: 75,
     borderRadius: 42,
     backgroundColor: '#6BC24A',
     justifyContent: 'center',
@@ -371,8 +372,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
-    borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   captureButtonDisabled: {
     backgroundColor: '#CCCCCC',
