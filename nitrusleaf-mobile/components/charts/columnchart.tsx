@@ -1,19 +1,9 @@
-// components/charts/GroupedColumnChart.tsx
+// components/charts/columnchart.tsx
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Svg, {
-  Rect,
-  Line,
-  Text as SvgText,
-  G,
-} from 'react-native-svg';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import Svg, { Rect, Line, Text as SvgText, G } from 'react-native-svg';
+import { CustomCard } from '@/components/cards/card';
+import { Button } from '@/components/ui/button';
 
 export interface GroupedColumnData {
   talhao: string;
@@ -29,198 +19,169 @@ interface GroupedColumnChartProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const CHART_PADDING = 40;
 const BAR_WIDTH = 24;
 const BAR_GAP = 8;
+const Y_AXIS_WIDTH = 32;
 
 export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
   data,
   onDetailPress,
-  height = 280,
+  height = 220,
   showDownloadButton = true,
 }) => {
-  const maxValue = Math.max(
-    ...data.flatMap(item => [item.cobre, item.manganes]),
-    10
-  );
-  
-  const yAxisMax = Math.ceil(maxValue / 5) * 5;
-  const yAxisSteps = [0, 5, 10, 15, 20].filter(step => step <= yAxisMax);
-  
-  const chartWidth = screenWidth - 64; // 16px padding on each side * 2
-  const groupWidth = BAR_WIDTH * 2 + BAR_GAP;
-  const totalGroupsWidth = groupWidth * data.length;
-  const startX = (chartWidth - totalGroupsWidth) / 2 + CHART_PADDING;
+  // Horizontal padding inside the card (matches cardContent padding: 16)
+  const chartWidth = screenWidth - 50 * 2; // 25 page padding * 2 + card internal padding
 
-  const getBarHeight = (value: number) => {
-    return (value / yAxisMax) * (height - 60);
-  };
+  const maxValue = Math.max(...data.flatMap(d => [d.cobre, d.manganes]), 10);
+  const yAxisMax = Math.ceil(maxValue / 5) * 5;
+  const yAxisSteps = [0, 5, 10, 15, 20].filter(s => s <= yAxisMax + 5);
+
+  const TOP_PADDING = 18;
+  const drawHeight = height - 32 - TOP_PADDING; // leave room for x-axis labels
+  const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 16; // 16 = spacing between groups
+  const totalGroupsWidth = groupWidth * data.length;
+  const startX = Y_AXIS_WIDTH + (chartWidth - Y_AXIS_WIDTH - totalGroupsWidth) / 2;
+
+  const getBarH = (value: number) => (value / yAxisMax) * drawHeight;
+  const baseY = drawHeight + TOP_PADDING;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <CustomCard variant="white-large">
+      <View style={styles.cardContent}>
+        {/* Title */}
         <Text style={styles.title}>Deficiência por talhão</Text>
-        {showDownloadButton && (
-          <TouchableOpacity style={styles.downloadButton}>
-            <Ionicons name="download-outline" size={20} color="#666" />
-          </TouchableOpacity>
-        )}
-      </View>
 
-      <View style={[styles.chartContainer, { height }]}>
-        <Svg width={chartWidth} height={height}>
-          {/* Y-axis grid lines */}
-          {yAxisSteps.map((step) => {
-            const y = height - 40 - (step / yAxisMax) * (height - 60);
-            return (
-              <G key={step}>
-                <Line
-                  x1={CHART_PADDING}
-                  y1={y}
-                  x2={chartWidth}
-                  y2={y}
-                  stroke="#E5E5E5"
-                  strokeWidth={1}
-                  strokeDasharray="5,5"
-                />
-                <SvgText
-                  x={CHART_PADDING - 8}
-                  y={y + 4}
-                  fontSize={11}
-                  fill="#888"
-                  textAnchor="end"
-                >
-                  {step}
-                </SvgText>
-              </G>
-            );
-          })}
+        {/* Chart */}
+        <View style={{ height: height + 20 }}>
+          <Svg width={chartWidth} height={height + 20}>
+            {/* Grid lines + Y labels */}
+            {yAxisSteps.map((step) => {
+              const y = baseY - getBarH(step);
+              return (
+                <G key={step}>
+                  <Line
+                    x1={Y_AXIS_WIDTH}
+                    y1={y}
+                    x2={chartWidth}
+                    y2={y}
+                    stroke="#EBEBEB"
+                    strokeWidth={1}
+                  />
+                  <SvgText
+                    x={Y_AXIS_WIDTH - 6}
+                    y={y + 4}
+                    fontSize={11}
+                    fill="#AAA"
+                    textAnchor="end"
+                  >
+                    {step}
+                  </SvgText>
+                </G>
+              );
+            })}
 
-          {/* Bars */}
-          {data.map((item, groupIndex) => {
-            const groupX = startX + groupIndex * groupWidth;
-            const cobreHeight = getBarHeight(item.cobre);
-            const manganesHeight = getBarHeight(item.manganes);
-            const baseY = height - 40;
+            {/* Bars + X labels */}
+            {data.map((item, i) => {
+              const gx = startX + i * groupWidth;
+              const cobreH = getBarH(item.cobre);
+              const manganesH = getBarH(item.manganes);
 
-            return (
-              <G key={groupIndex}>
-                {/* Cobre Bar */}
-                <Rect
-                  x={groupX}
-                  y={baseY - cobreHeight}
-                  width={BAR_WIDTH}
-                  height={cobreHeight}
-                  fill="#E65723"
-                  rx={4}
-                />
-                {/* Manganês Bar */}
-                <Rect
-                  x={groupX + BAR_WIDTH + BAR_GAP}
-                  y={baseY - manganesHeight}
-                  width={BAR_WIDTH}
-                  height={manganesHeight}
-                  fill="#FBBF24"
-                  rx={4}
-                />
-                {/* X-axis label */}
-                <SvgText
-                  x={groupX + BAR_WIDTH + 4}
-                  y={baseY + 16}
-                  fontSize={12}
-                  fill="#666"
-                  textAnchor="middle"
-                >
-                  {item.talhao}
-                </SvgText>
-              </G>
-            );
-          })}
-        </Svg>
-      </View>
-
-      {/* Legend */}
-      <View style={styles.legendContainer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#E65723' }]} />
-          <Text style={styles.legendText}>Cobre</Text>
+              return (
+                <G key={i}>
+                  {/* Cobre */}
+                  <Rect
+                    x={gx}
+                    y={baseY - cobreH}
+                    width={BAR_WIDTH}
+                    height={cobreH}
+                    fill="#E65723"
+                    rx={4}
+                  />
+                  {/* Manganês */}
+                  <Rect
+                    x={gx + BAR_WIDTH + BAR_GAP}
+                    y={baseY - manganesH}
+                    width={BAR_WIDTH}
+                    height={manganesH}
+                    fill="#FBBF24"
+                    rx={4}
+                  />
+                  {/* X label */}
+                  <SvgText
+                    x={gx + BAR_WIDTH + BAR_GAP / 2}
+                    y={baseY + 16}
+                    fontSize={11}
+                    fill="#666"
+                    textAnchor="middle"
+                  >
+                    {item.talhao}
+                  </SvgText>
+                </G>
+              );
+            })}
+          </Svg>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#FBBF24' }]} />
-          <Text style={styles.legendText}>Manganês</Text>
+
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#E65723' }]} />
+            <Text style={styles.legendText}>Cobre</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
+            <Text style={styles.legendText}>Manganês</Text>
+          </View>
+        </View>
+
+        {/* Button */}
+        <View style={styles.buttonWrapper}>
+          <Button
+            title="Detalhar"
+            variant="primary"
+            size="full"
+            onPress={onDetailPress}
+          />
         </View>
       </View>
-
-      {/* Detail Button */}
-      {onDetailPress && (
-        <TouchableOpacity style={styles.detailButton} onPress={onDetailPress}>
-          <Text style={styles.detailButtonText}>Detalhar</Text>
-          <Ionicons name="arrow-forward" size={16} color="#6BC24A" />
-        </TouchableOpacity>
-      )}
-    </View>
+    </CustomCard>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+  cardContent: {
     padding: 16,
-    marginBottom: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+    width: '100%',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#1A2C3E',
+    marginBottom: 12,
   },
-  downloadButton: {
-    padding: 4,
-  },
-  chartContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  legendContainer: {
+  legend: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 24,
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 5,
+    marginBottom: 4,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  legendDot: {
+    width: 28,
+    height: 18,
+    borderRadius: 14,
   },
   legendText: {
     fontSize: 13,
-    color: '#666',
-  },
-  detailButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  detailButtonText: {
-    fontSize: 14,
+    color: '#444',
     fontWeight: '500',
-    color: '#6BC24A',
+  },
+  buttonWrapper: {
+    marginTop: 20,
   },
 });

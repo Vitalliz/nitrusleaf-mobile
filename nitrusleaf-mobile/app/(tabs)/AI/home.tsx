@@ -164,8 +164,7 @@ export default function HomeScreen() {
           <GroupedColumnChart
             data={groupedColumnData}
             onDetailPress={handleDetailPress}
-            height={280}
-            showDownloadButton={false}
+            height={180}
           />
 
           {/* Evolução das deficiências (%) */}
