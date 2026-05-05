@@ -1,4 +1,4 @@
-// components/CustomCard.tsx
+// components/cards/card.tsx
 import { Colors } from '@/constants/theme';
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
@@ -13,55 +13,34 @@ interface CustomCardProps {
 }
 
 const variantConfig = {
-  yellow: { height: 200, color: '#FFD700', textColor: '#000000' },
-  gray: { height: 178, color: '#9CA3AF', textColor: '#FFFFFF' },
-  white: { height: 274, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
-  red: { height: 10, color: '#EF4444', textColor: '#FFFFFF' },
-  'red-large': { height: 1200, color: '#EF4444', textColor: '#FFFFFF', alignItems: 'center'},
-  'yellow-large': { height: 200, color: '#FFD700', textColor: '#000000' },
-  'white-large-analysis': { height: 1000, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
-  'white-large-feet': { height: 900, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
-  'white-large': { height: 600, color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
-  
+  yellow: { color: '#FFD700', textColor: '#000000' },
+  gray: { color: '#9CA3AF', textColor: '#FFFFFF' },
+  white: { color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
+  red: { color: '#EF4444', textColor: '#FFFFFF' },
+  'red-large': { color: '#EF4444', textColor: '#FFFFFF' },
+  'yellow-large': { color: '#FFD700', textColor: '#000000' },
+  'white-large-analysis': { color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
+  'white-large-feet': { color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
+  'white-large': { color: '#FFFFFF', textColor: '#000000', borderWidth: 1, borderColor: '#E5E5E5' },
 };
 
 export const CustomCard = ({ variant, children, bottomContent, onPress }: CustomCardProps) => {
-  const { height: topHeight, color: backgroundColor, textColor  } = variantConfig[variant];
-  
+  const { color: backgroundColor } = variantConfig[variant];
+
   const CardContainer = onPress ? TouchableOpacity : View;
-  
+
   return (
     <CardContainer
       style={styles.card}
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Parte Superior */}
-      <View style={[
-        styles.topSection, 
-        { 
-          height: topHeight, 
-          backgroundColor: backgroundColor,
-
-        }
-      ]}>
-        {(
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          {children ? children : (
-            <>
-              {variant === 'yellow' && <Text style={{ color: '#000' }}></Text>}
-              {variant === 'gray' && <Text style={{ color: '#FFF' }}></Text>}
-              {variant === 'white' && <Text style={{ color: '#000' }}></Text>}
-              {variant === 'red' && <Text style={{ color: '#FFF' }}></Text>}
-              {variant === 'red-large' && <Text style={{ color: '#FFF' }}></Text>}
-            </>
-          )}
+      <View style={[styles.topSection, { backgroundColor }]}>
+        <View style={styles.inner}>
+          {children}
         </View>
-
-        )}
       </View>
-      
-      {/* Parte Inferior */}
+
       {bottomContent && (
         <View style={styles.bottomSection}>
           {bottomContent}
@@ -73,39 +52,30 @@ export const CustomCard = ({ variant, children, bottomContent, onPress }: Custom
 
 const styles = StyleSheet.create({
   card: {
-    width: 385,
+    // Sem width fixo — respeita o pai (paddingHorizontal do ScrollView)
+    width: '100%',
     backgroundColor: '#fff',
-    // borderRadius: 12,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginVertical: 12,
-    alignSelf: 'center',
+    marginVertical: 6,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   topSection: {
     width: '100%',
-    maxHeight: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
+  },
+  inner: {
+    width: '100%',
   },
   bottomSection: {
     padding: 16,
     backgroundColor: '#fff',
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
-  },
-  defaultText: {
-    fontSize: 18,
-    fontWeight: '600',
   },
 });

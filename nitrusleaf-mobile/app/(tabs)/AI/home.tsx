@@ -148,20 +148,14 @@ export default function HomeScreen() {
               <Text style={styles.cardTitle}>
                 Ocorrências totais de deficiências em %
               </Text>
-              
+          
               <DonutChart
                 data={donutData}
-                size={200}
-                innerRadius={60}
+                size={100}
+                innerRadius={35}
                 centerText={`${coverageData.analyzed}/${coverageData.total}`}
                 showLabels={true}
-              />
-              
-              <Button
-                title="Ver detalhes"
-                variant="primary"
-                size="full"
-                onPress={handleVerDetalhes}
+                onDetailPress={handleVerDetalhes}   // ← botão agora vive dentro do componente
               />
             </View>
           </CustomCard>
@@ -222,11 +216,10 @@ const styles = StyleSheet.create({
 
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A2C3E",
-    marginBottom: 16,
-    textAlign: "center",
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1A2C3E',
+    marginBottom: 12,
   },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15},
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1A1A1A' },

@@ -1,7 +1,8 @@
-// components/charts/DonutChartAlternative.tsx
+// components/charts/donutchart.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
+import { Button } from '@/components/ui/button';
 
 export interface DonutData {
   name: string;
@@ -16,21 +17,21 @@ interface DonutChartProps {
   innerRadius?: number;
   centerText?: string;
   showLabels?: boolean;
+  onDetailPress?: () => void;
 }
 
 export const DonutChart: React.FC<DonutChartProps> = ({
   data,
-  size = 200,
-  innerRadius = 60,
+  size = 110,
+  innerRadius = 48,
   centerText,
   showLabels = true,
+  onDetailPress,
 }) => {
   const radius = size / 2;
-  const outerRadius = radius;
-  const strokeWidth = outerRadius - innerRadius;
-  const centerRadius = outerRadius - strokeWidth / 2;
+  const strokeWidth = radius - innerRadius;
+  const centerRadius = radius - strokeWidth / 2;
 
-  let currentAngle = -90; // Começa do topo (12 horas)
   const totalPercentage = data.reduce((sum, item) => sum + item.percentage, 0);
 
   const polarToCartesian = (angle: number) => {
@@ -44,143 +45,155 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   const describeArc = (startAngle: number, endAngle: number) => {
     const start = polarToCartesian(startAngle);
     const end = polarToCartesian(endAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-    
-    return `M ${start.x} ${start.y} A ${centerRadius} ${centerRadius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+    // Prevent full-circle path degeneration
+    const safeEnd = endAngle - startAngle >= 360 ? endAngle - 0.01 : endAngle;
+    const safeEndPoint = polarToCartesian(safeEnd);
+    const largeArcFlag = safeEnd - startAngle > 180 ? 1 : 0;
+    return `M ${start.x} ${start.y} A ${centerRadius} ${centerRadius} 0 ${largeArcFlag} 1 ${safeEndPoint.x} ${safeEndPoint.y}`;
   };
 
+  let currentAngle = -90;
   const slices = data.map((item) => {
     const angle = (item.percentage / totalPercentage) * 360;
     const startAngle = currentAngle;
     const endAngle = currentAngle + angle;
     currentAngle = endAngle;
-    
-    return {
-      ...item,
-      startAngle,
-      endAngle,
-      angle,
-    };
+    return { ...item, startAngle, endAngle };
   });
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.chartWrapper, { width: size, height: size }]}>
-        <Svg width={size} height={size}>
-          {/* Background circle */}
-          <Circle
-            cx={radius}
-            cy={radius}
-            r={centerRadius}
-            stroke="#F0F0F0"
-            strokeWidth={strokeWidth}
-            fill="none"
-          />
-          
-          {/* Slices */}
-          {slices.map((slice, index) => {
-            const path = describeArc(slice.startAngle, slice.endAngle);
-            return (
+    <View style={styles.wrapper}>
+      {/* Row: chart + legend */}
+      <View style={styles.row}>
+        {/* Donut */}
+        <View style={[styles.chartWrapper, { width: size, height: size }]}>
+          <Svg width={size} height={size}>
+            {/* Background track */}
+            <Circle
+              cx={radius}
+              cy={radius}
+              r={centerRadius}
+              stroke="#F0F0F0"
+              strokeWidth={strokeWidth}
+              fill="none"
+            />
+            {/* Slices */}
+            {slices.map((slice, index) => (
               <Path
                 key={index}
-                d={path}
+                d={describeArc(slice.startAngle, slice.endAngle)}
                 stroke={slice.color}
                 strokeWidth={strokeWidth}
                 fill="none"
                 strokeLinecap="butt"
               />
-            );
-          })}
-          
-          {/* Center white circle */}
-          <Circle
-            cx={radius}
-            cy={radius}
-            r={innerRadius}
-            fill="#FFFFFF"
-          />
-          
-          {/* Center text */}
-          <SvgText
-            x={radius}
-            y={radius - 8}
-            fontSize={24}
-            fontWeight="bold"
-            fill="#1A2C3E"
-            textAnchor="middle"
-          >
-            {centerText || `${Math.round(totalPercentage)}%`}
-          </SvgText>
-          <SvgText
-            x={radius}
-            y={radius + 12}
-            fontSize={11}
-            fill="#888"
-            textAnchor="middle"
-          >
-            Total
-          </SvgText>
-        </Svg>
+            ))}
+            {/* Inner white circle */}
+            <Circle cx={radius} cy={radius} r={innerRadius} fill="#FFFFFF" />
+          </Svg>
+
+          {/* Center text overlay */}
+          <View style={styles.centerTextWrapper} pointerEvents="none">
+            <Text style={styles.centerMain}>{centerText ?? `${Math.round(totalPercentage)}%`}</Text>
+          </View>
+        </View>
+
+        {/* Legend */}
+        {showLabels && (
+          <View style={styles.legend}>
+            {data.map((item, index) => (
+              <View key={index} style={styles.legendRow}>
+                {/* Colored badge with percentage */}
+                <View style={[styles.badge, { backgroundColor: item.color }]}>
+                  <Text style={styles.badgeText}>{item.percentage}%</Text>
+                </View>
+                {/* Name */}
+                <Text style={styles.legendName}>{item.name}</Text>
+                {/* Value */}
+                <Text style={styles.legendValue}>{item.value}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
-      {/* Legend */}
-      {showLabels && (
-        <View style={styles.legendContainer}>
-          {data.map((item, index) => (
-            <View key={index} style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-              <View style={styles.legendTextContainer}>
-                <Text style={styles.legendName}>
-                  {item.name} ({item.percentage}%)
-                </Text>
-                <Text style={styles.legendValue}>{item.value} árvores</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
+      {/* Button */}
+      <View style={styles.buttonWrapper}>
+        <Button
+          title="Ver detalhes"
+          variant="primary"
+          size="full"
+          onPress={onDetailPress}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-  },
-  chartWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 16,
-  },
-  legendContainer: {
+  wrapper: {
     width: '100%',
-    marginTop: 16,
-    gap: 12,
   },
-  legendItem: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
     gap: 12,
   },
-  legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+  chartWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  legendTextContainer: {
+  centerTextWrapper: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerMain: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A2C3E',
+    textAlign: 'center',
+  },
+  legend: {
     flex: 1,
+    gap: 12,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  badge: {
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    minWidth: 44,
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   legendName: {
-    fontSize: 14,
+    flex: 1,
+    fontSize: 12,
     fontWeight: '500',
     color: '#1A2C3E',
-    marginBottom: 2,
   },
   legendValue: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1A2C3E',
+    minWidth: 20,
+    textAlign: 'right',
+  },
+  buttonWrapper: {
+    marginTop: 10,
+    paddingHorizontal: 4,
   },
 });
