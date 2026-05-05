@@ -1,13 +1,9 @@
-// components/charts/EvolutionBarChart.tsx
+// components/charts/barchart.tsx
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
-import Svg, { Rect, Line, Text as SvgText, G, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import Svg, { Rect, Line, Text as SvgText, G } from 'react-native-svg';
+import { CustomCard } from '@/components/cards/card';
+import { Button } from '@/components/ui/button';
 
 export type TimePeriod = '6months' | '3months' | '1month';
 
@@ -20,18 +16,21 @@ export interface EvolutionData {
 interface EvolutionBarChartProps {
   data: EvolutionData[];
   onPeriodChange?: (period: TimePeriod) => void;
+  onDetailPress?: () => void;
   height?: number;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const CHART_PADDING = 40;
-const BAR_WIDTH = 28;
-const BAR_GAP = 6;
+const BAR_WIDTH = 12;
+const BAR_GAP = 3;
+const Y_AXIS_WIDTH = 32;
+const TOP_PADDING = 20;
 
 export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
   data,
   onPeriodChange,
-  height = 280,
+  onDetailPress,
+  height = 240,
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('6months');
 
@@ -46,236 +45,200 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
     onPeriodChange?.(period);
   };
 
-  const maxValue = Math.max(
-    ...data.flatMap(item => [item.cobre, item.manganes]),
-    50
-  );
-  const yAxisMax = Math.ceil(maxValue / 10) * 10;
-  const yAxisSteps = [0, 10, 20, 30, 40, 50].filter(step => step <= yAxisMax);
-  
-  const chartWidth = screenWidth - 64; // 32px padding total
-  const groupWidth = BAR_WIDTH * 2 + BAR_GAP;
-  const totalGroupsWidth = groupWidth * data.length;
-  const startX = (chartWidth - totalGroupsWidth) / 2 + CHART_PADDING;
+  const chartWidth = screenWidth - 25 * 2 - 16 * 2; // page padding + card padding
 
-  const getBarHeight = (value: number) => {
-    return (value / yAxisMax) * (height - 50);
-  };
+  const maxValue = Math.max(...data.flatMap(d => [d.cobre, d.manganes]), 50);
+  const yAxisMax = Math.ceil(maxValue / 10) * 10;
+  const yAxisSteps = [0, 10, 20, 30, 40, 50].filter(s => s <= yAxisMax);
+
+  const drawHeight = height - 32 - TOP_PADDING;
+  const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 10;
+  const totalGroupsWidth = groupWidth * data.length;
+  const startX = Y_AXIS_WIDTH + (chartWidth - Y_AXIS_WIDTH - totalGroupsWidth) / 2;
+
+  const getBarH = (value: number) => (value / yAxisMax) * drawHeight;
+  const baseY = drawHeight + TOP_PADDING;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Evolução das deficiências (%)</Text>
+    <CustomCard variant="white-large">
+      <View style={styles.cardContent}>
+        {/* Title */}
+        <Text style={styles.title}>Evolução das deficiências (%)</Text>
 
-      {/* Period Filters */}
-      <View style={styles.filterContainer}>
-        {periods.map(period => (
-          <TouchableOpacity
-            key={period.value}
-            style={[
-              styles.filterButton,
-              selectedPeriod === period.value && styles.filterButtonActive,
-            ]}
-            onPress={() => handlePeriodPress(period.value)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                selectedPeriod === period.value && styles.filterTextActive,
-              ]}
+        {/* Period filters */}
+        <View style={styles.filterRow}>
+          {periods.map(p => (
+            <TouchableOpacity
+              key={p.value}
+              style={[styles.filterBtn, selectedPeriod === p.value && styles.filterBtnActive]}
+              onPress={() => handlePeriodPress(p.value)}
             >
-              {period.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text style={[styles.filterText, selectedPeriod === p.value && styles.filterTextActive]}>
+                {p.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      {/* Chart */}
-      <View style={[styles.chartContainer, { height }]}>
-        <Svg width={chartWidth} height={height}>
-          <Defs>
-            <LinearGradient id="cobreGrad" x1="0" y1="1" x2="0" y2="0">
-              <Stop offset="0%" stopColor="#E65723" stopOpacity={0.8} />
-              <Stop offset="100%" stopColor="#E65723" stopOpacity={1} />
-            </LinearGradient>
-            <LinearGradient id="manganesGrad" x1="0" y1="1" x2="0" y2="0">
-              <Stop offset="0%" stopColor="#FBBF24" stopOpacity={0.8} />
-              <Stop offset="100%" stopColor="#FBBF24" stopOpacity={1} />
-            </LinearGradient>
-          </Defs>
-
-          {/* Y-axis grid lines */}
-          {yAxisSteps.map((step) => {
-            const y = height - 40 - (step / yAxisMax) * (height - 50);
-            return (
-              <G key={step}>
-                <Line
-                  x1={CHART_PADDING - 5}
-                  y1={y}
-                  x2={chartWidth}
-                  y2={y}
-                  stroke="#E5E5E5"
-                  strokeWidth={1}
-                  strokeDasharray="6,4"
-                />
-                <SvgText
-                  x={CHART_PADDING - 10}
-                  y={y + 4}
-                  fontSize={11}
-                  fill="#888"
-                  textAnchor="end"
-                >
-                  {step}
-                </SvgText>
-              </G>
-            );
-          })}
-
-          {/* Bars */}
-          {data.map((item, groupIndex) => {
-            const groupX = startX + groupIndex * groupWidth;
-            const cobreHeight = getBarHeight(item.cobre);
-            const manganesHeight = getBarHeight(item.manganes);
-            const baseY = height - 40;
-
-            return (
-              <G key={groupIndex}>
-                {/* Cobre Bar (left) */}
-                <Rect
-                  x={groupX}
-                  y={baseY - cobreHeight}
-                  width={BAR_WIDTH}
-                  height={cobreHeight}
-                  fill="url(#cobreGrad)"
-                  rx={4}
-                />
-                {/* Value label for Cobre */}
-                {item.cobre > 0 && (
+        {/* Chart */}
+        <View style={{ height: height + 20 }}>
+          <Svg width={chartWidth} height={height + 20}>
+            {/* Grid lines + Y labels */}
+            {yAxisSteps.map((step) => {
+              const y = baseY - getBarH(step);
+              return (
+                <G key={step}>
+                  <Line
+                    x1={Y_AXIS_WIDTH}
+                    y1={y}
+                    x2={chartWidth}
+                    y2={y}
+                    stroke="#EBEBEB"
+                    strokeWidth={1}
+                  />
                   <SvgText
-                    x={groupX + BAR_WIDTH / 2}
-                    y={baseY - cobreHeight - 5}
-                    fontSize={10}
+                    x={Y_AXIS_WIDTH - 6}
+                    y={y + 4}
+                    fontSize={11}
+                    fill="#AAA"
+                    textAnchor="end"
+                  >
+                    {step}
+                  </SvgText>
+                </G>
+              );
+            })}
+
+            {/* Bars + X labels */}
+            {data.map((item, i) => {
+              const gx = startX + i * groupWidth;
+              const cobreH = getBarH(item.cobre);
+              const manganesH = getBarH(item.manganes);
+
+              return (
+                <G key={i}>
+                  {/* Cobre */}
+                  <Rect
+                    x={gx}
+                    y={baseY - cobreH}
+                    width={BAR_WIDTH}
+                    height={cobreH}
                     fill="#E65723"
-                    textAnchor="middle"
-                    fontWeight="bold"
-                  >
-                    {item.cobre}
-                  </SvgText>
-                )}
-                
-                {/* Manganês Bar (right) */}
-                <Rect
-                  x={groupX + BAR_WIDTH + BAR_GAP}
-                  y={baseY - manganesHeight}
-                  width={BAR_WIDTH}
-                  height={manganesHeight}
-                  fill="url(#manganesGrad)"
-                  rx={4}
-                />
-                {/* Value label for Manganês */}
-                {item.manganes > 0 && (
-                  <SvgText
-                    x={groupX + BAR_WIDTH + BAR_GAP + BAR_WIDTH / 2}
-                    y={baseY - manganesHeight - 5}
-                    fontSize={10}
+                    rx={4}
+                  />
+                  {/* Manganês */}
+                  <Rect
+                    x={gx + BAR_WIDTH + BAR_GAP}
+                    y={baseY - manganesH}
+                    width={BAR_WIDTH}
+                    height={manganesH}
                     fill="#FBBF24"
+                    rx={4}
+                  />
+                  {/* X label */}
+                  <SvgText
+                    x={gx + BAR_WIDTH + BAR_GAP / 2}
+                    y={baseY + 16}
+                    fontSize={11}
+                    fill="#666"
                     textAnchor="middle"
-                    fontWeight="bold"
                   >
-                    {item.manganes}
+                    {item.period}
                   </SvgText>
-                )}
-                
-                {/* X-axis label */}
-                <SvgText
-                  x={groupX + BAR_WIDTH + 4}
-                  y={baseY + 16}
-                  fontSize={12}
-                  fill="#666"
-                  textAnchor="middle"
-                >
-                  {item.period}
-                </SvgText>
-              </G>
-            );
-          })}
-        </Svg>
-      </View>
+                </G>
+              );
+            })}
+          </Svg>
+        </View>
 
-      {/* Legend */}
-      <View style={styles.legendContainer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#E65723' }]} />
-          <Text style={styles.legendText}>Cobre</Text>
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#E65723' }]} />
+            <Text style={styles.legendText}>Cobre</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
+            <Text style={styles.legendText}>Manganês</Text>
+          </View>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#FBBF24' }]} />
-          <Text style={styles.legendText}>Manganês</Text>
+
+        {/* Button */}
+        <View style={styles.buttonWrapper}>
+          <Button
+            title="Detalhar"
+            variant="primary"
+            size="full"
+            onPress={onDetailPress}
+          />
         </View>
       </View>
-    </View>
+    </CustomCard>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+  cardContent: {
     padding: 16,
-    marginBottom: 16,
+    width: '100%',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#1A2C3E',
+    marginBottom: 12,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: 8,
     marginBottom: 16,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  filterButton: {
+  filterBtn: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 17,
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
     alignItems: 'center',
   },
-  filterButtonActive: {
-    backgroundColor: '#E8F5E9',
+  filterBtnActive: {
+    backgroundColor: '#FFB534',
+    borderWidth: 1.5,
+    borderColor: '#FBBF24',
   },
   filterText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 11,
+    color: '#333333',
     fontWeight: '500',
+    textAlign: 'center',
   },
   filterTextActive: {
-    color: '#6BC24A',
+    color: '#ffffff',
+    fontWeight: '700',
   },
-  chartContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: -10,
-  },
-  legendContainer: {
+  legend: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 24,
-    marginTop: 16,
+    marginTop: 8,
+    marginBottom: 4,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  legendDot: {
+    width: 28,
+    height: 18,
+    borderRadius: 14,
   },
   legendText: {
     fontSize: 13,
-    color: '#666',
+    color: '#444',
+    fontWeight: '500',
+  },
+  buttonWrapper: {
+    marginTop: 16,
   },
 });
