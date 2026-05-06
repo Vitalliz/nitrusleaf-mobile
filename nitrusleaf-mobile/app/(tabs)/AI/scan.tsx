@@ -54,7 +54,7 @@ export default function RealCameraScreen() {
         setIsProcessing(false);
         // Navegar para a tela de resultado com dados mock
         router.push({
-          pathname: '/(tabs)/AI/result',
+          pathname: '/(tabs)/AI/analysis-summary',
           params: {
             analysisId: Date.now().toString(),
             percentage: Math.floor(Math.random() * 100),

@@ -84,7 +84,6 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
             fill="#666"
             textAnchor="middle"
           >
-            Probabilidade estimada
           </SvgText>
         </Svg>
       </View>
@@ -128,14 +127,14 @@ const styles = StyleSheet.create({
   gaugeWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 0,
   },
   label: {
     fontSize: 24,
     fontWeight: '700',
     color: '#1A2C3E',
     textAlign: 'center',
-    marginBottom: 8,
+
   },
   sublabel: {
     fontSize: 14,
