@@ -54,7 +54,8 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
   const drawHeight = height - 32 - TOP_PADDING;
   const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 10;
   const totalGroupsWidth = groupWidth * data.length;
-  const startX = Y_AXIS_WIDTH + (chartWidth - Y_AXIS_WIDTH - totalGroupsWidth) / 2;
+  const availableWidth = chartWidth - Y_AXIS_WIDTH;
+  const startX = Y_AXIS_WIDTH + (availableWidth - totalGroupsWidth) / 2;
 
   const getBarH = (value: number) => (value / yAxisMax) * drawHeight;
   const baseY = drawHeight + TOP_PADDING;
@@ -196,24 +197,24 @@ const styles = StyleSheet.create({
   filterBtn: {
     flex: 1,
     paddingVertical: 7,
-    paddingHorizontal: 17,
+    paddingHorizontal: 4,
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
     alignItems: 'center',
   },
   filterBtnActive: {
-    backgroundColor: '#FFB534',
+    backgroundColor: '#FFF3E0',
     borderWidth: 1.5,
     borderColor: '#FBBF24',
   },
   filterText: {
     fontSize: 11,
-    color: '#333333',
+    color: '#888',
     fontWeight: '500',
     textAlign: 'center',
   },
   filterTextActive: {
-    color: '#ffffff',
+    color: '#E65723',
     fontWeight: '700',
   },
   legend: {

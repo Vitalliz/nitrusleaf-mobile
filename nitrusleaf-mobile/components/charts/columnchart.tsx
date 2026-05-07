@@ -36,11 +36,12 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
   const yAxisMax = Math.ceil(maxValue / 5) * 5;
   const yAxisSteps = [0, 5, 10, 15, 20].filter(s => s <= yAxisMax + 5);
 
-  const TOP_PADDING = 18;
-  const drawHeight = height - 32 - TOP_PADDING; // leave room for x-axis labels
-  const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 16; // 16 = spacing between groups
+  const TOP_PADDING = 16;  // espaço para o label "20" não ser cortado
+  const drawHeight = height - 32 - TOP_PADDING; // leave room for x-axis labels + top
+  const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 16;
   const totalGroupsWidth = groupWidth * data.length;
-  const startX = Y_AXIS_WIDTH + (chartWidth - Y_AXIS_WIDTH - totalGroupsWidth) / 2;
+  const availableWidth = chartWidth - Y_AXIS_WIDTH;
+  const startX = Y_AXIS_WIDTH + (availableWidth - totalGroupsWidth) / 2;
 
   const getBarH = (value: number) => (value / yAxisMax) * drawHeight;
   const baseY = drawHeight + TOP_PADDING;
@@ -157,13 +158,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#1A2C3E',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 24,
-    marginTop: 5,
+    marginTop: 12,
     marginBottom: 4,
   },
   legendItem: {
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
   },
   legendDot: {
     width: 28,
-    height: 18,
+    height: 28,
     borderRadius: 14,
   },
   legendText: {
@@ -182,6 +183,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   buttonWrapper: {
-    marginTop: 20,
+    marginTop: 12,
   },
 });
