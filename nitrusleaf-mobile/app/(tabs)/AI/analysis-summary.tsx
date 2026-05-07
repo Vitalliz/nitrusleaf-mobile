@@ -48,30 +48,34 @@ function ResultView({
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       {/* Card principal */}
-      <View style={[styles.card, { borderTopColor: accentColor }]}>
-        <Text style={styles.analysisId}>Análise #{analysisId}</Text>
-        <View style={styles.divider} />
+      <View>
+        <View style={[styles.card, { borderTopColor: accentColor }]}>
+          <Text style={styles.analysisId}>Análise #{analysisId}</Text>
+          <View style={styles.divider} />
 
-        <View style={styles.gaugeContainer}>
-          <GaugeChart
-            percentage={probability}
-            size={200}
-            backgroundColor="#E5E7EB"
-            showPercentage={true}
-          />
+          <View style={styles.gaugeContainer}>
+            <GaugeChart
+              percentage={probability}
+              size={200}
+              backgroundColor="#E5E7EB"
+              showPercentage={true}
+            />
+          </View>
+
+          <Text style={styles.probabilityLabel}>Probabilidade estimada</Text>
+          <Text style={[styles.deficiencyTitle, { color: accentColor }]}>
+            Deficiência de {deficiencyType}
+          </Text>
+
+          <Button title="Ver resumo técnico" variant="primary" size="full" onPress={onVerResumo} />
         </View>
-
-        <Text style={styles.probabilityLabel}>Probabilidade estimada</Text>
-        <Text style={[styles.deficiencyTitle, { color: accentColor }]}>
-          Deficiência de {deficiencyType}
+        <Text style={styles.note}>
+          Esta análise foi baseada na imagem enviada. Consulte um agrônomo para recomendações específicas.
         </Text>
-
-        <Button title="Ver resumo técnico" variant="primary" size="full" onPress={onVerResumo} />
       </View>
+      
 
-      <Text style={styles.note}>
-        Esta análise foi baseada na imagem enviada. Consulte um agrônomo para recomendações específicas.
-      </Text>
+      
       {/* Card verde */}
       <TouchableOpacity style={styles.infoCard} onPress={onInfoPress} activeOpacity={0.85}>
         <View style={styles.infoContent}>
@@ -240,14 +244,25 @@ function SummaryView({
             <Ionicons name="pencil-outline" size={13} color="#6BC24A" />
             <Text style={styles.linkText}>Editar relatório</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.linkRow}>
-            <Ionicons name="document-outline" size={13} color="#6BC24A" />
-            <Text style={styles.linkText}>Exportar como PDF</Text>
-          </TouchableOpacity>
         </View>
 
-        <View style={{ marginTop: 8 }}>
-          <Button title="Salvar no histórico" variant="primary" size="full" onPress={handleSave} />
+        {/* BOTÕES */}
+        <View style={{ gap: 12, marginTop: 10 }}>
+          <Button 
+            title="Exportar como PDF" 
+            variant="outline" 
+            size="full" 
+            icon="share-outline"
+            onPress={() => console.log("Exportar")} 
+          />
+          
+          <Button 
+            title="Salvar no histórico" 
+            variant="primary" 
+            size="full" 
+            icon="save-outline"
+            onPress={handleSave} 
+          />
         </View>
       </View>
     </ScrollView>
@@ -290,7 +305,6 @@ export default function ResultScreen() {
           <Text style={styles.headerTitle}>
             {view === "result" ? "Resultado da análise" : "Resumo da Análise"}
           </Text>
-          <View style={{ width: 40 }} />
         </View>
 
         {view === "result" ? (
@@ -327,6 +341,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingHorizontal: 24,
     gap: 18,
+    width: "100%",
     paddingTop: 32,
   },
   backBtn: { width: 40 },
@@ -341,12 +356,11 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#1A2C3E" },
 
   container: {
-    padding: 16,
+    flexGrow: 1,
     paddingHorizontal: 20,
-    paddingBottom: 40,
-    display: "flex",
-    justifyContent: "center",
-    gap: 16,
+    paddingTop: 16,
+    paddingBottom: 32,
+    justifyContent: "space-between",
   },
 
   // Card base
@@ -362,34 +376,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
+    marginBottom: 30
+    
   },
 
   // Tela 1
-  analysisId: { fontSize: 16, fontWeight: "700", color: "#98979F", marginBottom: 12 },
-  divider: { height: 0.9, backgroundColor: "#98979F", marginVertical: 14, borderRadius: 5 },
+  analysisId: { fontSize: 16, fontWeight: "700", color: "#98979F"},
+  divider: { height: 1, backgroundColor: "#b8b8b8", marginVertical: 14, borderRadius: 5 },
   gaugeContainer: { alignItems: "center", marginBottom: 16 },
   probabilityLabel: { fontSize: 14, color: "#666", textAlign: "center", marginBottom: 6 },
   deficiencyTitle: { fontSize: 20, fontWeight: "800", textAlign: "center", marginBottom: 24 },
-  infoCard: { backgroundColor: "#6BC24A", borderRadius: 12, padding: 18},
-  infoContent: { alignItems: "center", justifyContent: "center" },
+  infoCard: { backgroundColor: "#6BC24A",  alignSelf: "center", borderRadius: 16, marginBottom: 12, minHeight: 100, 
+    width: "60%", justifyContent: "center", borderBottomRightRadius: 0, borderBottomLeftRadius: 0, paddingTop: 12
+  },
+  infoContent: { alignItems: "center", justifyContent: "center", width: "100%" },
   infoTitle: { fontSize: 17, fontWeight: "700", color: "#fff", marginBottom: 2 },
   infoSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.85)" },
-  note: { fontSize: 12, color: "#888", textAlign: "center", paddingHorizontal: 8 },
+  note: { fontSize: 12, color: "#888", textAlign: "center", paddingHorizontal: 8, marginTop: 15 },
 
   // Tela 2
-  rowSpaced: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  dateRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  dateText: { fontSize: 14, color: "#888" },
-  infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
-  infoLabel: { fontSize: 16, color: "#666", flex: 1 },
-  infoValue: { fontSize: 16, color: "#1A2C3E" },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  rowSpaced: { flexDirection: "column", alignItems: "flex-start", gap: 10 },
+  dateRow: { flexDirection: "row", alignItems: "center", gap: 4,  backgroundColor: "#F1F1F1", padding: 5, borderRadius: 3 },
+  dateText: { fontSize: 14, color: "#000000" },
+  infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 5 },
+  infoLabel: { fontSize: 14, color: "#252525", flex: 1 },
+  infoValue: { fontSize: 14, color: "#1A2C3E" },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4},
   badgeText: { fontSize: 14, fontWeight: "700", color: "#fff" },
-  progressBar: { height: 14, backgroundColor: "#F0F0F0", borderRadius: 3, marginBottom: 6, overflow: "hidden" },
+  progressBar: { height: 14, backgroundColor: "#F0F0F0", borderRadius: 50, marginBottom: 6, overflow: "hidden" },
   progressFill: { height: "100%", borderRadius: 3 },
-  authorRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  authorRow: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#F1F1F1", padding: 5, borderRadius: 3 },
   avatarCircle: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#9CA3AF", alignItems: "center", justifyContent: "center" },
-  addStatus: { fontSize: 16, color: "#2196F3", fontWeight: "500", textDecorationLine: "underline" },
+  addStatus: { fontSize: 14, color: "#2b81d8", fontWeight: "500", textDecorationLine: "none",backgroundColor: "#F1F1F1", padding: 5, paddingHorizontal: 10, borderRadius: 3 },
   statusRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statusText: { fontSize: 14, fontWeight: "600" },
@@ -397,10 +415,10 @@ const styles = StyleSheet.create({
   statusOption: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   sectionTitle: { fontSize: 14, fontWeight: "700", color: "#1A2C3E", marginBottom: 10 },
   locationRow: { flexDirection: "row", gap: 8, marginBottom: 8, flexWrap: "wrap" },
-  locationChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#F3F4F6", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
-  locationChipText: { fontSize: 14, color: "#1A2C3E", fontWeight: "500" },
-  linkRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 4 },
-  linkText: { fontSize: 14, color: "#6BC24A", fontWeight: "500" },
+  locationChip: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#F1F1F1", padding: 6, borderRadius: 3 },
+  locationChipText: { fontSize: 14, color: "#1A2C3E", fontWeight: "500"   },
+  linkRow: { flexDirection: "row", alignItems: "center", alignSelf: "center", gap: 4, marginBottom: 4, backgroundColor: "#F1F1F1", padding: 6, paddingHorizontal: 15, borderRadius: 50  },
+  linkText: { fontSize: 14, color: "#2b81d8", fontWeight: "500" },
   textInput: { backgroundColor: "#F8F8F8", borderRadius: 10, padding: 12, minHeight: 90, fontSize: 13, color: "#1A2C3E", textAlignVertical: "top", marginBottom: 10, borderWidth: 1, borderColor: "#EFEFEF" },
   reportActions: { flexDirection: "row", justifyContent: "flex-end", gap: 16, marginBottom: 4 },
 });

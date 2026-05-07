@@ -69,21 +69,15 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
           {/* Percentage text */}
           <SvgText
             x={radius}
-            y={radius - 8}
+            y={radius}
             fontSize={42}
             fontWeight="bold"
+            fontFamily= "Roboto"
             fill="#1A2C3E"
             textAnchor="middle"
+            alignmentBaseline="middle"
           >
             {percentage}%
-          </SvgText>
-          <SvgText
-            x={radius}
-            y={radius + 16}
-            fontSize={14}
-            fill="#666"
-            textAnchor="middle"
-          >
           </SvgText>
         </Svg>
       </View>
@@ -123,6 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
+    
   },
   gaugeWrapper: {
     alignItems: 'center',
