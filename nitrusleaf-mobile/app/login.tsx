@@ -3,13 +3,16 @@ import { Background } from "@/components/ui/background";
 import { WelcomeTitle, WelcomeSubtitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Dimensions} from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import React, { useEffect, useState } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import WaveBg from "@/assets/images/wave-bg.svg";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Obtém a largura da tela do dispositivo para garantir o preenchimento total
+const { width: screenWidth } = Dimensions.get("window");
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -158,9 +161,13 @@ export default function LoginScreen() {
             </View>
         </View>
 
-        {/* Onda laranja na base (ao fundo) */}
+        {/* Onda laranja na base configurada para ocupar 100% da largura */}
         <View style={styles.waveContainer}>
-            <WaveBg width="100%" height={140} />
+        <WaveBg 
+            width={screenWidth} 
+            height={140} 
+            preserveAspectRatio="none" 
+        />
         </View>
 
         </Background>

@@ -1,12 +1,13 @@
-// app/welcome.tsx
 import { Background } from "@/components/ui/background";
 import { LoginButton, SignUpButton } from "@/components/ui/button";
 import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View, Dimensions } from "react-native"; // Adicionado Dimensions
 import NitrusleafLogo from "@/assets/images/nitrusleaf-logo.svg";
 import WaveBg from "@/assets/images/wave-bg.svg";
 
+// Obtém a largura da tela do dispositivo
+const { width: screenWidth } = Dimensions.get("window");
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -19,25 +20,21 @@ export default function WelcomeScreen() {
     router.push("/register");
   };
 
-  const handleGoogleLogin = () => {
-    // Implementar lógica de login social
-  };
-
   return (
     <Background>
       <View style={styles.container}>
 
         <View style={styles.logoSection}>
           <NitrusleafLogo width={316} height={96} />
+          {/* Subtítulo do projeto Nitrusleaf */}
           <Text style={styles.subtitle}>App de análise de folha da mexerica</Text>
         </View>
 
         {/* Grupo de Botões de Ação */}
         <View style={styles.buttonGroup}>
-          
           <LoginButton 
             onPress={handleLoginNavigation} 
-            title="Entrar" // Caso seu componente aceite title, senão ele usará o padrão interno
+            title="Entrar" 
           />
           <SignUpButton 
             onPress={handleRegisterNavigation}
@@ -46,9 +43,13 @@ export default function WelcomeScreen() {
 
       </View>
 
-      {/* Onda laranja na base */}
+      {/* Onda laranja na base configurada para ocupar 100% da largura */}
       <View style={styles.waveContainer}>
-        <WaveBg width="100%" height={140} />
+        <WaveBg 
+          width={screenWidth} 
+          height={140} 
+          preserveAspectRatio="none" 
+        />
       </View>
     </Background>
   );
@@ -58,9 +59,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center", // Centraliza o conteúdo principal
+    justifyContent: "center",
     paddingHorizontal: 38,
-    gap: 60, // Espaço entre a logo e os botões
+    gap: 60,
   },
   logoSection: {
     alignItems: "center",
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
   },
   waveContainer: {
     position: "absolute",
-    bottom: -10,
+    bottom: -1, // Ajustado para -1 para evitar frestas no fundo da tela
     left: 0,
     right: 0,
   },

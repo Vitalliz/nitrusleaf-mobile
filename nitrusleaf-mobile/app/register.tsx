@@ -3,11 +3,15 @@ import { WelcomeSubtitle, WelcomeTitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import WaveBg from "@/assets/images/wave-bg.svg";
+
+// Obtém a largura da tela do dispositivo para garantir o preenchimento total
+const { width: screenWidth } = Dimensions.get("window");
+
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -183,8 +187,13 @@ export default function RegisterScreen() {
         </View>
       </ScrollView>
 
+      {/* Onda laranja na base configurada para ocupar 100% da largura */}
       <View style={styles.waveContainer}>
-        <WaveBg width="100%" height={140} />
+        <WaveBg 
+          width={screenWidth} 
+          height={140} 
+          preserveAspectRatio="none" 
+        />
       </View>
     </Background>
   );

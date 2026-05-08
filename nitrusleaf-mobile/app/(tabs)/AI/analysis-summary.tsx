@@ -57,8 +57,7 @@ function ResultView({
             <GaugeChart
               percentage={probability}
               size={200}
-              backgroundColor="#E5E7EB"
-              showPercentage={true}
+              label=""
             />
           </View>
 
