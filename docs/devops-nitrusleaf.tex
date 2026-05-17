@@ -1,194 +1,252 @@
 % Seção DevOps — NitrusLeaf Mobile
 % Incluir no documento principal: \input{docs/devops-nitrusleaf.tex}
-% Requer: \usepackage{tikz}, \usepackage{float}, \usepackage{enumitem}
+% Requer no preâmbulo: \usepackage{tikz}, \usetikzlibrary{positioning,arrows.meta}
+%                       \usepackage{float}, \usepackage{enumitem}
 
 \section{DevOps: Infraestrutura, Automação e Entrega Contínua}
 
-DevOps \cite{wang2023} é uma cultura e conjunto de práticas que integra desenvolvimento de software (Dev) e operações de TI (Ops), focando em automação, colaboração e entrega contínua. No \textit{NitrusLeaf Mobile}, o repositório \texttt{Vitalliz/nitrusleaf-mobile} utiliza Git e GitHub Actions na branch \texttt{main} e nas branches dos membros da equipe, com backend Supabase e aplicativo Expo em produção de desenvolvimento.
+DevOps \cite{wang2023} é uma cultura e conjunto de práticas que integra desenvolvimento de software (Dev) e operações de TI (Ops), focando em automação, colaboração e entrega contínua. No \textit{NitrusLeaf Mobile}, o repositório \texttt{Vitalliz/nitrusleaf-mobile} adota Git, GitHub Actions, backend Supabase e aplicativo Expo (React Native), com validação automática a cada alteração enviada ao repositório.
 
 \subsection{Pipeline CI/CD}
 
-O pipeline de integração e entrega contínua é fundamental para automação e executa validação a cada \textit{push} ou \textit{pull request} na \texttt{main} ou nas branches dos integrantes:
+O pipeline de integração e entrega contínua executa três \textit{jobs} no GitHub Actions (\texttt{Build}, \texttt{Test} e \texttt{Deploy}) a cada \textit{push} em qualquer branch ou em \textit{pull request} direcionado à \texttt{main}. A Figura~\ref{fig:cicd} resume o fluxo; a etapa \textbf{Monitor} representa a observação do resultado (painel do GitHub Actions e Supabase Dashboard) e o retorno de correções ao código --- ciclo de melhoria contínua.
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=1.5cm,
-    every node/.style={rectangle, draw, rounded corners,
-                       fill=secondarycolor!20,
-                       text width=2cm,
-                       align=center,
-                       font=\small,
-                       minimum height=1cm}
+    node distance=0.9cm and 1.1cm,
+    stage/.style={
+        rectangle, draw, rounded corners=3pt,
+        fill=secondarycolor!20,
+        text width=2.15cm, align=center,
+        font=\small, minimum height=1.05cm
+    },
+    note/.style={font=\scriptsize, text=black!65, align=center},
+    arr/.style={-{Stealth[length=2.2mm]}, thick}
 ]
-\node (code) {Code};
-\node (build) [right=1cm of code] {Build};
-\node (test) [right=1cm of build] {Test};
-\node (deploy) [right=1cm of test] {Deploy};
-\node (monitor) [right=1cm of deploy] {Monitor};
+% Linha principal
+\node[stage] (code) {\textbf{Code}\\[-1pt]\scriptsize Git push / PR};
+\node[stage, right=of code] (build) {\textbf{Build}\\[-1pt]\scriptsize \texttt{npm ci}};
+\node[stage, right=of build] (test) {\textbf{Test}\\[-1pt]\scriptsize tipos + Jest};
+\node[stage, right=of test] (deploy) {\textbf{Deploy}\\[-1pt]\scriptsize branch \texttt{main}};
+\node[stage, right=of deploy] (monitor) {\textbf{Monitor}\\[-1pt]\scriptsize painéis};
 
-\draw[->, thick] (code) -- (build);
-\draw[->, thick] (build) -- (test);
-\draw[->, thick] (test) -- (deploy);
-\draw[->, thick] (deploy) -- (monitor);
-\draw[->, thick, dashed] (monitor) to[bend right=45] (code);
+\draw[arr] (code) -- (build);
+\draw[arr] (build) -- (test);
+\draw[arr] (test) -- (deploy);
+\draw[arr] (deploy) -- (monitor);
+
+% Detalhes abaixo (o que cada job executa de fato)
+\node[note, below=0.55cm of build] (buildnote) {+\ \texttt{expo-doctor}\ (não bloqueia)};
+\node[note, below=0.55cm of test] (testnote) {\texttt{typecheck},\ \texttt{lint:ci}};
+\node[note, below=0.55cm of deploy] (deploynote) {integração após CI verde};
+
+% Feedback Monitor -> Code
+\draw[arr, dashed] (monitor.south) to[bend right=55]
+    node[below, note, yshift=-0.15cm] {correções e novo commit} (code.south);
+
 \end{tikzpicture}
-\caption{Pipeline CI/CD}
+\caption{Pipeline CI/CD implementado no repositório (\texttt{.github/workflows/ci.yml})}
 \label{fig:cicd}
 \end{figure}
 
-No projeto, as etapas correspondem a: versionamento no GitHub; \texttt{npm ci} e \texttt{expo-doctor} (build); \texttt{npm run typecheck}, \texttt{npm test} e \texttt{npm run lint:ci} (test); integração na \texttt{main} após revisão (deploy); e acompanhamento via Supabase Dashboard (monitor).
+\subsubsection{Correspondência entre etapas e jobs}
+
+\begin{table}[H]
+\centering
+\caption{Etapas do pipeline e implementação no GitHub Actions}
+\label{tab:cicd-jobs}
+\small
+\begin{tabular}{|l|l|p{7.2cm}|}
+\hline
+\textbf{Etapa} & \textbf{Job} & \textbf{Comandos / comportamento real} \\
+\hline
+Code & --- & \textit{Push} ou PR; código em \texttt{nitrusleaf-mobile/} \\
+\hline
+Build & \texttt{build} & \texttt{npm ci}; \texttt{npx expo-doctor} (\texttt{continue-on-error}) \\
+\hline
+Test & \texttt{test} & \texttt{npm run typecheck}; \texttt{npm test -- --ci}; \texttt{npm run lint:ci} \\
+\hline
+Deploy & \texttt{deploy} & Somente \textit{push} na \texttt{main}; confirma integração (EAS/Supabase opcionais) \\
+\hline
+Monitor & --- & GitHub Actions (status do workflow); Supabase Dashboard (API, Auth, BD) \\
+\hline
+\end{tabular}
+\end{table}
+
+O ambiente de execução utiliza \textbf{Node.js 22} no runner e a variável \texttt{FORCE\_JAVASCRIPT\_ACTIONS\_TO\_NODE24} para compatibilidade das ações oficiais do GitHub.
 
 \subsection{Exemplo de Configuração CI/CD}
 
-Exemplo do arquivo \texttt{.github/workflows/ci.yml} (equivalente conceitual a \texttt{.gitlab-ci.yml}):
+Trecho conceitual equivalente ao arquivo \texttt{.github/workflows/ci.yml}:
 
 \begin{verbatim}
-stages:
-  - build
-  - test
-  - deploy
+name: CI
+on: [push, pull_request]
 
-build:
-  stage: build
-  script:
-    - npm ci
-    - npx expo-doctor
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+    - run: npm ci
+    - run: npx expo-doctor
+      continue-on-error: true
 
-test:
-  stage: test
-  script:
-    - npm run typecheck
-    - npm test -- --ci
-    - npm run lint:ci
+  test:
+    needs: build
+  steps:
+    - run: npm run typecheck
+    - run: npm test -- --ci
+    - run: npm run lint:ci
 
-deploy:
-  stage: deploy
-  only:
-    - main
-  script:
-    - merge apos CI verde na branch do membro
+  deploy:
+    needs: test
+    if: branch == main
+  steps:
+    - run: echo "CI verde na main"
 \end{verbatim}
 
-Comandos locais equivalentes: \texttt{npm run validate} e \texttt{npm run lint}.
+\textbf{Comandos locais:}
+\begin{itemize}[leftmargin=*, nosep]
+    \item \texttt{npm run validate} --- verificação de tipos (\texttt{tsconfig.ci.json}) + testes Jest;
+    \item \texttt{npm run lint:ci} --- ESLint na camada core (\texttt{utils}, \texttt{repositories}, \texttt{services}, \texttt{contexts});
+    \item \texttt{npm run lint} --- análise completa do projeto (inclui telas; pode reportar avisos legados).
+\end{itemize}
 
 \subsection{Infraestrutura como Código}
 
 \begin{table}[H]
 \centering
-\caption{Ferramentas DevOps Utilizadas}
+\caption{Ferramentas DevOps utilizadas no NitrusLeaf Mobile}
 \label{tab:devops-tools}
 \begin{tabular}{|l|l|p{6cm}|}
 \hline
 \textbf{Categoria} & \textbf{Ferramenta} & \textbf{Finalidade} \\
 \hline
-Controle de Versão & Git + GitHub & Versionamento na \texttt{main} e branches dos membros \\
-CI/CD & GitHub Actions & Build, testes e lint automáticos \\
-Backend (BaaS) & Supabase & PostgreSQL, autenticação e API REST \\
-App Mobile & Expo + React Native & Aplicativo iOS, Android e Web \\
-Testes & Jest + Testing Library & Testes unitários em \texttt{src/utils} \\
-Qualidade & ESLint (expo lint) & Padronização de código \\
-Configuração & \texttt{.env} / \texttt{.env.example} & URLs e chaves Supabase (não versionadas) \\
+Controle de Versão & Git + GitHub & \texttt{main} e branches da equipe via PR \\
+CI/CD & GitHub Actions & Jobs \texttt{build}, \texttt{test} e \texttt{deploy} \\
+Backend (BaaS) & Supabase & PostgreSQL, Auth JWT e API REST \\
+App Mobile & Expo SDK 54 + React Native & iOS, Android e Web \\
+Persistência local & \texttt{expo-sqlite} & SQLite no dispositivo (offline) \\
+Testes & Jest + jest-expo & Testes em \texttt{src/utils/\_\_tests\_\_} \\
+Qualidade & ESLint (\texttt{lint:ci}) & Validação automática da camada core \\
+Configuração & \texttt{.env} / \texttt{.env.example} & Chaves Supabase (não versionadas) \\
 \hline
 \end{tabular}
 \end{table}
 
 \subsection{Infraestrutura do Sistema}
 
-Esta seção documenta como o sistema funciona em diferentes ambientes e plataformas.
-
-\subsubsection{Arquitetura de Rede}
+\subsubsection{Componentes por ambiente}
 
 \begin{table}[H]
 \centering
-\caption{Componentes de Infraestrutura}
+\caption{Componentes de infraestrutura}
 \label{tab:infrastructure}
 \begin{tabular}{|l|p{10cm}|}
 \hline
 \textbf{Componente} & \textbf{Descrição} \\
 \hline
-\textbf{Desenvolvimento Local} &
+\textbf{Desenvolvimento local} &
 \begin{itemize}[leftmargin=*, nosep]
-    \item Máquinas da equipe com Node.js 20+
-    \item Variáveis em \texttt{.env} (modelo em \texttt{.env.example})
-    \item Branches por membro integradas à \texttt{main} via pull request
+    \item Node.js $\geq$ 20 (CI usa 22)
+    \item Variáveis em \texttt{.env} conforme \texttt{.env.example}
+    \item Branches dos membros integradas à \texttt{main} via pull request com CI verde
 \end{itemize} \\
 \hline
-\textbf{Cloud (Nuvem)} &
+\textbf{Nuvem (Supabase)} &
 \begin{itemize}[leftmargin=*, nosep]
-    \item Supabase: PostgreSQL gerenciado, Auth e API REST
-    \item Comunicação HTTPS entre app e backend
-    \item Painel Supabase para consulta de dados e autenticação
+    \item PostgreSQL gerenciado, autenticação e API REST
+    \item HTTPS entre app e backend
+    \item Painel para logs, usuários e consulta ao banco (etapa \textbf{Monitor})
 \end{itemize} \\
 \hline
-\textbf{Dispositivos Móveis} &
+\textbf{Dispositivos móveis} &
 \begin{itemize}[leftmargin=*, nosep]
-    \item App Expo (iOS, Android e Web)
-    \item SQLite local (\texttt{expo-sqlite}) para uso offline
-    \item Repositórios em \texttt{src/repositories} para sincronização local/remota
+    \item Binário/servidor de desenvolvimento via Expo
+    \item \texttt{expo-sqlite} para cache local
+    \item Camada \texttt{src/repositories} para acesso local e remoto
 \end{itemize} \\
 \hline
 \textbf{Segurança} &
 \begin{itemize}[leftmargin=*, nosep]
-    \item TLS nas chamadas à API Supabase
-    \item Autenticação por e-mail/senha com sessão JWT
-    \item Chave \textit{anon} no cliente; \texttt{.env} no \texttt{.gitignore}
+    \item TLS nas requisições à API
+    \item Sessão JWT via Supabase Auth
+    \item Chave \textit{anon} no cliente; \texttt{.env} ignorado pelo Git
 \end{itemize} \\
 \hline
 \end{tabular}
 \end{table}
 
-\subsubsection{Diagrama de Infraestrutura}
-
-Para ilustrar como os componentes se conectam:
+\subsubsection{Fluxo de dados}
 
 \begin{itemize}
-    \item \textbf{Usuários Mobile:} autenticam via Supabase Auth e consomem a API REST.
-    \item \textbf{Banco de Dados:} PostgreSQL gerenciado no Supabase.
-    \item \textbf{Cache Local:} SQLite no dispositivo para dados offline.
-    \item \textbf{CI/CD:} GitHub Actions valida build, tipos, testes e lint em cada \textit{push}.
-    \item \textbf{Versionamento:} código centralizado na \texttt{main} após merge das branches dos membros.
+    \item \textbf{Usuário mobile:} autentica no Supabase Auth e consome dados via API.
+    \item \textbf{Banco remoto:} PostgreSQL no Supabase.
+    \item \textbf{Cache local:} SQLite (\texttt{expo-sqlite}) no aparelho.
+    \item \textbf{CI/CD:} cada \textit{push} dispara build e testes; merge na \texttt{main} após pipeline bem-sucedido.
+    \item \textbf{Monitoramento:} status dos workflows no GitHub; métricas e saúde da API no Supabase Dashboard.
 \end{itemize}
 
 \subsection{Arquitetura de Deploy}
 
-Para documentar a arquitetura de deployment:
+A Figura~\ref{fig:deployment} separa validação do código (CI), execução do app e backend em nuvem. O GitHub Actions não hospeda o aplicativo: ele \textit{valida} o repositório antes da integração na \texttt{main}.
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=2cm,
-    component/.style={rectangle, draw, rounded corners,
-                      fill=secondarycolor!20,
-                      text width=2.5cm,
-                      align=center,
-                      minimum height=1.2cm}
+    node distance=1.5cm and 1.2cm,
+    component/.style={
+        rectangle, draw, rounded corners=3pt,
+        fill=secondarycolor!20,
+        text width=2.6cm, align=center,
+        font=\small, minimum height=1.1cm
+    },
+    arr/.style={-{Stealth[length=2mm]}, thick},
+    lbl/.style={font=\scriptsize, midway}
 ]
-\node[component] (ci) {GitHub\\Actions};
-\node[component, below left=1.2cm and 0.8cm of ci] (app) {App Expo};
-\node[component, below right=1.2cm and 0.8cm of ci] (api) {Supabase\\API};
-\node[component, below=1.2cm of api] (db) {PostgreSQL};
-\node[component, below=1.2cm of app] (local) {SQLite\\Local};
+% Coluna CI
+\node[component] (gh) {GitHub\\Repositório};
+\node[component, below=of gh] (ci) {GitHub\\Actions};
 
-\draw[<->, thick] (ci) -- (app);
-\draw[<->, thick] (app) -- node[above, font=\scriptsize] {HTTPS} (api);
-\draw[<->, thick] (api) -- (db);
-\draw[<->, thick] (app) -- (local);
+% Coluna runtime
+\node[component, right=3.2cm of gh] (app) {App Expo\\(dispositivo)};
+\node[component, below=of app] (sqlite) {SQLite\\(\texttt{expo-sqlite})};
+
+% Coluna backend
+\node[component, right=3.2cm of app] (api) {Supabase\\Auth + API};
+\node[component, below=of api] (db) {PostgreSQL};
+
+% Monitor (acima do backend)
+\node[component, above=0.9cm of api] (dash) {Supabase\\Dashboard};
+
+\draw[arr] (gh) -- node[lbl, left] {push / PR} (ci);
+\draw[arr] (ci) -- node[lbl, above] {valida} (gh);
+\draw[arr] (app) -- node[lbl, above] {HTTPS} (api);
+\draw[arr] (api) -- (db);
+\draw[arr] (app) -- (sqlite);
+\draw[arr, dashed] (dash) -- node[lbl, right] {monitora} (api);
+\draw[arr, dashed] (ci) -- node[lbl, pos=0.35, above, sloped] {status CI} (gh);
+
 \end{tikzpicture}
-\caption{Arquitetura de Deployment}
+\caption{Arquitetura de deployment e monitoramento}
 \label{fig:deployment}
 \end{figure}
 
 \subsection{Métricas e SLA}
 
-Métricas e indicadores acompanhados no estágio atual do projeto:
+Indicadores acompanhados na fase atual do projeto:
 
 \begin{itemize}
-    \item \textbf{Disponibilidade:} API Supabase conforme plano contratado
-    \item \textbf{Pipeline CI:} execução automática a cada \textit{push} ou PR
-    \item \textbf{Testes:} Jest com suíte em \texttt{src/utils} e \texttt{npm run validate}
-    \item \textbf{Qualidade:} \texttt{npm run lint:ci} no workflow; \texttt{npm run lint} completo localmente
-    \item \textbf{Deploy Frequency:} integração contínua via merge na \texttt{main}
-    \item \textbf{Lead Time:} revisão em PR com CI verde antes do merge
-    \item \textbf{MTTR:} correções versionadas e revalidadas pelo pipeline
+    \item \textbf{Disponibilidade:} conforme plano Supabase (API e banco gerenciados).
+    \item \textbf{Pipeline CI:} execução automática em \textit{push} e PR; jobs \texttt{build} e \texttt{test} obrigatórios.
+    \item \textbf{Testes:} suíte Jest em \texttt{src/utils}; comando \texttt{npm run validate} localmente.
+    \item \textbf{Qualidade:} \texttt{lint:ci} bloqueante no workflow; \texttt{npm run lint} ampliado para desenvolvimento.
+    \item \textbf{Deploy frequency:} integração contínua via merge na \texttt{main} após CI verde.
+    \item \textbf{Lead time:} revisão em PR com checks do GitHub antes do merge.
+    \item \textbf{MTTR:} correção versionada, novo \textit{push} e reexecução automática do pipeline.
 \end{itemize}

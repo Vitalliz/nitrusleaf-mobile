@@ -1,5 +1,5 @@
 # Pipeline CI/CD — NitrusLeaf Mobile
-# Alinhado à documentação: build → test (typecheck, jest, lint) → deploy (main)
+# build → test → deploy (main)
 
 name: CI
 
@@ -7,6 +7,10 @@ on:
   push:
   pull_request:
     branches: [main]
+
+env:
+  # Ações do GitHub (checkout/setup-node) em Node 24 — ver changelog GitHub Actions
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 defaults:
   run:
@@ -17,11 +21,13 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: nitrusleaf-mobile/package-lock.json
 
@@ -37,15 +43,18 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: nitrusleaf-mobile/package-lock.json
 
-      - run: npm ci
+      - name: Instalar dependências
+        run: npm ci
 
       - name: Verificação de tipos
         run: npm run typecheck
@@ -62,7 +71,8 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Integração na main
         run: |
