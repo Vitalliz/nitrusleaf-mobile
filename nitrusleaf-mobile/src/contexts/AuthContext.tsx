@@ -21,9 +21,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isAuthPending, setIsAuthPending] = useState(false);
 
-  useEffect(() => {
-    initializeAuth();
+  const initializeAuth = useCallback(async () => {
+    try {
+      const supabase = getSupabase();
+      const session = await getAuthSession();
+
+      if (session?.access_token && session.user?.id) {
+        const profile = await getUserByIdLocal(session.user.id);
+        if (profile) {
+          setUser(profile);
+          setToken(session.access_token);
+          await AsyncStorage.setItem(AUTH_USER_ID_KEY, session.user.id);
+          return;
+        }
+        await supabase.auth.signOut();
+        await AsyncStorage.removeItem(AUTH_USER_ID_KEY);
+        setUser(null);
+        setToken(null);
+        return;
+      }
+
+      await AsyncStorage.removeItem(AUTH_USER_ID_KEY);
+      setUser(null);
+      setToken(null);
+    } catch (error) {
+      console.error("Erro ao inicializar autenticação:", error);
+    } finally {
+      setIsInitializing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void initializeAuth();
+  }, [initializeAuth]);
 
   useEffect(() => {
     const supabase = getSupabase();
@@ -57,36 +87,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
-
-  const initializeAuth = useCallback(async () => {
-    try {
-      const supabase = getSupabase();
-      const session = await getAuthSession();
-
-      if (session?.access_token && session.user?.id) {
-        const profile = await getUserByIdLocal(session.user.id);
-        if (profile) {
-          setUser(profile);
-          setToken(session.access_token);
-          await AsyncStorage.setItem(AUTH_USER_ID_KEY, session.user.id);
-          return;
-        }
-        await supabase.auth.signOut();
-        await AsyncStorage.removeItem(AUTH_USER_ID_KEY);
-        setUser(null);
-        setToken(null);
-        return;
-      }
-
-      await AsyncStorage.removeItem(AUTH_USER_ID_KEY);
-      setUser(null);
-      setToken(null);
-    } catch (error) {
-      console.error("Erro ao inicializar autenticação:", error);
-    } finally {
-      setIsInitializing(false);
-    }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

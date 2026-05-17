@@ -1,0 +1,71 @@
+# Pipeline CI/CD — NitrusLeaf Mobile
+# Alinhado à documentação: build → test (typecheck, jest, lint) → deploy (main)
+
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+defaults:
+  run:
+    working-directory: nitrusleaf-mobile
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: nitrusleaf-mobile/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar dependências Expo
+        continue-on-error: true
+        run: npx expo-doctor
+
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: nitrusleaf-mobile/package-lock.json
+
+      - run: npm ci
+
+      - name: Verificação de tipos
+        run: npm run typecheck
+
+      - name: Testes unitários
+        run: npm test -- --ci --coverage=false
+
+      - name: Lint (camada core)
+        run: npm run lint:ci
+
+  deploy:
+    name: Deploy
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Integração na main
+        run: |
+          echo "CI verde: código pronto para merge/revisão na branch main."
+          echo "Publicação mobile: configurar EXPO_TOKEN para EAS Build (opcional)."
+          echo "Backend: Supabase Dashboard ou Supabase CLI para migrations."

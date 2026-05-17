@@ -1,0 +1,194 @@
+% Seção DevOps — NitrusLeaf Mobile
+% Incluir no documento principal: \input{docs/devops-nitrusleaf.tex}
+% Requer: \usepackage{tikz}, \usepackage{float}, \usepackage{enumitem}
+
+\section{DevOps: Infraestrutura, Automação e Entrega Contínua}
+
+DevOps \cite{wang2023} é uma cultura e conjunto de práticas que integra desenvolvimento de software (Dev) e operações de TI (Ops), focando em automação, colaboração e entrega contínua. No \textit{NitrusLeaf Mobile}, o repositório \texttt{Vitalliz/nitrusleaf-mobile} utiliza Git e GitHub Actions na branch \texttt{main} e nas branches dos membros da equipe, com backend Supabase e aplicativo Expo em produção de desenvolvimento.
+
+\subsection{Pipeline CI/CD}
+
+O pipeline de integração e entrega contínua é fundamental para automação e executa validação a cada \textit{push} ou \textit{pull request} na \texttt{main} ou nas branches dos integrantes:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    every node/.style={rectangle, draw, rounded corners,
+                       fill=secondarycolor!20,
+                       text width=2cm,
+                       align=center,
+                       font=\small,
+                       minimum height=1cm}
+]
+\node (code) {Code};
+\node (build) [right=1cm of code] {Build};
+\node (test) [right=1cm of build] {Test};
+\node (deploy) [right=1cm of test] {Deploy};
+\node (monitor) [right=1cm of deploy] {Monitor};
+
+\draw[->, thick] (code) -- (build);
+\draw[->, thick] (build) -- (test);
+\draw[->, thick] (test) -- (deploy);
+\draw[->, thick] (deploy) -- (monitor);
+\draw[->, thick, dashed] (monitor) to[bend right=45] (code);
+\end{tikzpicture}
+\caption{Pipeline CI/CD}
+\label{fig:cicd}
+\end{figure}
+
+No projeto, as etapas correspondem a: versionamento no GitHub; \texttt{npm ci} e \texttt{expo-doctor} (build); \texttt{npm run typecheck}, \texttt{npm test} e \texttt{npm run lint:ci} (test); integração na \texttt{main} após revisão (deploy); e acompanhamento via Supabase Dashboard (monitor).
+
+\subsection{Exemplo de Configuração CI/CD}
+
+Exemplo do arquivo \texttt{.github/workflows/ci.yml} (equivalente conceitual a \texttt{.gitlab-ci.yml}):
+
+\begin{verbatim}
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npx expo-doctor
+
+test:
+  stage: test
+  script:
+    - npm run typecheck
+    - npm test -- --ci
+    - npm run lint:ci
+
+deploy:
+  stage: deploy
+  only:
+    - main
+  script:
+    - merge apos CI verde na branch do membro
+\end{verbatim}
+
+Comandos locais equivalentes: \texttt{npm run validate} e \texttt{npm run lint}.
+
+\subsection{Infraestrutura como Código}
+
+\begin{table}[H]
+\centering
+\caption{Ferramentas DevOps Utilizadas}
+\label{tab:devops-tools}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Categoria} & \textbf{Ferramenta} & \textbf{Finalidade} \\
+\hline
+Controle de Versão & Git + GitHub & Versionamento na \texttt{main} e branches dos membros \\
+CI/CD & GitHub Actions & Build, testes e lint automáticos \\
+Backend (BaaS) & Supabase & PostgreSQL, autenticação e API REST \\
+App Mobile & Expo + React Native & Aplicativo iOS, Android e Web \\
+Testes & Jest + Testing Library & Testes unitários em \texttt{src/utils} \\
+Qualidade & ESLint (expo lint) & Padronização de código \\
+Configuração & \texttt{.env} / \texttt{.env.example} & URLs e chaves Supabase (não versionadas) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Infraestrutura do Sistema}
+
+Esta seção documenta como o sistema funciona em diferentes ambientes e plataformas.
+
+\subsubsection{Arquitetura de Rede}
+
+\begin{table}[H]
+\centering
+\caption{Componentes de Infraestrutura}
+\label{tab:infrastructure}
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Componente} & \textbf{Descrição} \\
+\hline
+\textbf{Desenvolvimento Local} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Máquinas da equipe com Node.js 20+
+    \item Variáveis em \texttt{.env} (modelo em \texttt{.env.example})
+    \item Branches por membro integradas à \texttt{main} via pull request
+\end{itemize} \\
+\hline
+\textbf{Cloud (Nuvem)} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Supabase: PostgreSQL gerenciado, Auth e API REST
+    \item Comunicação HTTPS entre app e backend
+    \item Painel Supabase para consulta de dados e autenticação
+\end{itemize} \\
+\hline
+\textbf{Dispositivos Móveis} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item App Expo (iOS, Android e Web)
+    \item SQLite local (\texttt{expo-sqlite}) para uso offline
+    \item Repositórios em \texttt{src/repositories} para sincronização local/remota
+\end{itemize} \\
+\hline
+\textbf{Segurança} &
+\begin{itemize}[leftmargin=*, nosep]
+    \item TLS nas chamadas à API Supabase
+    \item Autenticação por e-mail/senha com sessão JWT
+    \item Chave \textit{anon} no cliente; \texttt{.env} no \texttt{.gitignore}
+\end{itemize} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Diagrama de Infraestrutura}
+
+Para ilustrar como os componentes se conectam:
+
+\begin{itemize}
+    \item \textbf{Usuários Mobile:} autenticam via Supabase Auth e consomem a API REST.
+    \item \textbf{Banco de Dados:} PostgreSQL gerenciado no Supabase.
+    \item \textbf{Cache Local:} SQLite no dispositivo para dados offline.
+    \item \textbf{CI/CD:} GitHub Actions valida build, tipos, testes e lint em cada \textit{push}.
+    \item \textbf{Versionamento:} código centralizado na \texttt{main} após merge das branches dos membros.
+\end{itemize}
+
+\subsection{Arquitetura de Deploy}
+
+Para documentar a arquitetura de deployment:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2cm,
+    component/.style={rectangle, draw, rounded corners,
+                      fill=secondarycolor!20,
+                      text width=2.5cm,
+                      align=center,
+                      minimum height=1.2cm}
+]
+\node[component] (ci) {GitHub\\Actions};
+\node[component, below left=1.2cm and 0.8cm of ci] (app) {App Expo};
+\node[component, below right=1.2cm and 0.8cm of ci] (api) {Supabase\\API};
+\node[component, below=1.2cm of api] (db) {PostgreSQL};
+\node[component, below=1.2cm of app] (local) {SQLite\\Local};
+
+\draw[<->, thick] (ci) -- (app);
+\draw[<->, thick] (app) -- node[above, font=\scriptsize] {HTTPS} (api);
+\draw[<->, thick] (api) -- (db);
+\draw[<->, thick] (app) -- (local);
+\end{tikzpicture}
+\caption{Arquitetura de Deployment}
+\label{fig:deployment}
+\end{figure}
+
+\subsection{Métricas e SLA}
+
+Métricas e indicadores acompanhados no estágio atual do projeto:
+
+\begin{itemize}
+    \item \textbf{Disponibilidade:} API Supabase conforme plano contratado
+    \item \textbf{Pipeline CI:} execução automática a cada \textit{push} ou PR
+    \item \textbf{Testes:} Jest com suíte em \texttt{src/utils} e \texttt{npm run validate}
+    \item \textbf{Qualidade:} \texttt{npm run lint:ci} no workflow; \texttt{npm run lint} completo localmente
+    \item \textbf{Deploy Frequency:} integração contínua via merge na \texttt{main}
+    \item \textbf{Lead Time:} revisão em PR com CI verde antes do merge
+    \item \textbf{MTTR:} correções versionadas e revalidadas pelo pipeline
+\end{itemize}
