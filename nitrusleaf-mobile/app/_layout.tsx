@@ -4,7 +4,6 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
-import { Text } from 'react-native';
 import React from "react";
 
 export default function RootLayout() {
@@ -19,7 +18,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return null;
   }
-  
+
   return (
     <AuthProvider>
       <Stack
@@ -28,29 +27,13 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: bg },
         }}
       >
-        {/* Rotas Públicas (antes de login) */}
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="analysis"
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="register"
-          options={{
-            headerShown: false,
-          }}
-        />
-
-        {/* Rotas Autenticadas (com abas) */}
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="welcome" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="add-foot" />
+        <Stack.Screen name="analysis-form" />
       </Stack>
     </AuthProvider>
   );
