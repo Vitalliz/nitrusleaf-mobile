@@ -1,0 +1,15 @@
+# Ignorar ambiente virtual do Python
+.venv/
+venv/
+env/
+ENV/
+
+# Ignorar arquivos específicos do Expo
+.expo/
+node_modules/
+
+# Modelos IA
+*.keras
+*.h5
+*.pt
+*.pth
