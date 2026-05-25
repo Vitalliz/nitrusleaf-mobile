@@ -12,7 +12,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import WaveBg from "@/assets/images/wave-bg.svg";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Obt├®m a largura da tela do dispositivo para garantir o preenchimento total
+// Obtem a largura da tela do dispositivo para garantir o preenchimento total
 const { width: screenWidth } = Dimensions.get("window");
 
 export default function LoginScreen() {
@@ -75,18 +75,18 @@ export default function LoginScreen() {
     return (
         <Background>
         <View style={styles.container}>
-            {/* Bot├úo de voltar e ├¡cone da leaf */}
+            {/* Botão de voltar e ícone da leaf */}
             <View style={styles.iconsBox}>
                 <TouchableOpacity 
                     onPress={() => safeBack(router, ROUTES.welcome)}
-                    // Aumenta a ├írea de clique em 20px para cada lado
+                    // Aumenta a área de clique em 20px para cada lado
                     hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                 >
                     <Ionicons name="chevron-back" size={24} color="black"/>
                 </TouchableOpacity> 
             </View>
             
-            {/* Formul├írio de login */}
+            {/* Formulário de login */}
             <View style={styles.form}>
             <View style={styles.titleBox}>
                 <WelcomeTitle text="Bem vindo!"/>
@@ -95,9 +95,9 @@ export default function LoginScreen() {
             
             <View style={styles.form}>
                 <View style={styles.formInput}>
-                <Text style={styles.label}>E-mail ou n├║mero de telefone</Text>
+                <Text style={styles.label}>E-mail ou número de telefone</Text>
                 <Input
-                    placeholder="Digite seu e-mail ou n├║mero de telefone"
+                    placeholder="Digite seu e-mail ou número de telefone"
                     size="full"
                     variant="default"
                     value={email}
@@ -139,7 +139,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>
             </View>
             
-            {/* Bot├úo de login (Entrar) */}
+            {/* Botão de login (Entrar) */}
             <LoginButton  onPress={handleLogin} disabled={isAuthPending} />
 
             <View style={styles.divider}>
@@ -226,7 +226,7 @@ registerLink: {
     fontWeight: "600",
 },
 
-// Divider dos bot├Áes
+// Divider dos botões
 divider: {
 flexDirection: "row",
 alignItems: "center",
@@ -268,7 +268,7 @@ checkbox: {
     borderColor: "#a39a9a",
     backgroundColor: "white",
     borderRadius: 4,
-    justifyContent: 'center', // Centraliza o ├¡cone de check
+    justifyContent: 'center', // Centraliza o icone de check
     alignItems: 'center',
 },
 
@@ -284,7 +284,6 @@ forgotPassword: {
 // Footer
 waveContainer: {
     position: "absolute",
-    bottom: 0,
     left: 0,
     right: 0,
     bottom: -10

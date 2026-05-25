@@ -16,7 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused } from '@react-navigation/native';
 import Constants from 'expo-constants';
 
-// 🔥 CONFIGURAÇÃO DA API
+// CONFIGURAÇÃO DA API
 const getApiUrl = () => {
   // Tentar obter o IP do computador local que está rodando o Metro Bundler do Expo
   const hostUri = Constants.expoConfig?.hostUri;

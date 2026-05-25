@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import WaveBg from "@/assets/images/wave-bg.svg";
 
-// Obt├®m a largura da tela do dispositivo para garantir o preenchimento total
+// Obtem a largura da tela do dispositivo para garantir o preenchimento total
 const { width: screenWidth } = Dimensions.get("window");
 
 
@@ -43,10 +43,10 @@ export default function RegisterScreen() {
     if (isSignedIn) router.replace("/(tabs)/AI/home");
   }, [isSignedIn, router]);
 
-  // L├│gica para avan├ºar ou finalizar
+  // Lógica para avançar ou finalizar
   const handleNext = async () => {
     if (step < 4) {
-      // Adicionar valida├º├Áes espec├¡ficas por step se necessario
+      // Adicionar validações específicas por step se necessário
       setStep(step + 1);
     } else {
       await handleRegister();
@@ -127,9 +127,9 @@ export default function RegisterScreen() {
                 <WelcomeTitle text="Cadastro"/>
                 <WelcomeSubtitle text="Dados da Propriedade"/>
                 <View style={styles.propertyContainer}>
-                  <Text style={styles.infoText}>Informe o nome da sua propriedade para come├ºar.</Text>
+                  <Text style={styles.infoText}>Informe o nome da sua propriedade para começar.</Text>
                   <Text style={styles.label}>Nome da Propriedade</Text>
-                  <Input placeholder="Nome da fazenda, s├¡tio.." value={propName} onChangeText={setPropName}/>
+                  <Input placeholder="Nome da fazenda, sítio.." value={propName} onChangeText={setPropName}/>
                   <View style={{ width: '100%', marginTop: 20 }}>
                     <LoginButton 
                       onPress={handleNext} 
@@ -141,7 +141,7 @@ export default function RegisterScreen() {
               </View>
             )}
 
-            {/* ETAPA 3: ENDERE├çO DA PROPRIEDADE */}
+            {/* ETAPA 3: ENDEREÇO DA PROPRIEDADE */}
             {step === 3 && (
               <View style={styles.stepContainer}>
                 <WelcomeTitle text="Cadastro"/>
@@ -157,8 +157,8 @@ export default function RegisterScreen() {
                     <Input placeholder="Rua/Av" value={street} onChangeText={setStreet}/>
                   </View>
                   <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={styles.label}>N├║mero</Text>
-                    <Input placeholder="N┬║" value={number} onChangeText={setNumber}/>
+                    <Text style={styles.label}>Número</Text>
+                    <Input placeholder="N°" value={number} onChangeText={setNumber}/>
                   </View>
                 </View>
 
@@ -175,7 +175,7 @@ export default function RegisterScreen() {
                 <Text style={[styles.label, { marginTop: 25 }]}>E-mail</Text>
                 <Input placeholder="email@exemplo.com" value={email} onChangeText={setEmail}/>
                 <Text style={styles.label}>Senha</Text>
-                <Input placeholder="M├¡nimo 8 caracteres" value={password} onChangeText={setPassword} secureTextEntry/>
+                <Input placeholder="Mínimo 8 caracteres" value={password} onChangeText={setPassword} secureTextEntry/>
                 <Text style={styles.label}>Confirmar senha</Text>
                 <Input placeholder="Repita a senha" value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry/>
               </View>
@@ -192,7 +192,7 @@ export default function RegisterScreen() {
             )}
 
             <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>J├í possui uma conta? </Text>
+              <Text style={styles.loginText}>Já possui uma conta? </Text>
               <TouchableOpacity onPress={() => router.replace("/login")}>
                 <Text style={styles.loginLink}>Entrar</Text>
               </TouchableOpacity>

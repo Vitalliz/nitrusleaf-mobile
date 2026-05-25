@@ -6,7 +6,7 @@ import { StyleSheet, Text, View, Dimensions } from "react-native"; // Adicionado
 import NitrusleafLogo from "@/assets/images/nitrusleaf-logo.svg";
 import WaveBg from "@/assets/images/wave-bg.svg";
 
-// Obt├®m a largura da tela do dispositivo
+// Obtem a largura da tela do dispositivo
 const { width: screenWidth } = Dimensions.get("window");
 
 export default function WelcomeScreen() {
@@ -26,11 +26,11 @@ export default function WelcomeScreen() {
 
         <View style={styles.logoSection}>
           <NitrusleafLogo width={316} height={96} />
-          {/* Subt├¡tulo do projeto Nitrusleaf */}
-          <Text style={styles.subtitle}>App de an├ílise de folha da mexerica</Text>
+          {/* Subtítulo do projeto Nitrusleaf */}
+          <Text style={styles.subtitle}>Cuidando da sua plantação!</Text>
         </View>
 
-        {/* Grupo de Bot├Áes de A├º├úo */}
+        {/* Grupo de Botões de Ação */}
         <View style={styles.buttonGroup}>
           <LoginButton 
             onPress={handleLoginNavigation} 
