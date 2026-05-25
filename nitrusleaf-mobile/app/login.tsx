@@ -3,7 +3,7 @@ import { Background } from "@/components/ui/background";
 import { WelcomeTitle, WelcomeSubtitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
-import { View, StyleSheet, Text, TouchableOpacity, Dimensions} from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Dimensions, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +13,7 @@ import WaveBg from "@/assets/images/wave-bg.svg";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Obtem a largura da tela do dispositivo para garantir o preenchimento total
-const { width: screenWidth } = Dimensions.get("window");
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function LoginScreen() {
     const router = useRouter();
@@ -74,93 +74,98 @@ export default function LoginScreen() {
 
     return (
         <Background>
-        <View style={styles.container}>
-            {/* Botão de voltar e ícone da leaf */}
-            <View style={styles.iconsBox}>
-                <TouchableOpacity 
-                    onPress={() => safeBack(router, ROUTES.welcome)}
-                    // Aumenta a área de clique em 20px para cada lado
-                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                >
-                    <Ionicons name="chevron-back" size={24} color="black"/>
-                </TouchableOpacity> 
-            </View>
-            
-            {/* Formulário de login */}
-            <View style={styles.form}>
-            <View style={styles.titleBox}>
-                <WelcomeTitle text="Bem vindo!"/>
-                <WelcomeSubtitle text="Entre na sua conta"/>
-            </View>
-            
-            <View style={styles.form}>
-                <View style={styles.formInput}>
-                <Text style={styles.label}>E-mail ou número de telefone</Text>
-                <Input
-                    placeholder="Digite seu e-mail ou número de telefone"
-                    size="full"
-                    variant="default"
-                    value={email}
-                    onChangeText={setEmail}
-                />
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+        >
+            <View style={styles.container}>
+                {/* Botão de voltar e ícone da leaf */}
+                <View style={styles.iconsBox}>
+                    <TouchableOpacity 
+                        onPress={() => safeBack(router, ROUTES.welcome)}
+                        // Aumenta a área de clique em 20px para cada lado
+                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    >
+                        <Ionicons name="chevron-back" size={24} color="black"/>
+                    </TouchableOpacity> 
                 </View>
                 
-                {/*  */}
-                <View style={styles.formInput}>
-                <Text style={styles.label}>Senha</Text>
-                <Input
-                    placeholder="Digite sua senha"
-                    secureTextEntry={true} 
-                    value={password}
-                    onChangeText={setPassword}
-                />
+                {/* Formulário de login */}
+                <View style={styles.form}>
+                <View style={styles.titleBox}>
+                    <WelcomeTitle text="Bem vindo!"/>
+                    <WelcomeSubtitle text="Entre na sua conta"/>
+                </View>
+                
+                <View style={styles.form}>
+                    <View style={styles.formInput}>
+                    <Text style={styles.label}>E-mail ou número de telefone</Text>
+                    <Input
+                        placeholder="Digite seu e-mail ou número de telefone"
+                        size="full"
+                        variant="default"
+                        value={email}
+                        onChangeText={setEmail}
+                    />
+                    </View>
+                    
+                    {/*  */}
+                    <View style={styles.formInput}>
+                    <Text style={styles.label}>Senha</Text>
+                    <Input
+                        placeholder="Digite sua senha"
+                        secureTextEntry={true} 
+                        value={password}
+                        onChangeText={setPassword}
+                    />
+                    </View>
+                </View>
+                </View>
+
+                {/* Checkbox "Lembre-se de mim" e "Esqueci a senha" */}
+                <View style={{ width: "100%" }}>
+                <View style={styles.optionsRow}>
+                    <TouchableOpacity 
+                    style={styles.rememberMe} 
+                    onPress={() => setRememberMe(!rememberMe)} // Toggle do checkbox
+                    activeOpacity={0.7}
+                    >
+                    <View style={[
+                        styles.checkbox, 
+                        rememberMe && { backgroundColor: '#6BC24A', borderColor: '#6BC24A' } // Cor quando marcado
+                    ]}>
+                        {rememberMe && <Ionicons name="checkmark" size={12} color="white" />}
+                    </View>
+                    <Text style={styles.rememberText}>Lembre-se de mim</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                    <Text style={styles.forgotPassword}>Esqueci a senha</Text>
+                    </TouchableOpacity>
+                </View>
+                
+                {/* Botão de login (Entrar) */}
+                <LoginButton  onPress={handleLogin} disabled={isAuthPending} />
+
+                <View style={styles.divider}>
+                    <View style={styles.line} />
+                    <Text style={styles.orText}>ou</Text>
+                    <View style={styles.line} />
+                </View>
+
+                <GoogleButton2 onPress={handleGoogleLogin} />
+                </View>
+                
+                {/* Link para cadastro */}
+                <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>
+                    Não possui uma conta?{" "}
+                </Text>
+                <TouchableOpacity onPress={handleRegister}>
+                    <Text style={styles.registerLink}>Fazer cadastro</Text>
+                </TouchableOpacity>
                 </View>
             </View>
-            </View>
-
-            {/* Checkbox "Lembre-se de mim" e "Esqueci a senha" */}
-            <View style={{ width: "100%" }}>
-            <View style={styles.optionsRow}>
-                <TouchableOpacity 
-                style={styles.rememberMe} 
-                onPress={() => setRememberMe(!rememberMe)} // Toggle do checkbox
-                activeOpacity={0.7}
-                >
-                <View style={[
-                    styles.checkbox, 
-                    rememberMe && { backgroundColor: '#6BC24A', borderColor: '#6BC24A' } // Cor quando marcado
-                ]}>
-                    {rememberMe && <Ionicons name="checkmark" size={12} color="white" />}
-                </View>
-                <Text style={styles.rememberText}>Lembre-se de mim</Text>
-                </TouchableOpacity>
-                <TouchableOpacity>
-                <Text style={styles.forgotPassword}>Esqueci a senha</Text>
-                </TouchableOpacity>
-            </View>
-            
-            {/* Botão de login (Entrar) */}
-            <LoginButton  onPress={handleLogin} disabled={isAuthPending} />
-
-            <View style={styles.divider}>
-                <View style={styles.line} />
-                <Text style={styles.orText}>ou</Text>
-                <View style={styles.line} />
-            </View>
-
-            <GoogleButton2 onPress={handleGoogleLogin} />
-            </View>
-            
-            {/* Link para cadastro */}
-            <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>
-                Não possui uma conta?{" "}
-            </Text>
-            <TouchableOpacity onPress={handleRegister}>
-                <Text style={styles.registerLink}>Fazer cadastro</Text>
-            </TouchableOpacity>
-            </View>
-        </View>
+        </KeyboardAvoidingView>
 
         {/* Onda laranja na base configurada para ocupar 100% da largura */}
         <View style={styles.waveContainer}>
@@ -179,8 +184,9 @@ const styles = StyleSheet.create({
 container: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 25,
-    paddingTop: 70,
+    paddingBottom: 140,
     gap: 10
 },
 titleBox: {
