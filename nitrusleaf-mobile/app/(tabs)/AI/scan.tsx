@@ -1,4 +1,4 @@
-// // app/camera/RealCameraScreen.tsx
+// app/camera/RealCameraScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -10,7 +10,29 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { ROUTES, exitAnalysisFlow } from '@/utils/navigation';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import { useIsFocused } from '@react-navigation/native';
+import Constants from 'expo-constants';
+
+// 🔥 CONFIGURAÇÃO DA API
+const getApiUrl = () => {
+  // Tentar obter o IP do computador local que está rodando o Metro Bundler do Expo
+  const hostUri = Constants.expoConfig?.hostUri;
+  const hostIp = hostUri ? hostUri.split(':')[0] : null;
+
+  if (hostIp) {
+    console.log(`[API_URL] IP do host detectado via Expo: ${hostIp}`);
+    return `http://${hostIp}:5000/predict`;
+  }
+
+  // Fallbacks caso hostUri não esteja disponível (Ex: emulador ou produção)
+  if (__DEV__) {
+    return 'http://10.0.2.2:5000/predict'; // Emulador Android
+  }
+  return 'http://192.168.1.37:5000/predict'; // IP padrão local da máquina do usuário
+};
 
 export default function RealCameraScreen() {
   const router = useRouter();
@@ -19,6 +41,7 @@ export default function RealCameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (permission && !permission.granted) {
@@ -26,8 +49,47 @@ export default function RealCameraScreen() {
     }
   }, [permission]);
 
-  const handleBack = () => {
-    router.back();
+  const sendImageToApi = async (uri: string) => {
+    const API_URL = getApiUrl();
+    console.log('🔗 Conectando à API em:', API_URL);
+
+    const formData = new FormData();
+    formData.append('imagem', {
+      uri,
+      type: 'image/jpeg',
+      name: 'folha.jpg',
+    } as any);
+
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const resultado = await response.json();
+    console.log('📊 Resposta da API:', resultado);
+
+    if (resultado.status === 'sucesso') {
+      console.log('✅ Análise feita pelo modelo treinado');
+      console.log(`   Deficiência: ${resultado.classe_nome}`);
+      console.log(`   Probabilidade: ${resultado.probabilidade}%`);
+
+      router.push({
+        pathname: ROUTES.analysisSummary,
+        params: {
+          analysisId: Date.now().toString(),
+          probability: String(resultado.probabilidade),
+          deficiencyType: String(resultado.classe_nome ?? ''),
+          imageUri: uri,
+        },
+      });
+      return;
+    }
+
+    Alert.alert('Erro', resultado.mensagem || 'Erro ao analisar imagem');
+    setIsProcessing(false);
   };
 
   const handleCapture = async () => {
@@ -44,34 +106,53 @@ export default function RealCameraScreen() {
         skipProcessing: false,
       });
 
-      console.log('Foto capturada:', photo?.uri);
-
-      // Aqui você pode enviar a foto para a API de análise
-      // Por enquanto, vamos simular um resultado
-      
-      // Simular processamento da imagem
-      setTimeout(() => {
+      if (!photo?.uri) {
+        Alert.alert('Erro', 'Não foi possível capturar a foto.');
         setIsProcessing(false);
-        // Navegar para a tela de resultado com dados mock
-        router.push({
-          pathname: '/(tabs)/AI/analysis-summary',
-          params: {
-            analysisId: Date.now().toString(),
-            percentage: Math.floor(Math.random() * 100),
-            deficiencyType: Math.random() > 0.5 ? 'Cobre' : 'Manganês',
-            probability: Math.floor(Math.random() * 100),
-          },
-        });
-      }, 1500);
+        return;
+      }
+
+      console.log('Foto capturada:', photo.uri);
+      await sendImageToApi(photo.uri);
     } catch (error) {
-      console.error('Erro ao capturar foto:', error);
-      Alert.alert('Erro', 'Não foi possível capturar a foto. Tente novamente.');
+      console.error('Erro ao capturar/enviar foto:', error);
+      Alert.alert('Erro', 'Não foi possível processar a foto. Verifique sua conexão.');
       setIsProcessing(false);
     }
   };
 
-  const handleLocation = () => {
-    router.push('/(tabs)/AI/result');
+  const handleLocation = async () => {
+    if (isProcessing) return;
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos acessar suas fotos para escolher uma imagem da galeria.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+
+      setIsProcessing(true);
+      console.log('Imagem da galeria:', result.assets[0].uri);
+      await sendImageToApi(result.assets[0].uri);
+    } catch (error) {
+      console.error('Erro ao selecionar/enviar imagem:', error);
+      Alert.alert('Erro', 'Não foi possível processar a imagem. Verifique sua conexão.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBack = () => {
+    exitAnalysisFlow(router);
   };
 
   const toggleCameraFacing = () => {
@@ -106,76 +187,80 @@ export default function RealCameraScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        style={styles.camera}
-        facing={facing}
-        onCameraReady={() => setIsCameraReady(true)}
-      >
-        {/* Overlay com grade para auxiliar o enquadramento */}
-        <View style={styles.overlay}>
-          <View style={styles.gridContainer}>
-            <View style={styles.gridLineHorizontal} />
-            <View style={styles.gridLineVertical} />
-            <View style={styles.gridCornerTL} />
-            <View style={styles.gridCornerTR} />
-            <View style={styles.gridCornerBL} />
-            <View style={styles.gridCornerBR} />
-          </View>
-        </View>
-
-        {/* Badge superior "ESCANEANDO" */}
-        <View style={styles.topBadgeContainer}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>ESCANEANDO</Text>
-            <ActivityIndicator color="#FFFFFF" size="small" style={styles.badgeIndicator} />
-          </View>
-        </View>
-
-        {/* Botão de trocar câmera (canto superior direito) */}
-        <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-          <Ionicons name="camera-reverse-outline" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
-
-        {/* Texto instrucional */}
-        <View style={styles.instructionContainer}>
-          <Text style={styles.instructionText}>
-            Centralize a folha no centro da grade
-          </Text>
-        </View>
-
-        {/* Processando overlay */}
-        {isProcessing && (
-          <View style={styles.processingOverlay}>
-            <View style={styles.processingCard}>
-              <ActivityIndicator size="large" color="#6BC24A" />
-              <Text style={styles.processingText}>Processando imagem...</Text>
+      {isFocused && (
+        <>
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing={facing}
+            onCameraReady={() => setIsCameraReady(true)}
+          />
+          
+          {/* Overlay com grade para auxiliar o enquadramento */}
+          <View style={styles.overlay}>
+            <View style={styles.gridContainer}>
+              <View style={styles.gridLineHorizontal} />
+              <View style={styles.gridLineVertical} />
+              <View style={styles.gridCornerTL} />
+              <View style={styles.gridCornerTR} />
+              <View style={styles.gridCornerBL} />
+              <View style={styles.gridCornerBR} />
             </View>
           </View>
-        )}
 
-        {/* Controles inferiores */}
-        <View style={styles.bottomControls}>
-          <TouchableOpacity style={styles.sideButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={28} color="#2B2B2B" />
+          {/* Badge superior "ESCANEANDO" */}
+          <View style={styles.topBadgeContainer}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>ESCANEANDO</Text>
+              <ActivityIndicator color="#FFFFFF" size="small" style={styles.badgeIndicator} />
+            </View>
+          </View>
+
+          {/* Botão de trocar câmera (canto superior direito) */}
+          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
+            <Ionicons name="camera-reverse-outline" size={28} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.captureButton,
-              (!isCameraReady || isProcessing) && styles.captureButtonDisabled,
-            ]}
-            onPress={handleCapture}
-            disabled={!isCameraReady || isProcessing}
-          >
-            <Ionicons name="camera-outline" size={36} color="#FFFFFF" />
-          </TouchableOpacity>
+          {/* Texto instrucional */}
+          <View style={styles.instructionContainer}>
+            <Text style={styles.instructionText}>
+              Centralize a folha no centro da grade
+            </Text>
+          </View>
 
-          <TouchableOpacity style={styles.sideButton} onPress={handleLocation}>
-            <Ionicons name="images-outline" size={28} color="#2B2B2B" />
-          </TouchableOpacity>
-        </View>
-      </CameraView>
+          {/* Processando overlay */}
+          {isProcessing && (
+            <View style={styles.processingOverlay}>
+              <View style={styles.processingCard}>
+                <ActivityIndicator size="large" color="#6BC24A" />
+                <Text style={styles.processingText}>Processando imagem...</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Controles inferiores */}
+          <View style={styles.bottomControls}>
+            <TouchableOpacity style={styles.sideButton} onPress={handleBack}>
+              <Ionicons name="arrow-back" size={28} color="#2B2B2B" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.captureButton,
+                (!isCameraReady || isProcessing) && styles.captureButtonDisabled,
+              ]}
+              onPress={handleCapture}
+              disabled={!isCameraReady || isProcessing}
+            >
+              <Ionicons name="camera-outline" size={36} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.sideButton} onPress={handleLocation}>
+              <Ionicons name="images-outline" size={28} color="#2B2B2B" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </View>
   );
 }

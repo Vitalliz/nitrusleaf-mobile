@@ -32,18 +32,23 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
   // Horizontal padding inside the card (matches cardContent padding: 16)
   const chartWidth = screenWidth - 50 * 2; // 25 page padding * 2 + card internal padding
 
-  const maxValue = Math.max(...data.flatMap(d => [d.cobre, d.manganes]), 10);
-  const yAxisMax = Math.ceil(maxValue / 5) * 5;
+  const safeData = data.length > 0 ? data : [{ talhao: "-", cobre: 0, manganes: 0 }];
+  const maxValue = Math.max(...safeData.flatMap((d) => [d.cobre, d.manganes]), 1);
+  const yAxisMax = Math.max(5, Math.ceil(maxValue / 5) * 5);
   const yAxisSteps = [0, 5, 10, 15, 20].filter(s => s <= yAxisMax + 5);
 
   const TOP_PADDING = 16;  // espaço para o label "20" não ser cortado
   const drawHeight = height - 32 - TOP_PADDING; // leave room for x-axis labels + top
   const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 16;
-  const totalGroupsWidth = groupWidth * data.length;
+  const totalGroupsWidth = groupWidth * safeData.length;
   const availableWidth = chartWidth - Y_AXIS_WIDTH;
-  const startX = Y_AXIS_WIDTH + (availableWidth - totalGroupsWidth) / 2;
+  const startX = Y_AXIS_WIDTH + Math.max(0, (availableWidth - totalGroupsWidth) / 2);
 
-  const getBarH = (value: number) => (value / yAxisMax) * drawHeight;
+  const getBarH = (value: number) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return (n / yAxisMax) * drawHeight;
+  };
   const baseY = drawHeight + TOP_PADDING;
 
   return (
@@ -82,7 +87,7 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
             })}
 
             {/* Bars + X labels */}
-            {data.map((item, i) => {
+            {safeData.map((item, i) => {
               const gx = startX + i * groupWidth;
               const cobreH = getBarH(item.cobre);
               const manganesH = getBarH(item.manganes);

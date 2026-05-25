@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { ROUTES, safeBack } from "@/utils/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
@@ -121,14 +122,19 @@ export default function HistoryTreeScreen() {
   }, [analysesData, sortOrder]);
 
   const handleBack = useCallback(() => {
-    router.back();
+    safeBack(router, ROUTES.history);
   }, [router]);
 
   const handleAnalysisPress = useCallback(
     (analysisId: string) => {
       router.push({
-        pathname: "/AI/analysis-summary",
-        params: { id: analysisId.replace("#", "") },
+        pathname: ROUTES.analysisSummary,
+        params: {
+          analysisId: analysisId.replace("#", ""),
+          returnTo: treeId
+            ? `/(tabs)/History/field-three?treeId=${encodeURIComponent(treeId)}`
+            : ROUTES.history,
+        },
       });
     },
     [router],

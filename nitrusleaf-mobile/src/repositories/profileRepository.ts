@@ -9,6 +9,7 @@ type UsuarioRow = {
   celular: string | null;
   cpf: string | null;
   data_nascimento: string | null;
+  foto_perfil: string | null;
 };
 
 export type UsuarioDetails = {
@@ -18,6 +19,7 @@ export type UsuarioDetails = {
   phone?: string;
   cpf?: string;
   birthDate?: string;
+  avatarUrl?: string;
 };
 
 function mapRow(row: UsuarioRow): UsuarioDetails {
@@ -30,6 +32,7 @@ function mapRow(row: UsuarioRow): UsuarioDetails {
     phone: row.telefone ?? row.celular ?? undefined,
     cpf: row.cpf ?? undefined,
     birthDate: row.data_nascimento ?? undefined,
+    avatarUrl: row.foto_perfil ?? undefined,
   };
 }
 
@@ -45,7 +48,7 @@ export async function getUsuarioDetails(
   const { data, error } = await supabase
     .from("usuarios")
     .select(
-      "id_usuario, nome, sobrenome, email, telefone, celular, cpf, data_nascimento"
+      "id_usuario, nome, sobrenome, email, telefone, celular, cpf, data_nascimento, foto_perfil"
     )
     .eq("id_usuario", Number(id_usuario))
     .maybeSingle();
@@ -82,6 +85,34 @@ export async function updateUsuarioDetails(
       data_nascimento: payload.birthDate ?? null,
       updatedat: new Date().toISOString(),
     })
+    .eq("id_usuario", Number(id_usuario));
+
+  throwIfError(error);
+}
+
+export async function updateUsuarioAvatar(
+  id_usuario: string,
+  avatarUrl: string
+): Promise<void> {
+  const supabase = getSupabase();
+
+  const { error } = await supabase
+    .from("usuarios")
+    .update({
+      foto_perfil: avatarUrl,
+      updatedat: new Date().toISOString(),
+    })
+    .eq("id_usuario", Number(id_usuario));
+
+  throwIfError(error);
+}
+
+export async function deleteUsuario(id_usuario: string): Promise<void> {
+  const supabase = getSupabase();
+
+  const { error } = await supabase
+    .from("usuarios")
+    .delete()
     .eq("id_usuario", Number(id_usuario));
 
   throwIfError(error);

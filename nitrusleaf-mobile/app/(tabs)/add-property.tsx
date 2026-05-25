@@ -1,7 +1,8 @@
 // app/(tabs)/add-property.tsx - Cadastro de Propriedade
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Alert, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ROUTES, safeBack } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
 import { Background } from '@/components/ui/background';
@@ -13,8 +14,16 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export default function AddPropertyScreen() {
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+
+  const handleBack = () => {
+    const target = returnTo && String(returnTo).startsWith('/')
+      ? (returnTo as typeof ROUTES.profile)
+      : ROUTES.profile;
+    safeBack(router, target);
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -105,7 +114,7 @@ export default function AddPropertyScreen() {
       Alert.alert('Sucesso', 'Propriedade cadastrada com sucesso!', [
         {
           text: 'OK',
-          onPress: () => router.replace('/(tabs)/fields')
+          onPress: () => router.replace(returnTo && String(returnTo).startsWith('/') ? (returnTo as typeof ROUTES.profile) : ROUTES.profile)
         }
       ]);
     } catch (error) {
@@ -121,7 +130,7 @@ export default function AddPropertyScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={handleBack}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>

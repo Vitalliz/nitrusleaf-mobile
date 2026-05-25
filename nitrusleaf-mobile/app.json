@@ -39,7 +39,14 @@
       ],
       "expo-web-browser",
       "expo-font",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para definir a foto de perfil.",
+          "cameraPermission": "O app precisa usar a câmera para tirar sua foto de perfil."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

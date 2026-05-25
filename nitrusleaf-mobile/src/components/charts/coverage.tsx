@@ -14,7 +14,8 @@ export const CoverageCard: React.FC<CoverageCardProps> = ({
   total,
   notAnalyzed,
 }) => {
-  const coveragePercentage = (analyzed / total) * 100;
+  const coveragePercentage =
+    total > 0 ? Math.min(100, Math.round((analyzed / total) * 100)) : 0;
 
   return (
     <View style={styles.container}>

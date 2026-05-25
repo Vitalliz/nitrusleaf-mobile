@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ROUTES, safeBack } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
 import { Background } from '@/components/ui/background';
@@ -88,7 +89,7 @@ export default function PropertyDetailsScreen() {
               Alert.alert('Sucesso', 'Propriedade excluída com sucesso!', [
                 {
                   text: 'OK',
-                  onPress: () => router.replace('/(tabs)/fields')
+                  onPress: () => router.replace(ROUTES.history)
                 }
               ]);
             } catch (error) {
@@ -118,7 +119,7 @@ export default function PropertyDetailsScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => safeBack(router, ROUTES.history)}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
@@ -139,7 +140,7 @@ export default function PropertyDetailsScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => safeBack(router, ROUTES.history)}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
@@ -159,7 +160,7 @@ export default function PropertyDetailsScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => safeBack(router, ROUTES.history)}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>

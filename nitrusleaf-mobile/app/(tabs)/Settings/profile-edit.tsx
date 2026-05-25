@@ -1,401 +1,460 @@
-// // app/(tabs)/profile.tsx - PROFILE SCREEN
-// import React, { useState } from "react";
-// import {
-//   View,
-//   ScrollView,
-//   StyleSheet,
-//   Text,
-//   TouchableOpacity,
-//   TextInput,
-//   Alert,
-//   Image,
-// } from "react-native";
-// import { Ionicons } from "@expo/vector-icons";
-// import { useRouter } from "expo-router";
-// import { useAuth } from "@/contexts/AuthContext";
-// import Footer from "@/components/footer";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  Image,
+  ActivityIndicator,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { ROUTES, safeBack } from "@/utils/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getUsuarioDetails,
+  updateUsuarioDetails,
+  updateUsuarioAvatar,
+  deleteUsuario,
+} from "@/repositories/profileRepository";
+import {
+  pickProfileImageFromDevice,
+  uploadProfileAvatar,
+} from "@/services/profileAvatar";
+import { Background } from "@/components/ui/background";
 
-// export default function ProfileScreen() {
-//   const router = useRouter();
-//   const { user, logout } = useAuth();
-//   const [isEditing, setIsEditing] = useState(false);
-//   const [profileData, setProfileData] = useState({
-//     name: user?.name || "João Silva",
-//     email: user?.email || "joao@example.com",
-//     phone: "(11) 99999-9999",
-//     company: "NitrusLeaf Agro",
-//     experience: "5 anos",
-//   });
+const DEFAULT_AVATAR =
+  "https://media.istockphoto.com/id/1410538853/pt/foto/young-man-in-the-public-park.jpg?s=2048x2048&w=is&k=20&c=MIzvR5V8GPSO0zVoFnyE6E-AdkmH_TdBO0MSeEs1Ik4=";
 
-//   const handleSaveProfile = () => {
-//     console.log("Perfil salvo:", profileData);
-//     setIsEditing(false);
-//     Alert.alert("Sucesso", "Perfil atualizado com sucesso!");
-//   };
+export default function ProfileEditScreen() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
-//   const handleLogout = () => {
-//     Alert.alert("Sair", "Tem certeza que deseja sair?", [
-//       { text: "Cancelar", onPress: () => {} },
-//       {
-//         text: "Sair",
-//         onPress: () => {
-//           logout();
-//           router.replace("/login");
-//         },
-//       },
-//     ]);
-//   };
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    cpf: "",
+    birthDate: "",
+  });
 
-//   const handleChangePassword = () => {
-//     Alert.alert("Alterar Senha", "Redirecionando para alteração de senha...", [
-//       { text: "OK", onPress: () => {} },
-//     ]);
-//   };
+  useEffect(() => {
+    async function loadData() {
+      if (!user?.id) return;
+      try {
+        const details = await getUsuarioDetails(user.id);
+        if (details) {
+          setFormData({
+            name: details.fullName || "",
+            email: details.email || "",
+            phone: details.phone || "",
+            cpf: details.cpf || "",
+            birthDate: details.birthDate || "",
+          });
+          if (details.avatarUrl) setAvatarUri(details.avatarUrl);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados de perfil.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadData();
+  }, [user]);
 
-//   return (
-//     <View style={styles.container}>
-//       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-//         {/* Profile Header */}
-//         <View style={styles.profileHeader}>
-//           <View style={styles.avatarContainer}>
-//              <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
-//           </View>
-//           <Text style={styles.profileName}>{profileData.name}</Text>
-//           <Text style={styles.profileEmail}>{profileData.email}</Text>
-//         </View>
+  const handleSave = async () => {
+    if (!user?.id) return;
+    if (!formData.name.trim()) {
+      Alert.alert("Erro", "Nome completo é obrigatório.");
+      return;
+    }
 
-//         {/* Profile Edit Toggle */}
-//         {!isEditing && (
-//           <TouchableOpacity
-//             style={styles.editButton}
-//             onPress={() => setIsEditing(true)}
-//           >
-//             <Ionicons name="pencil" size={16} color="#FFFFFF" />
-//             <Text style={styles.editButtonText}>Editar Perfil</Text>
-//           </TouchableOpacity>
-//         )}
+    setSaving(true);
+    try {
+      await updateUsuarioDetails(user.id, {
+        fullName: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || undefined,
+        cpf: formData.cpf.trim() || undefined,
+        birthDate: formData.birthDate.trim() || undefined,
+      });
+      Alert.alert("Sucesso", "Perfil atualizado com sucesso!");
+      router.replace(ROUTES.profile);
+    } catch (error: any) {
+      console.error("Erro ao atualizar perfil:", error);
+      Alert.alert("Erro", error.message || "Não foi possível atualizar o perfil.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-//         {/* Profile Form */}
-//         <View style={styles.formContainer}>
-//           <View style={styles.formSection}>
-//             <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+  const applyPickedAvatar = async (useCamera: boolean) => {
+    if (!user?.id) return;
+    try {
+      const picked = await pickProfileImageFromDevice(useCamera);
+      if (picked.cancelled || !picked.localUri) return;
 
-//             <View style={styles.formGroup}>
-//               <Text style={styles.label}>Nome Completo:</Text>
-//               <TextInput
-//                 style={[
-//                   styles.input,
-//                   !isEditing && styles.inputDisabled,
-//                 ]}
-//                 value={profileData.name}
-//                 onChangeText={(text) =>
-//                   setProfileData({ ...profileData, name: text })
-//                 }
-//                 editable={isEditing}
-//                 placeholderTextColor="#CCC"
-//               />
-//             </View>
+      setUploadingAvatar(true);
+      setAvatarUri(picked.localUri);
 
-//             <View style={styles.formGroup}>
-//               <Text style={styles.label}>E-mail:</Text>
-//               <TextInput
-//                 style={[
-//                   styles.input,
-//                   !isEditing && styles.inputDisabled,
-//                 ]}
-//                 value={profileData.email}
-//                 onChangeText={(text) =>
-//                   setProfileData({ ...profileData, email: text })
-//                 }
-//                 editable={isEditing}
-//                 placeholderTextColor="#CCC"
-//               />
-//             </View>
+      const storedUrl = await uploadProfileAvatar(user.id, picked.localUri);
+      await updateUsuarioAvatar(user.id, storedUrl);
+      setAvatarUri(storedUrl);
+      Alert.alert("Sucesso", "Foto de perfil atualizada.");
+    } catch (error: unknown) {
+      console.error("Erro ao alterar foto:", error);
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível atualizar a foto de perfil.";
+      Alert.alert("Erro", msg);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
-//             <View style={styles.formGroup}>
-//               <Text style={styles.label}>Telefone:</Text>
-//               <TextInput
-//                 style={[
-//                   styles.input,
-//                   !isEditing && styles.inputDisabled,
-//                 ]}
-//                 value={profileData.phone}
-//                 onChangeText={(text) =>
-//                   setProfileData({ ...profileData, phone: text })
-//                 }
-//                 editable={isEditing}
-//                 placeholderTextColor="#CCC"
-//               />
-//             </View>
-//           </View>
+  const handleChangePhoto = () => {
+    Alert.alert("Foto de perfil", "Escolha de onde enviar a imagem", [
+      { text: "Galeria", onPress: () => void applyPickedAvatar(false) },
+      { text: "Câmera", onPress: () => void applyPickedAvatar(true) },
+      { text: "Cancelar", style: "cancel" },
+    ]);
+  };
 
-//           <View style={styles.formSection}>
-//             <Text style={styles.sectionTitle}>Informações Profissionais</Text>
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Excluir Conta",
+      "Tem certeza que deseja excluir sua conta permanentemente? Essa ação é irreversível e excluirá todos os seus dados.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir permanentemente",
+          style: "destructive",
+          onPress: async () => {
+            if (!user?.id) return;
+            try {
+              setSaving(true);
+              // Deleta o registro do usuário
+              await deleteUsuario(user.id);
+              // Executa o logout para limpar o estado local
+              await logout();
+              Alert.alert("Conta Excluída", "Sua conta foi excluída com sucesso.");
+              router.replace("/login");
+            } catch (error: any) {
+              console.error("Erro ao excluir conta:", error);
+              Alert.alert("Erro", error.message || "Não foi possível excluir a conta. Entre em contato com o suporte.");
+            } finally {
+              setSaving(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
-//             <View style={styles.formGroup}>
-//               <Text style={styles.label}>Empresa:</Text>
-//               <TextInput
-//                 style={[
-//                   styles.input,
-//                   !isEditing && styles.inputDisabled,
-//                 ]}
-//                 value={profileData.company}
-//                 onChangeText={(text) =>
-//                   setProfileData({ ...profileData, company: text })
-//                 }
-//                 editable={isEditing}
-//                 placeholderTextColor="#CCC"
-//               />
-//             </View>
+  return (
+    <Background>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
-//             <View style={styles.formGroup}>
-//               <Text style={styles.label}>Experiência:</Text>
-//               <TextInput
-//                 style={[
-//                   styles.input,
-//                   !isEditing && styles.inputDisabled,
-//                 ]}
-//                 value={profileData.experience}
-//                 onChangeText={(text) =>
-//                   setProfileData({ ...profileData, experience: text })
-//                 }
-//                 editable={isEditing}
-//                 placeholderTextColor="#CCC"
-//               />
-//             </View>
-//           </View>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => safeBack(router, ROUTES.profile)} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Editar Perfil</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-//           {isEditing && (
-//             <View style={styles.buttonGroup}>
-//               <TouchableOpacity
-//                 style={styles.saveButton}
-//                 onPress={handleSaveProfile}
-//               >
-//                 <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-//                 <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-//               </TouchableOpacity>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6BC24A" />
+          </View>
+        ) : (
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {/* Avatar Header */}
+            <TouchableOpacity
+              style={styles.avatarSection}
+              onPress={handleChangePhoto}
+              disabled={uploadingAvatar}
+              activeOpacity={0.8}
+            >
+              <View style={styles.avatarWrapper}>
+                <Image
+                  source={{ uri: avatarUri ?? DEFAULT_AVATAR }}
+                  style={styles.avatar}
+                />
+                <View style={styles.cameraIcon}>
+                  {uploadingAvatar ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Ionicons name="camera" size={16} color="#FFF" />
+                  )}
+                </View>
+              </View>
+              <Text style={styles.avatarText}>
+                {uploadingAvatar ? "Enviando foto..." : "Alterar foto de perfil"}
+              </Text>
+            </TouchableOpacity>
 
-//               <TouchableOpacity
-//                 style={styles.cancelButton}
-//                 onPress={() => setIsEditing(false)}
-//               >
-//                 <Text style={styles.cancelButtonText}>Cancelar</Text>
-//               </TouchableOpacity>
-//             </View>
-//           )}
-//         </View>
+            {/* Form */}
+            <View style={styles.formContainer}>
+              <Text style={styles.sectionTitle}>Informações Pessoais</Text>
 
-//         {/* Account Actions */}
-//         <View style={styles.actionsContainer}>
-//           <Text style={styles.sectionTitle}>Conta</Text>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Nome Completo *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.name}
+                  onChangeText={(text) => setFormData({ ...formData, name: text })}
+                  placeholder="Seu nome"
+                  placeholderTextColor="#CCC"
+                />
+              </View>
 
-//           <TouchableOpacity
-//             style={styles.actionCard}
-//             onPress={handleChangePassword}
-//           >
-//             <Ionicons name="key" size={20} color="#6BC24A" />
-//             <View style={styles.actionContent}>
-//               <Text style={styles.actionTitle}>Alterar Senha</Text>
-//               <Text style={styles.actionSubtitle}>
-//                 Atualize sua senha de segurança
-//               </Text>
-//             </View>
-//             <Ionicons name="chevron-forward" size={20} color="#DDD" />
-//           </TouchableOpacity>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>E-mail (Não editável)</Text>
+                <TextInput
+                  style={[styles.input, styles.inputDisabled]}
+                  value={formData.email}
+                  editable={false}
+                  placeholder="Seu e-mail"
+                  placeholderTextColor="#CCC"
+                />
+              </View>
 
-//           <TouchableOpacity style={styles.actionCard}>
-//             <Ionicons name="notifications" size={20} color="#6BC24A" />
-//             <View style={styles.actionContent}>
-//               <Text style={styles.actionTitle}>Notificações</Text>
-//               <Text style={styles.actionSubtitle}>
-//                 Configurar preferências de alerta
-//               </Text>
-//             </View>
-//             <Ionicons name="chevron-forward" size={20} color="#DDD" />
-//           </TouchableOpacity>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Telefone</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.phone}
+                  onChangeText={(text) => setFormData({ ...formData, phone: text })}
+                  placeholder="(00) 00000-0000"
+                  placeholderTextColor="#CCC"
+                />
+              </View>
 
-//           <TouchableOpacity style={styles.actionCard}>
-//             <Ionicons name="help-circle" size={20} color="#6BC24A" />
-//             <View style={styles.actionContent}>
-//               <Text style={styles.actionTitle}>Ajuda e Suporte</Text>
-//               <Text style={styles.actionSubtitle}>
-//                 Contate nosso suporte técnico
-//               </Text>
-//             </View>
-//             <Ionicons name="chevron-forward" size={20} color="#DDD" />
-//           </TouchableOpacity>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>CPF</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.cpf}
+                  onChangeText={(text) => setFormData({ ...formData, cpf: text })}
+                  placeholder="000.000.000-00"
+                  placeholderTextColor="#CCC"
+                />
+              </View>
 
-//           <TouchableOpacity
-//             style={[styles.actionCard, styles.logoutCard]}
-//             onPress={handleLogout}
-//           >
-//             <Ionicons name="log-out" size={20} color="#E74C3C" />
-//             <View style={styles.actionContent}>
-//               <Text style={[styles.actionTitle, styles.logoutTitle]}>
-//                 Sair da Conta
-//               </Text>
-//               <Text style={styles.actionSubtitle}>
-//                 Desconecte-se da sua conta
-//               </Text>
-//             </View>
-//             <Ionicons name="chevron-forward" size={20} color="#DDD" />
-//           </TouchableOpacity>
-//         </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Data de Nascimento</Text>
+                <TextInput
+                  style={styles.input}
+                  value={formData.birthDate}
+                  onChangeText={(text) => setFormData({ ...formData, birthDate: text })}
+                  placeholder="AAAA-MM-DD"
+                  placeholderTextColor="#CCC"
+                />
+              </View>
 
-//         <View style={styles.spacer} />
-//       </ScrollView>
-//       <Footer />
-//     </View>
-//   );
-// }
+              {/* Save Button */}
+              <TouchableOpacity
+                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                onPress={handleSave}
+                disabled={saving}
+              >
+                <Text style={styles.saveButtonText}>
+                  {saving ? "Salvando..." : "Salvar Alterações"}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#F5F5F5",
-//   },
-//   content: {
-//     flex: 1,
-//   },
-//   profileHeader: {
-//     alignItems: "center",
-//     paddingVertical: 30,
-//     backgroundColor: "#FFFFFF",
-//     marginBottom: 10,
-//   },
-//   avatarContainer: {
-//     marginBottom: 15,
-//   },
-//   avatar: {
-//     width: 100,
-//     height: 100,
-//     borderRadius: 50,
-//   },
-//   profileName: {
-//     fontSize: 22,
-//     fontWeight: "700",
-//     color: "#2B2B2B",
-//   },
-//   profileEmail: {
-//     fontSize: 14,
-//     color: "#999",
-//     marginTop: 4,
-//   },
-//   editButton: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "center",
-//     backgroundColor: "#6BC24A",
-//     marginHorizontal: 20,
-//     paddingVertical: 12,
-//     borderRadius: 8,
-//     marginBottom: 20,
-//   },
-//   editButtonText: {
-//     color: "#FFFFFF",
-//     fontWeight: "600",
-//     marginLeft: 8,
-//   },
-//   formContainer: {
-//     paddingHorizontal: 20,
-//     marginBottom: 20,
-//   },
-//   formSection: {
-//     backgroundColor: "#FFFFFF",
-//     borderRadius: 12,
-//     padding: 15,
-//     marginBottom: 15,
-//   },
-//   sectionTitle: {
-//     fontSize: 16,
-//     fontWeight: "700",
-//     color: "#2B2B2B",
-//     marginBottom: 15,
-//   },
-//   formGroup: {
-//     marginBottom: 15,
-//   },
-//   label: {
-//     fontSize: 14,
-//     fontWeight: "600",
-//     color: "#2B2B2B",
-//     marginBottom: 8,
-//   },
-//   input: {
-//     borderWidth: 1,
-//     borderColor: "#DDD",
-//     borderRadius: 8,
-//     paddingHorizontal: 12,
-//     paddingVertical: 10,
-//     fontSize: 14,
-//     color: "#2B2B2B",
-//     backgroundColor: "#FFFFFF",
-//   },
-//   inputDisabled: {
-//     backgroundColor: "#F5F5F5",
-//     color: "#999",
-//   },
-//   buttonGroup: {
-//     gap: 10,
-//   },
-//   saveButton: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "center",
-//     backgroundColor: "#6BC24A",
-//     paddingVertical: 12,
-//     borderRadius: 8,
-//   },
-//   saveButtonText: {
-//     color: "#FFFFFF",
-//     fontWeight: "600",
-//     marginLeft: 8,
-//   },
-//   cancelButton: {
-//     paddingVertical: 12,
-//     borderRadius: 8,
-//     borderWidth: 1,
-//     borderColor: "#DDD",
-//     alignItems: "center",
-//   },
-//   cancelButtonText: {
-//     color: "#2B2B2B",
-//     fontWeight: "600",
-//   },
-//   actionsContainer: {
-//     paddingHorizontal: 20,
-//     paddingBottom: 20,
-//   },
-//   actionCard: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#FFFFFF",
-//     borderRadius: 12,
-//     padding: 15,
-//     marginBottom: 10,
-//   },
-//   logoutCard: {
-//     marginTop: 10,
-//     backgroundColor: "#FFF5F5",
-//   },
-//   actionContent: {
-//     flex: 1,
-//     marginLeft: 12,
-//   },
-//   actionTitle: {
-//     fontSize: 15,
-//     fontWeight: "600",
-//     color: "#2B2B2B",
-//   },
-//   logoutTitle: {
-//     color: "#E74C3C",
-//   },
-//   actionSubtitle: {
-//     fontSize: 12,
-//     color: "#999",
-//     marginTop: 4,
-//   },
-//   spacer: {
-//     height: 40,
-//   },
-// });
+            {/* Danger Zone */}
+            <View style={styles.dangerZone}>
+              <Text style={styles.dangerTitle}>Zona de Risco</Text>
+              <Text style={styles.dangerDesc}>
+                A exclusão da conta apagará permanentemente todos os seus dados pessoais, históricos e análises cadastradas.
+              </Text>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDeleteAccount}
+                disabled={saving}
+              >
+                <Ionicons name="trash-outline" size={20} color="#E53E3E" />
+                <Text style={styles.deleteButtonText}>Excluir Minha Conta</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.spacer} />
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </Background>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EFEFEF",
+  },
+  backBtn: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  avatarSection: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  avatarWrapper: {
+    position: "relative",
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: "#6BC24A",
+  },
+  cameraIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#6BC24A",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFF",
+  },
+  avatarText: {
+    fontSize: 14,
+    color: "#6BC24A",
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  formContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1A2C3E",
+    marginBottom: 16,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1.5,
+    borderColor: "#E8D7BD",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#2B2B2B",
+    backgroundColor: "#FFFFFF",
+  },
+  inputDisabled: {
+    backgroundColor: "#F5F5F5",
+    borderColor: "#E5E5E5",
+    color: "#999",
+  },
+  saveButton: {
+    backgroundColor: "#6BC24A",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#9CA3AF",
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  dangerZone: {
+    backgroundColor: "#FFF5F5",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#FED7D7",
+    marginBottom: 40,
+  },
+  dangerTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#C53030",
+    marginBottom: 8,
+  },
+  dangerDesc: {
+    fontSize: 13,
+    color: "#742A2A",
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#E53E3E",
+  },
+  deleteButtonText: {
+    color: "#E53E3E",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  spacer: {
+    height: 40,
+  },
+});

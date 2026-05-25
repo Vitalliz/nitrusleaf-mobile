@@ -113,7 +113,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
-    let createdUser: User | null = null;
     try {
       setIsAuthPending(true);
       if (data.password !== data.passwordConfirmation) {
@@ -128,20 +127,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         cpf: data.cpf,
         password: data.password,
       });
-      createdUser = u;
 
       const session =
         signUpSession?.access_token ? signUpSession : await getAuthSession();
 
       if (!session?.access_token) {
-        setUser(null);
-        setToken(null);
         throw new Error(
           "Sessão não disponível após o cadastro. Tente fazer login; se o projeto exige confirmação de e-mail, use o link enviado ao seu e-mail."
         );
       }
 
-      setUser(createdUser);
+      const p = data.property;
+      if (u && p?.name?.trim()) {
+        try {
+          await withTimeout(
+            createProperty({
+              userId: u.id,
+              name: p.name.trim(),
+              cep: p.cep.replace(/\D/g, "") || p.cep.trim(),
+              logradouro: p.street.trim(),
+              numero: p.number,
+              bairro: p.neighborhood.trim(),
+              cidade: p.city.trim(),
+            }),
+            25_000,
+            "Não foi possível salvar a propriedade a tempo. Você pode cadastrá-la depois no app."
+          );
+        } catch (propErr) {
+          console.error("Cadastro: falha ao criar propriedade:", propErr);
+        }
+      }
+
+      setUser(u);
       setToken(session.access_token);
       if (session.user?.id) {
         await AsyncStorage.setItem(AUTH_USER_ID_KEY, session.user.id);
@@ -150,29 +167,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error("Erro no registro:", error);
       throw error;
     } finally {
-      // Importante: não aguardar `createProperty` aqui — se a requisição travar (RLS/rede), o loading nunca terminava.
       setIsAuthPending(false);
-    }
-
-    const p = data.property;
-    if (createdUser && p?.name?.trim()) {
-      try {
-        await withTimeout(
-          createProperty({
-            userId: createdUser.id,
-            name: p.name.trim(),
-            cep: p.cep.replace(/\D/g, "") || p.cep.trim(),
-            logradouro: p.street.trim(),
-            numero: p.number,
-            bairro: p.neighborhood.trim(),
-            cidade: p.city.trim(),
-          }),
-          25_000,
-          "Não foi possível salvar a propriedade a tempo. Você pode cadastrá-la depois no app."
-        );
-      } catch (propErr) {
-        console.error("Cadastro: falha ao criar propriedade:", propErr);
-      }
     }
   }, []);
 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ROUTES, safeBack } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Footer from '@/components/footer';
 import { Background } from '@/components/ui/background';
@@ -66,7 +67,7 @@ export default function PeDetailsScreen() {
               Alert.alert('Sucesso', 'Pé excluído com sucesso!', [
                 {
                   text: 'OK',
-                  onPress: () => router.back()
+                  onPress: () => safeBack(router, ROUTES.history)
                 }
               ]);
             } catch (error) {
@@ -109,7 +110,7 @@ export default function PeDetailsScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => safeBack(router, ROUTES.history)}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
@@ -130,7 +131,7 @@ export default function PeDetailsScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => safeBack(router, ROUTES.history)}
           >
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>

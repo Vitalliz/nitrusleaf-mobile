@@ -47,17 +47,22 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
 
   const chartWidth = screenWidth - 25 * 2 - 16 * 2; // page padding + card padding
 
-  const maxValue = Math.max(...data.flatMap(d => [d.cobre, d.manganes]), 50);
-  const yAxisMax = Math.ceil(maxValue / 10) * 10;
+  const safeData = data.length > 0 ? data : [{ period: "-", cobre: 0, manganes: 0 }];
+  const maxValue = Math.max(...safeData.flatMap((d) => [d.cobre, d.manganes]), 1);
+  const yAxisMax = Math.max(10, Math.ceil(maxValue / 10) * 10);
   const yAxisSteps = [0, 10, 20, 30, 40, 50].filter(s => s <= yAxisMax);
 
   const drawHeight = height - 32 - TOP_PADDING;
   const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 10;
-  const totalGroupsWidth = groupWidth * data.length;
+  const totalGroupsWidth = groupWidth * safeData.length;
   const availableWidth = chartWidth - Y_AXIS_WIDTH;
-  const startX = Y_AXIS_WIDTH + (availableWidth - totalGroupsWidth) / 2;
+  const startX = Y_AXIS_WIDTH + Math.max(0, (availableWidth - totalGroupsWidth) / 2);
 
-  const getBarH = (value: number) => (value / yAxisMax) * drawHeight;
+  const getBarH = (value: number) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return (n / yAxisMax) * drawHeight;
+  };
   const baseY = drawHeight + TOP_PADDING;
 
   return (
@@ -111,7 +116,7 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
             })}
 
             {/* Bars + X labels */}
-            {data.map((item, i) => {
+            {safeData.map((item, i) => {
               const gx = startX + i * groupWidth;
               const cobreH = getBarH(item.cobre);
               const manganesH = getBarH(item.manganes);

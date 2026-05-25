@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { LoginButton, GoogleButton2 } from "@/components/ui/button";
 import { View, StyleSheet, Text, TouchableOpacity, Dimensions} from "react-native";
 import { useRouter } from "expo-router";
+import { ROUTES, safeBack } from "@/utils/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import React, { useEffect, useState } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -77,7 +78,7 @@ export default function LoginScreen() {
             {/* Bot├úo de voltar e ├¡cone da leaf */}
             <View style={styles.iconsBox}>
                 <TouchableOpacity 
-                    onPress={() => router.back()}
+                    onPress={() => safeBack(router, ROUTES.welcome)}
                     // Aumenta a ├írea de clique em 20px para cada lado
                     hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                 >

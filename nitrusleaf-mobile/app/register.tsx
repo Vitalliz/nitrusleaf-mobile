@@ -1,10 +1,11 @@
-﻿import { Background } from "@/components/ui/background";
+import { Background } from "@/components/ui/background";
 import { WelcomeSubtitle, WelcomeTitle } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { LoginButton } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
+import { ROUTES, safeBack } from "@/utils/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import WaveBg from "@/assets/images/wave-bg.svg";
@@ -56,7 +57,7 @@ export default function RegisterScreen() {
     if (step > 1) {
       setStep(step - 1);
     } else {
-      router.back();
+      safeBack(router, ROUTES.welcome);
     }
   };
 
@@ -66,10 +67,23 @@ export default function RegisterScreen() {
         alert("Preencha os dados de acesso.");
         return;
       }
-      // Chame sua API enviando todos os estados acumulados
+      
       await register({
-        name, lastName, email, phone, cpf, password, passwordConfirmation,
-        // adicione propName, cep, etc, se o seu context suportar
+        name,
+        lastName,
+        email,
+        phone,
+        cpf,
+        password,
+        passwordConfirmation,
+        property: {
+          name: propName,
+          cep,
+          city,
+          street,
+          number: Number(number) || 0,
+          neighborhood,
+        },
       });
       router.replace("/(tabs)/AI/home");
     } catch (e: any) {

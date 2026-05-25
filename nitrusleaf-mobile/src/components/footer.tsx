@@ -1,33 +1,25 @@
-﻿// components/footer.tsx - FOOTER PROFISSIONAL COM NAVEGA├ç├âO
+﻿// components/footer.tsx — navegação legada (preferir tab-bar)
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ROUTES, switchTab } from '@/utils/navigation';
 
 export default function Footer() {
   const router = useRouter();
-
-  const handleNavigation = (route: string) => {
-    router.push(route as any);
-  };
-
-  const handleCamera = () => {
-    // Navega para a tela do menuzinho com a folha
-    router.push('/(tabs)/menu' as any);
-  };
 
   return (
     <View style={styles.footer}>
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/home')}
+        onPress={() => switchTab(router, ROUTES.home)}
       >
         <Ionicons name="home" size={28} color="white" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/maps')}
+        onPress={() => switchTab(router, ROUTES.maps)}
       >
         <Ionicons name="map" size={28} color="white" />
       </TouchableOpacity>
@@ -35,7 +27,7 @@ export default function Footer() {
       <View style={styles.cameraButtonContainer}>
         <TouchableOpacity
           style={styles.cameraButton}
-          onPress={handleCamera}
+          onPress={() => switchTab(router, ROUTES.scan)}
         >
           <Image
             source={require('@/assets/images/icons/camera-white.png')}
@@ -47,14 +39,14 @@ export default function Footer() {
 
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/history')}
+        onPress={() => switchTab(router, ROUTES.history)}
       >
         <Ionicons name="bar-chart" size={28} color="white" />
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.footerButton}
-        onPress={() => handleNavigation('/(tabs)/profile')}
+        onPress={() => switchTab(router, ROUTES.profile)}
       >
         <Ionicons name="person" size={28} color="white" />
       </TouchableOpacity>

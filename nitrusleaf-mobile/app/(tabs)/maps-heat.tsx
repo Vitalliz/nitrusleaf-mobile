@@ -124,7 +124,7 @@ const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
         <Text style={styles.breadcrumb}>Mapas</Text>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.push("/(tabs)/maps")}
+          onPress={() => router.replace("/(tabs)/Maps/maps")}
         >
           <Text style={styles.backArrow}>←</Text>
           <Text style={styles.backText}>Voltar</Text>

@@ -33,6 +33,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   const centerRadius = radius - strokeWidth / 2;
 
   const totalPercentage = data.reduce((sum, item) => sum + item.percentage, 0);
+  const hasData = totalPercentage > 0 && data.length > 0;
 
   const polarToCartesian = (angle: number) => {
     const angleInRad = (angle * Math.PI) / 180;
@@ -53,13 +54,15 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   };
 
   let currentAngle = -90;
-  const slices = data.map((item) => {
-    const angle = (item.percentage / totalPercentage) * 360;
-    const startAngle = currentAngle;
-    const endAngle = currentAngle + angle;
-    currentAngle = endAngle;
-    return { ...item, startAngle, endAngle };
-  });
+  const slices = hasData
+    ? data.map((item) => {
+        const angle = (item.percentage / totalPercentage) * 360;
+        const startAngle = currentAngle;
+        const endAngle = currentAngle + angle;
+        currentAngle = endAngle;
+        return { ...item, startAngle, endAngle };
+      })
+    : [];
 
   return (
     <View style={styles.wrapper}>
@@ -94,7 +97,9 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 
           {/* Center text overlay */}
           <View style={styles.centerTextWrapper} pointerEvents="none">
-            <Text style={styles.centerMain}>{centerText ?? `${Math.round(totalPercentage)}%`}</Text>
+            <Text style={styles.centerMain}>
+              {centerText ?? (hasData ? `${Math.round(totalPercentage)}%` : "0%")}
+            </Text>
           </View>
         </View>
 

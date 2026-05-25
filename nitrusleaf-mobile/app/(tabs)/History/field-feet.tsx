@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { ROUTES, safeBack } from "@/utils/navigation";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -10,63 +11,83 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
 
 import { CustomCard } from "@/components/cards/card";
 import { Background } from "@/components/ui/background";
 import { Button } from "@/components/ui/button";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
+import { useAuth } from "@/contexts/AuthContext";
+import { DEFAULT_AVATAR } from "@/constants/profile";
+import { getUsuarioDetails } from "@/repositories/profileRepository";
+import { getPropertiesByUser } from "@/repositories/propertyRepository";
+import { getTalhaoById } from "@/repositories/talhaoRepository";
+import { getPesByTalhao } from "@/repositories/peRepository";
 
 export default function TalhaoDetailScreen() {
   const router = useRouter();
+  const { talhaoId } = useLocalSearchParams<{ talhaoId?: string }>();
+  const { user } = useAuth();
+  const isFocused = useIsFocused();
+
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
-  const arvores = [
-    {
-      id: "01",
-      name: "Árvore #01",
-      deficiency: "Cobre",
-      status: "Não tratado",
-      date: "10 Nov, 2025",
-    },
-    {
-      id: "02",
-      name: "Árvore #02",
-      deficiency: null,
-      status: "Tratado",
-      date: "12 Nov, 2025",
-    },
-    {
-      id: "03",
-      name: "Árvore #03",
-      deficiency: "Cobre",
-      status: "Não informado",
-      date: "13 Nov, 2025",
-    },
-    {
-      id: "04",
-      name: "Árvore #04",
-      deficiency: "Manganês",
-      status: "Não tratado",
-      date: "10 Nov, 2025",
-    },
-    {
-      id: "05",
-      name: "Árvore #05",
-      deficiency: "Ferro",
-      status: "Tratado",
-      date: "15 Nov, 2025",
-    },
-    {
-      id: "06",
-      name: "Árvore #06",
-      deficiency: "Cobre",
-      status: "Em tratamento",
-      date: "18 Nov, 2025",
-    },
-  ];
+  const [dbUser, setDbUser] = useState<any>(null);
+  const [property, setProperty] = useState<any>(null);
+  const [talhao, setTalhao] = useState<any>(null);
+  const [arvores, setArvores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      if (!user?.id || !talhaoId) return;
+      try {
+        setLoading(true);
+        const details = await getUsuarioDetails(user.id);
+        setDbUser(details);
+
+        const props = await getPropertiesByUser(user.id);
+        if (props && props.length > 0) {
+          setProperty(props[0]);
+        }
+
+        const tInfo = await getTalhaoById(talhaoId);
+        setTalhao(tInfo);
+
+        const dbTrees = await getPesByTalhao(talhaoId);
+        const mapped = dbTrees.map(tree => {
+          const defs = [];
+          if (tree.deficienciaCobre) defs.push("Cobre");
+          if (tree.deficienciaManganes) defs.push("Manganês");
+          if (tree.outros) defs.push("Outros");
+
+          const dateStr = tree.createdAt
+            ? new Date(tree.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+            : 'Sem data';
+
+          return {
+            id: tree.id,
+            name: tree.nome,
+            deficiency: defs.length > 0 ? defs.join(", ") : null,
+            status: tree.situacao || "Sem-informações",
+            date: dateStr,
+          };
+        });
+        setArvores(mapped);
+      } catch (err) {
+        console.error("Erro ao carregar dados do talhão:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (isFocused) {
+      void loadData();
+    }
+  }, [user, talhaoId, isFocused]);
 
   const filteredArvores = arvores.filter((arvore) =>
     arvore.name.toLowerCase().includes(searchText.toLowerCase()),
@@ -83,6 +104,7 @@ export default function TalhaoDetailScreen() {
     switch (status) {
       case "Tratado":
         return "#4CAF50";
+      case "Não-Tratado":
       case "Não tratado":
         return "#F44336";
       case "Em tratamento":
@@ -96,6 +118,7 @@ export default function TalhaoDetailScreen() {
     switch (status) {
       case "Tratado":
         return "#E8F5E9";
+      case "Não-Tratado":
       case "Não tratado":
         return "#FFEBEE";
       case "Em tratamento":
@@ -106,7 +129,7 @@ export default function TalhaoDetailScreen() {
   };
 
   const handleBackPress = useCallback(() => {
-    router.back();
+    safeBack(router, ROUTES.history);
   }, [router]);
 
   const handleArvorePress = useCallback(
@@ -121,12 +144,20 @@ export default function TalhaoDetailScreen() {
   );
 
   const handleAddArvore = useCallback(() => {
-    console.log("Add new tree");
-  }, []);
+    if (talhaoId) {
+      router.push({
+        pathname: "/(tabs)/add-foot",
+        params: {
+          talhaoId,
+          talhaoName: talhao?.name ?? "",
+        },
+      });
+    }
+  }, [talhaoId, talhao?.name, router]);
 
   const handleVerAnalises = useCallback(() => {
-    console.log("Ver análises detalhadas");
-  }, []);
+    router.push("/(tabs)/AI/home");
+  }, [router]);
 
   const handleSortToggle = useCallback(() => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -138,131 +169,148 @@ export default function TalhaoDetailScreen() {
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
-          title="Roberto Almeida"
-          subtitle="Sítio Santa Aurora"
+          userName={loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
+          userSubtitle={loading ? "Carregando..." : (property?.name || "Sem propriedade")}
+          userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
+          subtitleIcon="location-outline"
           onMenuPress={() => console.log("Menu pressed")}
-          onAvatarPress={() => console.log("Avatar pressed")}
+          onAvatarPress={() => router.push("/(tabs)/Settings/profile")}
         />
 
-        <ScrollView contentContainerStyle={styles.container}>
-          {/* Título do Talhão */}
-          <View style={styles.titleRow}>
-            <TouchableOpacity onPress={handleBackPress}>
-              <Ionicons name="arrow-back" size={24} color="#1A2C3E" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Talhão #01</Text>
-            <View style={{ width: 24 }} />
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6BC24A" />
           </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.container}>
+            {/* Título do Talhão */}
+            <View style={styles.titleRow}>
+              <TouchableOpacity onPress={handleBackPress}>
+                <Ionicons name="arrow-back" size={24} color="#1A2C3E" />
+              </TouchableOpacity>
+              <Text style={styles.title}>{talhao?.name || "Talhão"}</Text>
+              <View style={{ width: 24 }} />
+            </View>
 
-          {/* CARD - Lista de Árvores (White Large) - CORRIGIDO */}
-          <CustomCard
-            variant="white-large-feet"
-            bottomContent={
-              <View style={styles.cardContent}>
-                {/* Busca e Cadastro */}
-                <View style={styles.searchContainer}>
-                  <View style={styles.searchBox}>
-                    <Ionicons name="search-outline" size={20} color="#999" />
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder="Buscar árvore"
-                      placeholderTextColor="#999"
-                      value={searchText}
-                      onChangeText={setSearchText}
-                    />
+            {/* CARD - Lista de Árvores (White Large) */}
+            <CustomCard
+              variant="white-large-feet"
+              bottomContent={
+                <View style={styles.cardContent}>
+                  {/* Busca e Cadastro */}
+                  <View style={styles.searchContainer}>
+                    <View style={styles.searchBox}>
+                      <Ionicons name="search-outline" size={20} color="#999" />
+                      <TextInput
+                        style={styles.searchInput}
+                        placeholder="Buscar árvore"
+                        placeholderTextColor="#999"
+                        value={searchText}
+                        onChangeText={setSearchText}
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={handleAddArvore}
+                    >
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={24}
+                        color="#6BC24A"
+                      />
+                      <Text style={styles.addButtonText}>Cadastrar Árvore</Text>
+                    </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handleAddArvore}
-                  >
-                    <Ionicons
-                      name="add-circle-outline"
-                      size={24}
-                      color="#6BC24A"
-                    />
-                    <Text style={styles.addButtonText}>Cadastrar Árvore</Text>
-                  </TouchableOpacity>
-                </View>
+                  {/* Lista de Árvores */}
+                  <View style={styles.listHeader}>
+                    <Text style={styles.listCount}>
+                      {sortedArvores.length} Árvores cadastradas
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.sortButton}
+                      onPress={handleSortToggle}
+                    >
+                      <Text style={styles.sortText}>Ordenar</Text>
+                      <Ionicons
+                        name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
+                        size={14}
+                        color="#666"
+                      />
+                    </TouchableOpacity>
+                  </View>
 
-                {/* Lista de Árvores */}
-                <View style={styles.listHeader}>
-                  <Text style={styles.listCount}>
-                    {sortedArvores.length} Árvores cadastradas
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.sortButton}
-                    onPress={handleSortToggle}
-                  >
-                    <Text style={styles.sortText}>Ordenar</Text>
-                    <Ionicons
-                      name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
-                      size={14}
-                      color="#666"
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                {sortedArvores.map((arvore) => (
-                  <TouchableOpacity
-                    key={arvore.id}
-                    style={styles.arvoreCard}
-                    onPress={() => handleArvorePress(arvore.id)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.arvoreHeader}>
-                      <Text style={styles.arvoreName}>{arvore.name}</Text>
-                      {arvore.deficiency && (
-                        <View style={styles.deficiencyBadge}>
-                          <Text style={styles.deficiencyText}>
-                            {arvore.deficiency}
-                          </Text>
-                        </View>
-                      )}
+                  {sortedArvores.length === 0 ? (
+                    <View style={styles.emptyTrees}>
+                      <Ionicons name="alert-circle-outline" size={32} color="#888" />
+                      <Text style={styles.emptyText}>
+                        Nenhuma árvore cadastrada neste talhão. Clique no botão acima para cadastrar a primeira!
+                      </Text>
                     </View>
-
-                    <View style={styles.arvoreInfo}>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          { backgroundColor: getStatusBgColor(arvore.status) },
-                        ]}
+                  ) : (
+                    sortedArvores.map((arvore) => (
+                      <TouchableOpacity
+                        key={arvore.id}
+                        style={styles.arvoreCard}
+                        onPress={() => handleArvorePress(arvore.id)}
+                        activeOpacity={0.7}
                       >
-                        <Text
-                          style={[
-                            styles.statusText,
-                            { color: getStatusColor(arvore.status) },
-                          ]}
-                        >
-                          {arvore.status}
-                        </Text>
-                      </View>
+                        <View style={styles.arvoreHeader}>
+                          <Text style={styles.arvoreName}>{arvore.name}</Text>
+                          {arvore.deficiency && (
+                            <View style={styles.deficiencyBadge}>
+                              <Text style={styles.deficiencyText}>
+                                {arvore.deficiency}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
 
-                      <View style={styles.dateInfo}>
-                        <Ionicons
-                          name="calendar-outline"
-                          size={12}
-                          color="#888"
-                        />
-                        <Text style={styles.arvoreDate}>
-                          Criado em: {arvore.date}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                        <View style={styles.arvoreInfo}>
+                          <View
+                            style={[
+                              styles.statusBadge,
+                              { backgroundColor: getStatusBgColor(arvore.status) },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.statusText,
+                                { color: getStatusColor(arvore.status) },
+                              ]}
+                            >
+                              {arvore.status}
+                            </Text>
+                          </View>
 
-                {/* Botão Ver Análises Detalhadas */}
-                <Button
-                  title="Ver análises detalhadas"
-                  variant="primary"
-                  size="full"
-                  onPress={handleVerAnalises}
-                />
-              </View>
-            }
-          />
-        </ScrollView>
+                          <View style={styles.dateInfo}>
+                            <Ionicons
+                              name="calendar-outline"
+                              size={12}
+                              color="#888"
+                            />
+                            <Text style={styles.arvoreDate}>
+                              Criado em: {arvore.date}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))
+                  )}
+
+                  {/* Botão Ver Análises Detalhadas */}
+                  <Button
+                    title="Ver análises detalhadas"
+                    variant="primary"
+                    size="full"
+                    onPress={handleVerAnalises}
+                  />
+                </View>
+              }
+            />
+          </ScrollView>
+        )}
 
         <BottomNavbar />
       </SafeAreaView>
@@ -424,5 +472,30 @@ const styles = StyleSheet.create({
   arvoreDate: {
     fontSize: 12,
     color: "#888",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyTrees: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E5E5E5',
+    borderStyle: 'dashed',
+    gap: 8,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

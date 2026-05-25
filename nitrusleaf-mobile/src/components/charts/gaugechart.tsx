@@ -1,38 +1,49 @@
-// components/charts/GaugeChart.tsx
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import Svg, { Circle, G, Text as SvgText, Path } from 'react-native-svg';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 
 interface GaugeChartProps {
   percentage: number;
-  label: string;
+  deficiencyType?: "Cobre" | "Manganês" | "Saudável";
+  label?: string;
   sublabel?: string;
   size?: number;
+  backgroundColor?: string;
+  showPercentage?: boolean;
   onTechnicalPress?: () => void;
   onInfoPress?: () => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
-
 export const GaugeChart: React.FC<GaugeChartProps> = ({
   percentage,
+  deficiencyType = "Saudável",
   label,
   sublabel,
-  size = 240,
+  size = 280,
   onTechnicalPress,
   onInfoPress,
 }) => {
-  const radius = size / 2;
-  const strokeWidth = 24;
+  const center = size / 2;
+  const radius = size * 0.38;
+  const strokeWidth = 20;
   const centerRadius = radius - strokeWidth / 2;
   const circumference = 2 * Math.PI * centerRadius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const safePct = Math.min(100, Math.max(0, Number(percentage) || 0));
+  const strokeDashoffset = circumference - (safePct / 100) * circumference;
+  const displayPct = Number.isInteger(safePct) ? safePct : Math.round(safePct * 10) / 10;
 
-  // Calculate color based on percentage
+  // Cor baseada no tipo de deficiência
   const getGaugeColor = () => {
-    if (percentage < 30) return '#EF4444';
-    if (percentage < 70) return '#FBBF24';
+    if (deficiencyType === 'Saudável') {
+      return '#6BC24A'; // Verde
+    }
+    if (deficiencyType === 'Manganês') {
+      return '#FBBF24'; // Amarelo/Laranja
+    }
+    if (deficiencyType === 'Cobre') {
+      return '#E65723'; // Laranja escuro
+    }
     return '#6BC24A';
   };
 
@@ -42,20 +53,18 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
     <View style={styles.container}>
       <View style={[styles.gaugeWrapper, { width: size, height: size }]}>
         <Svg width={size} height={size}>
-          {/* Background circle */}
           <Circle
-            cx={radius}
-            cy={radius}
+            cx={center}
+            cy={center}
             r={centerRadius}
-            stroke="#F0F0F0"
+            stroke="#E5E7EB"
             strokeWidth={strokeWidth}
             fill="none"
           />
-          
-          {/* Progress circle */}
+
           <Circle
-            cx={radius}
-            cy={radius}
+            cx={center}
+            cy={center}
             r={centerRadius}
             stroke={gaugeColor}
             strokeWidth={strokeWidth}
@@ -63,50 +72,24 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            transform={`rotate(-90, ${radius}, ${radius})`}
+            transform={`rotate(-90, ${center}, ${center})`}
           />
 
-          {/* Percentage text */}
           <SvgText
-            x={radius}
-            y={radius}
-            fontSize={42}
+            x={center}
+            y={center + 6}
+            fontSize={36}
             fontWeight="bold"
-            fontFamily= "Roboto"
             fill="#1A2C3E"
             textAnchor="middle"
-            alignmentBaseline="middle"
           >
-            {percentage}%
+            {`${displayPct}%`}
           </SvgText>
         </Svg>
       </View>
 
       <Text style={styles.label}>{label}</Text>
       {sublabel && <Text style={styles.sublabel}>{sublabel}</Text>}
-
-      {/* Technical Summary Button */}
-      {onTechnicalPress && (
-        <View style={styles.technicalContainer}>
-          <Text style={styles.analysisId}>Análise #006</Text>
-          <TouchableOpacity style={styles.technicalButton} onPress={onTechnicalPress}>
-            <Text style={styles.technicalButtonText}>Ver resumo técnico</Text>
-            <Ionicons name="document-text-outline" size={18} color="#6BC24A" />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Info Box */}
-      {onInfoPress && (
-        <TouchableOpacity style={styles.infoBox} onPress={onInfoPress}>
-          <Ionicons name="help-circle-outline" size={20} color="#6BC24A" />
-          <View style={styles.infoTextContainer}>
-            <Text style={styles.infoTitle}>O que significa?</Text>
-            <Text style={styles.infoSubtitle}>Clique para saber mais</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#CCC" />
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -116,71 +99,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 24,
-    
+    padding: 16,
   },
   gaugeWrapper: {
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 0,
+    marginBottom: 4,
   },
   label: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#1A2C3E',
     textAlign: 'center',
-
   },
   sublabel: {
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
-    marginBottom: 24,
-  },
-  technicalContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  analysisId: {
-    fontSize: 14,
-    color: '#888',
-  },
-  technicalButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  technicalButtonText: {
-    fontSize: 14,
-    color: '#6BC24A',
-    fontWeight: '500',
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    gap: 12,
-  },
-  infoTextContainer: {
-    flex: 1,
-  },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A2C3E',
-    marginBottom: 2,
-  },
-  infoSubtitle: {
-    fontSize: 12,
-    color: '#888',
+    marginBottom: 8,
   },
 });

@@ -3,6 +3,8 @@ import { Background } from "@/components/ui/background";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import { ROUTES, safeBack } from "@/utils/navigation";
 import {
   Platform,
   ScrollView,
@@ -49,13 +51,13 @@ const analysisData: AnalysisData = {
 
 // Componente principal
 const AnalysisResultScreen: React.FC = () => {
+  const router = useRouter();
   const [reportText, setReportText] = useState<string>("");
   const [status, setStatus] = useState<string | null>(analysisData.status);
   const [location, setLocation] = useState(analysisData.location);
 
-  // Handlers
   const handleGoBack = () => {
-    console.log("Voltar para tela anterior");
+    safeBack(router, ROUTES.history);
   };
 
   const handleEditReport = () => {

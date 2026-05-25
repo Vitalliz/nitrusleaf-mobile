@@ -1,206 +1,357 @@
-// import React from "react";
-// import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-// import { Ionicons } from "@expo/vector-icons";
-// import { useRouter } from "expo-router";
-// import { Background } from '@/components/ui/background';
+// app/(tabs)/Settings/profile.tsx — Tela de Configurações do Usuário
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  Image,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { openAddProperty } from '@/utils/navigation';
+import { Background } from '@/components/ui/background';
+import BottomNavbar from '@/components/ui/tab-bar';
+import { useAuth } from '@/contexts/AuthContext';
 
-// // Interface para as props do Item
-// interface MenuItemProps {
-//   icon: string;
-//   text: string;
-//   onPress: () => void;
-// }
+import { useIsFocused } from '@react-navigation/native';
+import { getUsuarioDetails } from '@/repositories/profileRepository';
+import { getPropertiesByUser } from '@/repositories/propertyRepository';
 
-// // Componente MenuItem separado
-// const MenuItem: React.FC<MenuItemProps> = ({ icon, text, onPress }) => (
-//   <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-//     <View style={styles.menuItemLeft}>
-//       <Ionicons name={icon as any} size={22} color="#555" />
-//       <Text style={styles.menuItemText}>{text}</Text>
-//     </View>
-//     <Ionicons name="chevron-forward" size={22} color="#555" />
-//   </TouchableOpacity>
-// );
+type MenuItem = {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  subtitle: string;
+  route?: string;
+  danger?: boolean;
+};
 
-// export default function SettingsScreen() {
-//   const router = useRouter();
+const MENU_ITEMS: MenuItem[] = [
+  {
+    icon: 'person-outline',
+    label: 'Dados Pessoais',
+    subtitle: 'Nome, telefone e e-mail',
+    route: '/(tabs)/Settings/personal-dates',
+  },
+  {
+    icon: 'business-outline',
+    label: 'Dados da Propriedade',
+    subtitle: 'Fazenda, área e localização',
+    route: '/(tabs)/Settings/property-dates',
+  },
+  {
+    icon: 'add-circle-outline',
+    label: 'Nova propriedade',
+    subtitle: 'Cadastrar outra fazenda ou sítio',
+    route: '/(tabs)/add-property',
+  },
+  {
+    icon: 'pencil-outline',
+    label: 'Editar Perfil',
+    subtitle: 'Altere foto e informações',
+    route: '/(tabs)/Settings/profile-edit',
+  },
+  {
+    icon: 'notifications-outline',
+    label: 'Notificações',
+    subtitle: 'Alertas e preferências',
+  },
+  {
+    icon: 'help-circle-outline',
+    label: 'Ajuda e Suporte',
+    subtitle: 'Contate nossa equipe',
+  },
+];
 
-//   // Dados do menu
-//   const menuItems = [
-//     {
-//       icon: "person-outline",
-//       text: "Dados Pessoais",
-//       route: "/(tabs)/personal-dates",
-//     },
-//     {
-//       icon: "business-outline",
-//       text: "Dados de Propriedade",
-//       route: "/(tabs)/property-dates",
-//     },
-//     {
-//       icon: "people-outline",
-//       text: "Permissões",
-//       route: "/(tabs)/permissions",
-//     },
-//     {
-//       icon: "key-outline",
-//       text: "Segurança",
-//       route: "/(tabs)/security",
-//     },
-//   ];
+export default function ProfileScreen() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const isFocused = useIsFocused();
+  const [dbUser, setDbUser] = useState<any>(null);
+  const [property, setProperty] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-//   return (
-//     <Background>
-//       {/* Header */}
-//       <View style={styles.header}>
-//         <View style={styles.userInfo}>
-//            <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
-//           <Text style={styles.userText}>Olá, João Silva!</Text>
-//         </View>
+  useEffect(() => {
+    async function loadData() {
+      if (!user?.id) return;
+      try {
+        const details = await getUsuarioDetails(user.id);
+        setDbUser(details);
+        const props = await getPropertiesByUser(user.id);
+        if (props && props.length > 0) {
+          setProperty(props[0]);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados no menu do perfil:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (isFocused) {
+      void loadData();
+    }
+  }, [user, isFocused]);
 
-//         <TouchableOpacity>
-//           <Ionicons name="menu" size={32} color="#3A3A3A" />
-//         </TouchableOpacity>
-//       </View>
+  const handleLogout = () => {
+    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/login');
+        },
+      },
+    ]);
+  };
 
-//       {/* Título da Seção */}
-//       <View style={styles.sectionHeader}>
-//         <Ionicons name="settings-outline" size={22} color="#555" />
-//         <Text style={styles.sectionTitle}>Configurações da Conta</Text>
-//       </View>
+  const handleMenuPress = (item: MenuItem) => {
+    if (!item.route) return;
+    if (item.route === '/(tabs)/add-property') {
+      openAddProperty(router);
+      return;
+    }
+    router.push(item.route as any);
+  };
 
-//       {/* Card do Menu */}
-//       <View style={styles.menuCard}>
-//         {menuItems.map((item) => (
-//           <MenuItem
-//             key={item.text}
-//             icon={item.icon}
-//             text={item.text}
-//             onPress={() => router.push(item.route as any)}
-//           />
-//         ))}
-//       </View>
+  return (
+    <Background>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
-//       {/* Botão Voltar */}
-//       <View style={styles.footer}>
-//         <TouchableOpacity
-//           style={styles.backButton}
-//           onPress={() => router.back()}
-//         >
-//           <Ionicons name="arrow-back" size={20} color="#fff" />
-//           <Text style={styles.backButtonText}>Voltar</Text>
-//         </TouchableOpacity>
-//       </View>
-//     </Background>
-//   );
-// }
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header do Perfil */}
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarWrapper}>
+              <Image
+                source={{
+                  uri:
+                    dbUser?.avatarUrl ??
+                    'https://media.istockphoto.com/id/1410538853/pt/foto/young-man-in-the-public-park.jpg?s=2048x2048&w=is&k=20&c=MIzvR5V8GPSO0zVoFnyE6E-AdkmH_TdBO0MSeEs1Ik4=',
+                }}
+                style={styles.avatar}
+              />
+              <TouchableOpacity style={styles.avatarEdit} onPress={() => router.push('/(tabs)/Settings/profile-edit')}>
+                <Ionicons name="camera" size={14} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.userName}>
+              {loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
+            </Text>
+            <Text style={styles.userEmail}>
+              {loading ? "" : (dbUser?.email || user?.email || "")}
+            </Text>
+            <View style={styles.propertyBadge}>
+              <Ionicons name="location-outline" size={13} color="#6BC24A" />
+              <Text style={styles.propertyText}>
+                {loading ? "..." : (property?.name || "Sem propriedade")}
+              </Text>
+            </View>
+          </View>
 
-// const styles = StyleSheet.create({
+          {/* Título da seção */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name="settings-outline" size={18} color="#1A2C3E" />
+            <Text style={styles.sectionTitle}>Configurações da Conta</Text>
+          </View>
 
-//   // Header
-//   header: {
-//     paddingHorizontal: 24,
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//   },
-//   userInfo: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//   },
-//   userText: {
-//     fontSize: 18,
-//     marginLeft: 12,
-//     fontWeight: "600",
-//     color: "#333",
-//   },
-//   userImage: {
-//     width: 44,
-//     height: 44,
-//     borderRadius: 22,
-//     backgroundColor: "#E8D7BD", // fallback color
-//   },
+          {/* Menu de opções */}
+          <View style={styles.menuCard}>
+            {MENU_ITEMS.map((item, index) => (
+              <TouchableOpacity
+                key={item.label}
+                style={[
+                  styles.menuItem,
+                  index < MENU_ITEMS.length - 1 && styles.menuItemBorder,
+                ]}
+                activeOpacity={0.7}
+                onPress={() => handleMenuPress(item)}
+              >
+                <View style={styles.menuIcon}>
+                  <Ionicons name={item.icon} size={20} color="#6BC24A" />
+                </View>
+                <View style={styles.menuContent}>
+                  <Text style={styles.menuLabel}>{item.label}</Text>
+                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#CCC" />
+              </TouchableOpacity>
+            ))}
+          </View>
 
-//   // Seção Título
-//   sectionHeader: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     marginTop: 32,
-//     marginBottom: 16,
-//     paddingHorizontal: 24,
-//   },
-//   sectionTitle: {
-//     fontSize: 20,
-//     fontWeight: "700",
-//     marginLeft: 8,
-//     color: "#333",
-//   },
+          {/* Botão de logout */}
+          <TouchableOpacity
+            style={styles.logoutButton}
+            activeOpacity={0.8}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out-outline" size={20} color="#E53E3E" />
+            <Text style={styles.logoutText}>Sair da Conta</Text>
+          </TouchableOpacity>
 
-//   // Card do Menu
-//   menuCard: {
-//     backgroundColor: "#FFFFFF",
-//     marginHorizontal: 24,
-//     marginTop: 20,
-//     marginBottom: 320,
-//     paddingVertical: 8,
-//     borderRadius: 16,
-//     shadowColor: "#000",
-//     shadowOpacity: 0.1,
-//     shadowRadius: 8,
-//     shadowOffset: { width: 0, height: 4 },
-//     elevation: 6,
-//   },
+          <Text style={styles.version}>NitrusLeaf v1.0.0</Text>
+        </ScrollView>
 
-//   // Itens do Menu
-//   menuItem: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     paddingVertical: 16,
-//     paddingHorizontal: 20,
-//     borderBottomWidth: 1,
-//     borderBottomColor: "#F0E6D5",
-//   },
-//   menuItemLeft: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//   },
-//   menuItemText: {
-//     marginLeft: 12,
-//     fontSize: 16,
-//     color: "#333",
-//     fontWeight: "500",
-//   },
+        <BottomNavbar />
+      </SafeAreaView>
+    </Background>
+  );
+}
 
-//   // Footer
-//   footer: {
-//     position: "absolute",
-//     bottom: 0,
-//     width: "100%",
-//     height: 100,
-//     backgroundColor: "#FFB027",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     paddingBottom: 20,
-//   },
-//   backButton: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     backgroundColor: "#6BC24A",
-//     paddingVertical: 12,
-//     paddingHorizontal: 28,
-//     borderRadius: 30,
-//   },
-//   backButtonText: {
-//     color: "#FFFFFF",
-//     fontSize: 16,
-//     marginLeft: 8,
-//     fontWeight: "600",
-//   },
-//   avatar: {
-//     width: 40,
-//     height: 40,
-//     borderRadius: 20,
-//     marginRight: 10,
-//   },
-// });
+const styles = StyleSheet.create({
+  safeArea: { flex: 1 },
+  container: {
+    padding: 20,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 3,
+    borderColor: '#6BC24A',
+  },
+  avatarEdit: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#6BC24A',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A2C3E',
+  },
+  userEmail: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  propertyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  propertyText: {
+    fontSize: 13,
+    color: '#6BC24A',
+    fontWeight: '600',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1A2C3E',
+  },
+  menuCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  menuItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#F0FDF4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1A2C3E',
+  },
+  menuSubtitle: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 1,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#FED7D7',
+    marginTop: 4,
+  },
+  logoutText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#E53E3E',
+  },
+  version: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#BBB',
+    marginTop: 8,
+  },
+});
