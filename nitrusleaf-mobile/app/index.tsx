@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import NitrusleafLogo from '@/assets/images/nitrusleaf-logo.svg';
 import WaveBgBig from '@/assets/images/wave-bg-big.svg';
 
+
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function SplashScreen() {

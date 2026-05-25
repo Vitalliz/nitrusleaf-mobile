@@ -9,6 +9,7 @@ import { ROUTES, safeBack } from "@/utils/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import WaveBg from "@/assets/images/wave-bg.svg";
+import MaskInput, { Masks } from 'react-native-mask-input';
 
 // Obtem a largura da tela do dispositivo para garantir o preenchimento total
 const { width: screenWidth } = Dimensions.get("window");
@@ -115,9 +116,23 @@ export default function RegisterScreen() {
                 <Text style={styles.label}>Sobrenome</Text>
                 <Input placeholder="Sobrenome" value={lastName} onChangeText={setLastName}/>
                 <Text style={styles.label}>CPF</Text>
-                <Input placeholder="000.000.000-00" value={cpf} onChangeText={setCpf}/>
+                
+                {/* CPF */}
+                <Input
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChangeText={setCpf}
+                  mask={Masks.BRL_CPF}
+                />
+
+                {/* Telefone */}
                 <Text style={styles.label}>Telefone</Text>
-                <Input placeholder="(xx) xxxxx-xxxx" value={phone} onChangeText={setPhone}/>
+                <Input
+                  placeholder="(xx) xxxxx-xxxx"
+                  value={phone}
+                  onChangeText={setPhone}
+                  mask={Masks.BRL_PHONE}
+                />
               </View>
             )}
 
@@ -147,7 +162,16 @@ export default function RegisterScreen() {
                 <WelcomeTitle text="Cadastro"/>
                 <WelcomeSubtitle text="Dados da Propriedade"/>
                 <Text style={[styles.label, { marginTop: 25 }]}>CEP</Text>
-                <Input placeholder="00000-000" value={cep} onChangeText={setCep}/>
+
+
+                {/* CEP */}
+                <Input
+                  placeholder="00000-000"
+                  value={cep}
+                  onChangeText={setCep}
+                  mask={[/\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/]}
+                />
+
                 <Text style={styles.label}>Cidade</Text>
                 <Input placeholder="Sua cidade" value={city} onChangeText={setCity}/>
                 

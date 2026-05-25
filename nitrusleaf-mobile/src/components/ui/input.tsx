@@ -1,6 +1,7 @@
 import * as React from "react";
 import { TextInput, StyleSheet, DimensionValue, KeyboardTypeOptions, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import MaskInput, { Masks } from 'react-native-mask-input';
 
 type InputVariant = "default" | "error" | "readonly";
 type InputSize = "size-327" | "size-199" | "size-364" | "size-287" | "size-286" | "medium" | "full";
@@ -14,6 +15,7 @@ interface InputProps {
   width?: DimensionValue;
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
+  mask?: (string | RegExp)[];
 }
 
 export const Input = ({
@@ -25,6 +27,7 @@ export const Input = ({
   width,
   secureTextEntry = false,
   keyboardType = "default",
+  mask,
 }: InputProps) => {
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
@@ -36,6 +39,24 @@ export const Input = ({
 
   return (
     <View style={containerStyle}>
+      {/* 👇 Se tiver máscara, usa MaskInput; senão, TextInput normal */}
+      {mask ? (
+        <MaskInput
+          style={[         
+            styles.input,
+            inputVariants[variant],
+            secureTextEntry && { paddingRight: 48 }
+          ]}
+          placeholder={placeholder}
+          placeholderTextColor="#747474"
+          value={value}
+          onChangeText={(masked, unmasked) => onChangeText?.(masked)}
+          mask={mask}
+          editable={variant !== "readonly"}
+          keyboardType={keyboardType ?? "numeric"}
+          secureTextEntry={secureTextEntry ? !isPasswordVisible : false}
+        />
+      ) : (
       <TextInput
         style={[
           styles.input,
@@ -52,6 +73,7 @@ export const Input = ({
         secureTextEntry={secureTextEntry ? !isPasswordVisible : false}
         keyboardType={keyboardType}
       />
+      )}
 
       {secureTextEntry && (
         <TouchableOpacity

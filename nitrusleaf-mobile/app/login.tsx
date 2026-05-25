@@ -154,7 +154,7 @@ export default function LoginScreen() {
             {/* Link para cadastro */}
             <View style={styles.registerContainer}>
             <Text style={styles.registerText}>
-                N├úo possui uma conta?{" "}
+                Não possui uma conta?{" "}
             </Text>
             <TouchableOpacity onPress={handleRegister}>
                 <Text style={styles.registerLink}>Fazer cadastro</Text>
