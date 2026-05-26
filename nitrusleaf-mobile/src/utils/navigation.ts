@@ -5,7 +5,7 @@ export const ROUTES = {
   history: "/(tabs)/History/fields",
   scan: "/(tabs)/AI/scan",
   analysisSummary: "/(tabs)/AI/analysis-summary",
-  profile: "/(tabs)/Settings/profile",
+  profile: "/(tabs)/Settings/profile-new",
   maps: "/(tabs)/Maps/maps",
   login: "/login",
   welcome: "/welcome",
