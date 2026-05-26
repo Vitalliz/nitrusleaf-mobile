@@ -10,6 +10,7 @@ import {
     StatusBar,
     Image,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -17,19 +18,22 @@ import { openAddProperty } from '@/utils/navigation';
 import { Background } from '@/components/ui/background';
 import BottomNavbar from '@/components/ui/tab-bar';
 import { useAuth } from '@/contexts/AuthContext';
-
 import { useIsFocused } from '@react-navigation/native';
-import { getUsuarioDetails } from '@/repositories/profileRepository';
+import { getUsuarioDetails, updateUsuarioAvatar } from '@/repositories/profileRepository';
 import { getPropertiesByUser } from '@/repositories/propertyRepository';
+import {
+    pickProfileImageFromDevice,
+    uploadProfileAvatar,
+} from '@/services/profileAvatar';
 
 type MenuItem = {
     icon: keyof typeof Ionicons.glyphMap;
     label: string;
     subtitle?: string;
     route?: string;
-    };
+};
 
-    const MENU_ITEMS: MenuItem[] = [
+const MENU_ITEMS: MenuItem[] = [
     {
         icon: 'settings-outline',
         label: 'Configurações',
@@ -41,18 +45,19 @@ type MenuItem = {
         subtitle: 'Cadastrar nova propriedade',
         route: '/(tabs)/add-property',
     },
-    ];
+];
 
 export default function ProfileScreen() {
-const router = useRouter();
-const { user, logout } = useAuth();
-const isFocused = useIsFocused();
+    const router = useRouter();
+    const { user, logout } = useAuth();
+    const isFocused = useIsFocused();
 
-const [dbUser, setDbUser] = useState<any>(null);
-const [property, setProperty] = useState<any>(null);
-const [loading, setLoading] = useState(true);
-
-const [totalAnalyses] = useState<number>(0);
+    const [dbUser, setDbUser] = useState<any>(null);
+    const [property, setProperty] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [totalAnalyses] = useState<number>(0);
+    const [avatarUri, setAvatarUri] = useState<string | null>(null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
     useEffect(() => {
         async function loadData() {
@@ -60,12 +65,13 @@ const [totalAnalyses] = useState<number>(0);
             try {
                 const details = await getUsuarioDetails(user.id);
                 setDbUser(details);
+                if (details?.avatarUrl) setAvatarUri(details.avatarUrl);
                 const props = await getPropertiesByUser(user.id);
-            if (props && props.length > 0) {
-                setProperty(props[0]);
-            }
+                if (props && props.length > 0) {
+                    setProperty(props[0]);
+                }
             } catch (err) {
-                console.error("Erro ao carregar dados no menu do perfil:", err);
+                console.error('Erro ao carregar dados no menu do perfil:', err);
             } finally {
                 setLoading(false);
             }
@@ -75,196 +81,198 @@ const [totalAnalyses] = useState<number>(0);
         }
     }, [user, isFocused]);
 
+    const applyPickedAvatar = async (useCamera: boolean) => {
+        if (!user?.id) return;
+        try {
+            const picked = await pickProfileImageFromDevice(useCamera);
+            if (picked.cancelled || !picked.localUri) return;
+
+            setUploadingAvatar(true);
+            setAvatarUri(picked.localUri);
+
+            const storedUrl = await uploadProfileAvatar(user.id, picked.localUri);
+            await updateUsuarioAvatar(user.id, storedUrl);
+            setAvatarUri(storedUrl);
+            Alert.alert('Sucesso', 'Foto de perfil atualizada.');
+        } catch (error: unknown) {
+            console.error('Erro ao alterar foto:', error);
+            const msg =
+                error instanceof Error
+                    ? error.message
+                    : 'Não foi possível atualizar a foto de perfil.';
+            Alert.alert('Erro', msg);
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
+    const handleChangePhoto = () => {
+        Alert.alert('Foto de perfil', 'Escolha de onde enviar a imagem', [
+            { text: 'Galeria', onPress: () => void applyPickedAvatar(false) },
+            { text: 'Câmera', onPress: () => void applyPickedAvatar(true) },
+            { text: 'Cancelar', style: 'cancel' },
+        ]);
+    };
+
     const handleLogout = () => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: async () => {
-            await logout();
-            router.replace('/login');
-        },
-        },
-    ]);
+        Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+                text: 'Sair',
+                style: 'destructive',
+                onPress: async () => {
+                    await logout();
+                    router.replace('/login');
+                },
+            },
+        ]);
     };
 
     const handleMenuPress = (item: MenuItem) => {
-    if (!item.route) return;
-    if (item.route === '/(tabs)/add-property') {
-        openAddProperty(router);
-        return;
-    }
-    router.push(item.route as any);
-};
-
+        if (!item.route) return;
+        if (item.route === '/(tabs)/add-property') {
+            openAddProperty(router);
+            return;
+        }
+        router.push(item.route as any);
+    };
 
     return (
         <Background>
-        <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
-            
-            <ScrollView
-                contentContainerStyle={styles.container}
-                showsVerticalScrollIndicator={false}
-            >
-            {/* TOPO LARANJA */}
-            <View style={styles.header}>
-                <View style={styles.headerRow}>
-                <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => router.back()}
+            <SafeAreaView style={styles.safeArea}>
+                <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+
+                <ScrollView
+                    contentContainerStyle={styles.container}
+                    showsVerticalScrollIndicator={false}
                 >
-                    <Ionicons
-                    name="chevron-back"
-                    size={22}
-                    color="#1A2C3E"
-                    />
-                </TouchableOpacity>
+                    {/* TOPO LARANJA */}
+                    <View style={styles.header}>
+                        <View style={styles.headerRow}>
+                            <TouchableOpacity
+                                style={styles.backButton}
+                                onPress={() => router.back()}
+                            >
+                                <Ionicons name="chevron-back" size={22} color="#1A2C3E" />
+                            </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>Meu Perfil</Text>
+                            <Text style={styles.headerTitle}>Meu Perfil</Text>
 
-                <View style={{ width: 42 }} />
-                </View>
-            </View>
-
-            {/* CARD BRANCO */}
-            <View style={styles.profileCard}>
-                {/* AVATAR */}
-                <View style={styles.avatarWrapper}>
-                <Image
-                    source={{
-                    uri:
-                        dbUser?.avatarUrl ??
-                        'https://media.istockphoto.com/id/1410538853/pt/foto/young-man-in-the-public-park.jpg?s=2048x2048&w=is&k=20&c=MIzvR5V8GPSO0zVoFnyE6E-AdkmH_TdBO0MSeEs1Ik4=',
-                    }}
-                    style={styles.avatar}
-                />
-                    <TouchableOpacity
-                        style={styles.avatarEdit}
-                        onPress={() =>
-                        router.push('/(tabs)/Settings/profile-edit')
-                    }>
-                        <Ionicons
-                        name="camera"
-                        size={22}
-                        color="#FFF"
-                        />
-                    </TouchableOpacity>
-                </View>
-
-                {/* NOME */}
-                <Text style={styles.userName}>
-                {loading
-                    ? 'Carregando...'
-                    : dbUser?.fullName ||
-                    user?.name ||
-                    'Usuário'}
-                </Text>
-
-                {/* EMAIL */}
-                <Text style={styles.userEmail}>
-                {loading
-                    ? ''
-                    : dbUser?.email || user?.email || ''}
-                </Text>
-
-                {/* PROPRIEDADE */}
-                <View style={styles.propertyBadge}>
-                    <Ionicons
-                        name="business-outline"
-                        size={14}
-                        color="#6BC24A"
-                    />
-
-                    <Text style={styles.propertyText}>
-                        {loading
-                        ? '...'
-                        : property?.name || 'Sem propriedade'}
-                    </Text>
-                </View>
-
-                {/* TOTAL DE ANÁLISES */}
-                <View style={styles.analysesCard}>
-                    <Text style={styles.analysesLabel}>
-                    Total de Análises Feitas
-                    </Text>
-
-                    <View style={styles.analysesBadge}>
-                    <Text style={styles.analysesValue}>
-                        {totalAnalyses}
-                    </Text>
-                    </View>
-                </View>
-            </View>
-
-            
-
-            {/* TÍTULO */}
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                Configurações
-                </Text>
-            </View>
-
-            {/* MENU */}
-            <View style={styles.menuCard}>
-                {MENU_ITEMS.map((item, index) => (
-                <TouchableOpacity
-                    key={item.label}
-                    style={[
-                        styles.menuItem,
-                        index < MENU_ITEMS.length - 1 && styles.menuItemBorder,
-                    ]}
-                    activeOpacity={0.7}
-                    onPress={() => handleMenuPress(item)}
-                >
-                    <View style={styles.menuIcon}>
-                        <Ionicons name={item.icon} size={20} color="#6BC24A" />
+                            <View style={{ width: 42 }} />
+                        </View>
                     </View>
 
-                    <View style={styles.menuContent}>
-                    <Text style={styles.menuLabel}>
-                        {item.label}
-                    </Text>
+                    {/* CARD BRANCO */}
+                    <View style={styles.profileCard}>
+                        {/* AVATAR */}
+                        <TouchableOpacity
+                            style={styles.avatarWrapper}
+                            onPress={handleChangePhoto}
+                            disabled={uploadingAvatar}
+                            activeOpacity={0.8}
+                        >
+                            {avatarUri ? (
+                                <Image
+                                    source={{ uri: avatarUri }}
+                                    style={styles.avatar}
+                                />
+                            ) : (
+                                <View style={styles.defaultAvatar}>
+                                    <Ionicons name="person" size={45} color="#BDBDBD" />
+                                </View>
+                            )}
+                            <View style={styles.avatarEdit}>
+                                {uploadingAvatar ? (
+                                    <ActivityIndicator size="small" color="#FFF" />
+                                ) : (
+                                    <Ionicons name="camera" size={22} color="#FFF" />
+                                )}
+                            </View>
+                        </TouchableOpacity>
 
-                    {item.subtitle && (
-                        <Text style={styles.menuSubtitle}>
-                        {item.subtitle}
+                        {/* NOME */}
+                        <Text style={styles.userName}>
+                            {loading ? 'Carregando...' : dbUser?.fullName || user?.name || 'Usuário'}
                         </Text>
-                    )}
+
+                        {/* EMAIL */}
+                        <Text style={styles.userEmail}>
+                            {loading ? '' : dbUser?.email || user?.email || ''}
+                        </Text>
+
+                        {/* PROPRIEDADE */}
+                        <View style={styles.propertyBadge}>
+                            <Ionicons name="business-outline" size={14} color="#6BC24A" />
+                            <Text style={styles.propertyText}>
+                                {loading ? '...' : property?.name || 'Sem propriedade'}
+                            </Text>
+                        </View>
+
+                        {/* TOTAL DE ANÁLISES */}
+                        <View style={styles.analysesCard}>
+                            <Text style={styles.analysesLabel}>Total de Análises Feitas</Text>
+                            <View style={styles.analysesBadge}>
+                                <Text style={styles.analysesValue}>{totalAnalyses}</Text>
+                            </View>
+                        </View>
                     </View>
 
-                    <Ionicons name="chevron-forward" size={18} color="#BDBDBD"/>
-                </TouchableOpacity>
-                ))}
-            </View>
+                    {/* TÍTULO */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Configurações</Text>
+                    </View>
 
-            {/* BOTÃO EDITAR */}
-            <TouchableOpacity
-                style={styles.editButton}
-                activeOpacity={0.8}
-                onPress={() =>
-                router.push('/(tabs)/Settings/profile-edit')
-                }
-            >
-                <Ionicons name="pencil-outline" size={18} color="#FFF" />
-                <Text style={styles.editButtonText}>Editar Perfil</Text>
-            </TouchableOpacity>
+                    {/* MENU */}
+                    <View style={styles.menuCard}>
+                        {MENU_ITEMS.map((item, index) => (
+                            <TouchableOpacity
+                                key={item.label}
+                                style={[
+                                    styles.menuItem,
+                                    index < MENU_ITEMS.length - 1 && styles.menuItemBorder,
+                                ]}
+                                activeOpacity={0.7}
+                                onPress={() => handleMenuPress(item)}
+                            >
+                                <View style={styles.menuIcon}>
+                                    <Ionicons name={item.icon} size={20} color="#6BC24A" />
+                                </View>
 
-            {/* BOTÃO SAIR */}
-            <TouchableOpacity
-                style={styles.logoutButton}
-                activeOpacity={0.8}
-                onPress={handleLogout}
-            >
-                <Ionicons name="log-out-outline" size={18} color="#E53E3E"/>
-                <Text style={styles.logoutText}>Sair da Conta</Text>
-            </TouchableOpacity>
-            </ScrollView>
+                                <View style={styles.menuContent}>
+                                    <Text style={styles.menuLabel}>{item.label}</Text>
+                                    {item.subtitle && (
+                                        <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                                    )}
+                                </View>
 
-            <BottomNavbar />
-        </SafeAreaView>
+                                <Ionicons name="chevron-forward" size={18} color="#BDBDBD" />
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    {/* BOTÃO EDITAR */}
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        activeOpacity={0.8}
+                        onPress={() => router.push('/(tabs)/Settings/profile-edit')}
+                    >
+                        <Ionicons name="pencil-outline" size={18} color="#FFF" />
+                        <Text style={styles.editButtonText}>Editar Perfil</Text>
+                    </TouchableOpacity>
+
+                    {/* BOTÃO SAIR */}
+                    <TouchableOpacity
+                        style={styles.logoutButton}
+                        activeOpacity={0.8}
+                        onPress={handleLogout}
+                    >
+                        <Ionicons name="log-out-outline" size={18} color="#E53E3E" />
+                        <Text style={styles.logoutText}>Sair da Conta</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+
+                <BottomNavbar />
+            </SafeAreaView>
         </Background>
     );
 }
@@ -285,14 +293,12 @@ const styles = StyleSheet.create({
         paddingTop: 45,
         paddingHorizontal: 20,
     },
-
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginTop: 10,
     },
-
     backButton: {
         width: 36,
         height: 36,
@@ -323,6 +329,16 @@ const styles = StyleSheet.create({
     avatarWrapper: {
         position: 'absolute',
         top: -55,
+    },
+    defaultAvatar: {
+        width: 110,
+        height: 110,
+        borderRadius: 55,
+        backgroundColor: '#F3F4F6',
+        borderWidth: 3,
+        borderColor: '#FFF',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     avatar: {
         width: 110,
@@ -381,7 +397,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderWidth: 1,
         borderColor: '#E8E8E8',
-        shadowRadius: 1,
         elevation: 1,
     },
     analysesLabel: {
@@ -389,7 +404,6 @@ const styles = StyleSheet.create({
         color: '#1A2C3E',
         fontWeight: '500',
     },
-
     analysesBadge: {
         backgroundColor: '#6BC24A',
         borderRadius: 8,
@@ -403,6 +417,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#FFF',
     },
+
     /* SECTION */
     sectionHeader: {
         paddingHorizontal: 20,
@@ -472,7 +487,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 20,
     },
-
     editButtonText: {
         fontSize: 15,
         fontWeight: '600',
@@ -493,7 +507,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         marginTop: 12,
     },
-
     logoutText: {
         fontSize: 15,
         fontWeight: '600',

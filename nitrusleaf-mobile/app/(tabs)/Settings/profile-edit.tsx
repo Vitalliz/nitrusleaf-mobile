@@ -175,7 +175,7 @@
                   ) : (
                     <Ionicons
                       name="camera"
-                      size={16}
+                      size={26}
                       color="#FFF"
                     />
                   )}
@@ -316,21 +316,19 @@
       width: 100,
       height: 100,
       borderRadius: 50,
-      borderWidth: 3,
+      borderWidth: 1,
       borderColor: "#6BC24A",
     },
     cameraIcon: {
       position: "absolute",
-      bottom: 0,
-      right: 0,
+      bottom: -5,
+      right: -15,
       backgroundColor: "#6BC24A",
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 50,
+      height: 50,
+      borderRadius: 50,
       alignItems: "center",
       justifyContent: "center",
-      borderWidth: 2,
-      borderColor: "#FFF",
     },
     avatarText: {
       fontSize: 14,
