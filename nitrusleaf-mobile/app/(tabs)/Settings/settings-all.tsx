@@ -39,7 +39,7 @@ const MENU_ITEMS: MenuItem[] = [
     icon: 'business-outline',
     label: 'Dados da Propriedade',
     subtitle: 'Meus dados pessoais',
-    route: '/(tabs)/Settings/property-dates',
+    route: '/(tabs)/Settings/property-data',
   },
   {
     icon: 'settings-outline',
