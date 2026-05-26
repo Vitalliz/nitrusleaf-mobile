@@ -20,7 +20,6 @@
     getUsuarioDetails,
     updateUsuarioDetails,
     updateUsuarioAvatar,
-    deleteUsuario,
   } from "@/repositories/profileRepository";
   import {
     pickProfileImageFromDevice,
@@ -30,7 +29,7 @@
 
   export default function ProfileEditScreen() {
     const router = useRouter();
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -126,37 +125,6 @@
         { text: "Câmera", onPress: () => void applyPickedAvatar(true) },
         { text: "Cancelar", style: "cancel" },
       ]);
-    };
-
-    const handleDeleteAccount = () => {
-      Alert.alert(
-        "Excluir Conta",
-        "Tem certeza que deseja excluir sua conta permanentemente? Essa ação é irreversível e excluirá todos os seus dados.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          {
-            text: "Excluir permanentemente",
-            style: "destructive",
-            onPress: async () => {
-              if (!user?.id) return;
-              try {
-                setSaving(true);
-                // Deleta o registro do usuário
-                await deleteUsuario(user.id);
-                // Executa o logout para limpar o estado local
-                await logout();
-                Alert.alert("Conta Excluída", "Sua conta foi excluída com sucesso.");
-                router.replace("/login");
-              } catch (error: any) {
-                console.error("Erro ao excluir conta:", error);
-                Alert.alert("Erro", error.message || "Não foi possível excluir a conta. Entre em contato com o suporte.");
-              } finally {
-                setSaving(false);
-              }
-            },
-          },
-        ]
-      );
     };
 
     return (
