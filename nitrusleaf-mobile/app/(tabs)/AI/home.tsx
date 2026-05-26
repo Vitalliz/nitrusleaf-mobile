@@ -285,7 +285,6 @@ export default function HomeScreen() {
             {/* Deficiência por talhão */}
             <GroupedColumnChart
               data={groupedColumnData}
-              onDetailPress={handleDetailPress}
               height={180}
             />
 

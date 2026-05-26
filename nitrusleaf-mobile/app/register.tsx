@@ -125,6 +125,7 @@ export default function RegisterScreen() {
                   mask={Masks.BRL_CPF}
                 />
 
+
                 {/* Telefone */}
                 <Text style={styles.label}>Telefone</Text>
                 <Input
@@ -133,6 +134,8 @@ export default function RegisterScreen() {
                   onChangeText={setPhone}
                   mask={Masks.BRL_PHONE}
                 />
+              
+                <Input placeholder="(xx) xxxxx-xxxx" value={phone} onChangeText={setPhone}/>
               </View>
             )}
 

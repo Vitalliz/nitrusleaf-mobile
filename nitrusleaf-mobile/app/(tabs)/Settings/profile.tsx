@@ -65,6 +65,12 @@ const MENU_ITEMS: MenuItem[] = [
     label: 'Ajuda e Suporte',
     subtitle: 'Contate nossa equipe',
   },
+  {
+    icon: 'settings-outline',
+    label: 'Configurações da Conta',
+    subtitle: 'Verifique seu email e senha',
+    route: '/(tabs)/Settings/profile-new'
+  },
 ];
 
 export default function ProfileScreen() {
@@ -160,7 +166,7 @@ export default function ProfileScreen() {
           {/* Título da seção */}
           <View style={styles.sectionHeader}>
             <Ionicons name="settings-outline" size={18} color="#1A2C3E" />
-            <Text style={styles.sectionTitle}>Configurações da Conta</Text>
+            <Text style={styles.sectionTitle}>Configurações</Text>
           </View>
 
           {/* Menu de opções */}

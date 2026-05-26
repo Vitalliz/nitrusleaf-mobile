@@ -139,16 +139,6 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
             <Text style={styles.legendText}>Manganês</Text>
           </View>
         </View>
-
-        {/* Button */}
-        <View style={styles.buttonWrapper}>
-          <Button
-            title="Detalhar"
-            variant="primary"
-            size="full"
-            onPress={onDetailPress}
-          />
-        </View>
       </View>
     </CustomCard>
   );

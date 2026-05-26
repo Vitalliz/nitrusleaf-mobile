@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
   },
   iconWrapperActive: {
     backgroundColor: '#FEE4C1',
+    borderRadius: 12,
   },
   cameraWrapper: {
     flex: 1,
