@@ -46,21 +46,29 @@ const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) =
         </Text>
         
         <View style={styles.footer}>
-          <View style={styles.dateContainer}>
-            <Ionicons name="calendar-outline" size={12} color="#888" />
-            <Text style={styles.date}>Criado em: {talhao.date}</Text>
-          </View>
-          {talhao.deficientTrees > 0 && (
-            <View style={styles.deficientBadge}>
-              <Text style={styles.deficientText}>
-                ⚠️ {talhao.deficientTrees} com deficiência
-              </Text>
-            </View>
-          )}
+        <View style={styles.dateContainer}>
+          <Text style={styles.dateLabel}>Criado em:</Text>
+
+          <Ionicons
+            name="calendar-outline"
+            size={14}
+            color="#777"
+          />
+
+          <Text style={styles.date}>{talhao.date}</Text>
         </View>
+
+        {talhao.deficientTrees > 0 && (
+          <View style={styles.deficientBadge}>
+            <Text style={styles.deficientText}>
+              ⚠️ {talhao.deficientTrees} com deficiência
+            </Text>
+          </View>
+        )}
+      </View>
       </View>
       
-      <Ionicons name="chevron-forward" size={24} color="#CCC" />
+      <Ionicons name="chevron-forward" size={30} color="#757575" style={styles.chevron} />
     </TouchableOpacity>
   );
 });
@@ -69,69 +77,84 @@ TalhaoCard.displayName = 'TalhaoCard';
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9F9F9',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderRadius: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginBottom:12,
   },
-  content: {
-    flex: 1,
-  },
+  content: { flex: 1, },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    marginBottom: 6,
   },
   name: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1A2C3E',
+    fontWeight: "700",
+    color: "#1A1A1A",
   },
+
   progressBadge: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: "#EAF8E5",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
+
   progressText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#4CAF50',
+    fontWeight: "700",
+    color: "#6BC24A",
   },
+
   stats: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    fontSize: 16,
+    color: "#1A1A1A",
+    marginBottom: 10,
   },
+
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
+
   dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4, 
   },
-  date: {
-    fontSize: 12,
-    color: '#888',
+
+  dateLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#666",
   },
+
+  date: { fontSize: 14, color: "#777", },
+
   deficientBadge: {
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: "#FFF4E5",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
+
   deficientText: {
     fontSize: 11,
-    fontWeight: '500',
-    color: '#FF9800',
+    fontWeight: "600",
+    color: "#FF9800",
+  },
+
+  chevron: {
+    marginLeft: 14,
   },
 });
-
 export default TalhaoCard;
