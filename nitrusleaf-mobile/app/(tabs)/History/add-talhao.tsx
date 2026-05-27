@@ -122,7 +122,7 @@ export default function AddTalhaoScreen() {
               onChangeText={(value) =>
                 handleInputChange("especieFruta", value)
               }
-              placeholder="Ex: Laranja, Limão, Abacaxi"
+              placeholder="Ex: Murcote, Ponkan"
               size="full"
             />
           </View>

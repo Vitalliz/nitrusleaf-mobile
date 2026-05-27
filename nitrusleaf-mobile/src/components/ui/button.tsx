@@ -4,7 +4,7 @@ import { Image , TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Label } from "@/components/ui/label";
 import { Ionicons } from "@expo/vector-icons";
 
-type Variant = "primary" | "secondary" | "accent" | "text" | "outline" | "google" | "googleTwo" | "navigation" | "solid-green";
+type Variant = "primary" | "secondary" | "accent" | "text" | "outline" | "google" | "googleTwo" | "navigation" | "solid-green" | "danger";
 type Size = "328" | "151" | "142" | "143" | "241" | "56" | "111" | "206" | "full" | "auto";
 
 interface ButtonProps {
@@ -63,12 +63,16 @@ export const Button = ({
           }
           color={
             variant === "google" || variant === "googleTwo"
-              ? "secondary" 
+              ? "secondary"
               : variant === "secondary" || variant === "outline" || variant === "text"
-              ? "accent" 
+              ? "accent"
               : "white"
           }
-          style={StyleSheet.flatten([styles.text, ...(disabled ? [styles.disabledText] : [])])}
+          style={{
+            ...styles.text,
+            ...(variant === "danger" && { color: "#FF5C5C" }),
+            ...(disabled && styles.disabledText),
+          }}
         />
       </View>
     </TouchableOpacity>
@@ -111,7 +115,6 @@ const buttonStyles = StyleSheet.create({
     borderWidth: 0.9,
     borderColor: "#d1d1d1",
     elevation: 2,
-    fontWeight: "200"
   },
   navigation: {
     backgroundColor: "#6BC24A",
@@ -128,103 +131,39 @@ const buttonStyles = StyleSheet.create({
     borderRadius: 20,
     elevation: 2,
   },
+  danger: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    color: "#FF5C5C",
+    borderColor: "#FF5C5C",
+    elevation: 3,
+  },
 });
 
 const textStyles = StyleSheet.create({
-  primary: { 
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  secondary: { 
-    color: "#6BC24A",
-    fontWeight: "600",
-  },
-  accent: { 
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  text: { 
-    color: "#6BC24A",
-    fontWeight: "400",
-  },
-  outline: { 
-    color: "#6BC24A",
-    fontWeight: "600",
-  },
-  google: { 
-    color: "#333333",
-    fontWeight: "500",
-  },
-  googleTwo: { 
-    color: "#333333",
-    fontWeight: "500",
-  },
-  navigation: { 
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  "solid-green": { 
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
-  },
+  primary: { color: "#FFFFFF", fontWeight: "600" },
+  secondary: { color: "#6BC24A", fontWeight: "600" },
+  accent: { color: "#FFFFFF", fontWeight: "600" },
+  text: { color: "#6BC24A", fontWeight: "400" },
+  outline: { color: "#6BC24A", fontWeight: "600" },
+  google: { color: "#333333", fontWeight: "500" },
+  googleTwo: { color: "#333333", fontWeight: "500" },
+  navigation: { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
+  "solid-green": { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
+  danger: { color: "#FF5C5C", fontWeight: "600" },
 });
 
 const sizeStyles = StyleSheet.create({
-  "328": {
-    width: 328,
-    height: 50,
-    borderRadius: 25,
-  },
-  "151": {
-    width: 151,
-    height: 45,
-    borderRadius: 22,
-  },
-  "142": {
-    width: 142,
-    height: 45,
-    borderRadius: 22,
-  },
-  "143": {
-    width: 143,
-    height: 45,
-    borderRadius: 22,
-  },
-  "241": {
-    width: 241,
-    height: 50,
-    borderRadius: 25,
-  },
-  "56": {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-  "111": {
-    width: 111,
-    height: 36,
-    borderRadius: 18,
-    paddingVertical: 8,
-  },
-  "206": {
-    width: 206,
-    height: 45,
-    borderRadius: 22,
-  },
-  "full": {
-    width: "100%",
-    height: 44,
-    borderRadius: 25,
-  },
-  "auto": {
-    paddingHorizontal: 16,
-    height: 36,
-    minWidth: 80,
-    borderRadius: 18,
-    paddingVertical: 8,
-  },
+  "328": { width: 328, height: 50, borderRadius: 25 },
+  "151": { width: 151, height: 45, borderRadius: 22 },
+  "142": { width: 142, height: 45, borderRadius: 22 },
+  "143": { width: 143, height: 45, borderRadius: 22 },
+  "241": { width: 241, height: 50, borderRadius: 25 },
+  "56":  { width: 56,  height: 56, borderRadius: 28 },
+  "111": { width: 111, height: 36, borderRadius: 18, paddingVertical: 8 },
+  "206": { width: 206, height: 45, borderRadius: 22 },
+  "full": { width: "100%", height: 44, borderRadius: 25 },
+  "auto": { paddingHorizontal: 16, height: 36, minWidth: 80, borderRadius: 18, paddingVertical: 8 },
 });
 
 const styles = StyleSheet.create({
@@ -232,7 +171,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
-    margin: 0
+    margin: 0,
   },
   googleIcon: {
     position: "absolute",
@@ -265,159 +204,62 @@ const styles = StyleSheet.create({
   },
 });
 
-// Componentes específicos baseados nas telas - ATUALIZADOS
 export const ContinueButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Continuar" 
-    variant="primary" 
-    size="328" 
-    onPress={onPress} 
-  />
+  <Button title="Continuar" variant="primary" size="328" onPress={onPress} />
 );
 
 export const GoogleButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Cadastrar-se com o Google" 
-    variant="google" 
-    size="full" 
-    onPress={onPress}
-    icon="logo-google"
-  />
+  <Button title="Cadastrar-se com o Google" variant="google" size="full" onPress={onPress} icon="logo-google" />
 );
 
 export const GoogleButton2 = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Entrar com o Google" 
-    variant="googleTwo" 
-    size="full" 
-    onPress={onPress}
-    icon="logo-google"
-  />
+  <Button title="Entrar com o Google" variant="googleTwo" size="full" onPress={onPress} icon="logo-google" />
 );
 
-export const LoginButton = ({
-  onPress,
-  disabled = false,
-  title = "Entrar",
-}: {
-  onPress?: () => void;
-  disabled?: boolean;
-  title?: string;
-}) => (
-  <Button 
-    title={title}
-    variant="primary" 
-    size="full" 
-    onPress={onPress} 
-    disabled={disabled}
-  />
+export const LoginButton = ({ onPress, disabled = false, title = "Entrar" }: { onPress?: () => void; disabled?: boolean; title?: string }) => (
+  <Button title={title} variant="primary" size="full" onPress={onPress} disabled={disabled} />
 );
 
 export const NextButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Próxima" 
-    variant="primary" 
-    size="206" 
-    onPress={onPress} 
-  />
+  <Button title="Próxima" variant="primary" size="206" onPress={onPress} />
 );
 
 export const BackButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Voltar" 
-    variant="navigation" 
-    size="auto" 
-    onPress={onPress}
-    icon="arrow-back"
-  />
+  <Button title="Voltar" variant="navigation" size="auto" onPress={onPress} icon="arrow-back" />
 );
 
 export const DetailButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Detalhar" 
-    variant="solid-green" 
-    size="111" 
-    onPress={onPress} 
-  />
+  <Button title="Detalhar" variant="solid-green" size="111" onPress={onPress} />
 );
 
 export const ExpandButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Expandir" 
-    variant="solid-green" 
-    size="111" 
-    onPress={onPress} 
-  />
+  <Button title="Expandir" variant="solid-green" size="111" onPress={onPress} />
 );
 
 export const FinishButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Finalizar" 
-    variant="primary" 
-    size="206" 
-    onPress={onPress} 
-  />
+  <Button title="Finalizar" variant="primary" size="206" onPress={onPress} />
 );
 
 export const AddTreeButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="+ Adicionar pé" 
-    variant="solid-green" 
-    size="auto" 
-    onPress={onPress} 
-  />
+  <Button title="+ Adicionar pé" variant="solid-green" size="auto" onPress={onPress} />
 );
 
 export const ViewPercentageButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Ver %" 
-    variant="solid-green" 
-    size="auto" 
-    onPress={onPress} 
-  />
+  <Button title="Ver %" variant="solid-green" size="auto" onPress={onPress} />
 );
 
 export const SeeMoreButton = ({ onPress, title = "Clique para saber mais" }: { onPress?: () => void; title?: string }) => (
-  <Button 
-    title={title}
-    variant="text" 
-    size="auto" 
-    onPress={onPress} 
-  />
+  <Button title={title} variant="text" size="auto" onPress={onPress} />
 );
 
 export const DirectlyButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="A diretamente" 
-    variant="text" 
-    size="auto" 
-    onPress={onPress} 
-  />
+  <Button title="A diretamente" variant="text" size="auto" onPress={onPress} />
 );
 
 export const ViewMapsButton = ({ onPress }: { onPress?: () => void }) => (
-  <Button 
-    title="Ver mapas" 
-    variant="text" 
-    size="auto" 
-    onPress={onPress} 
-  />
+  <Button title="Ver mapas" variant="text" size="auto" onPress={onPress} />
 );
 
-export const SignUpButton = ({
-  onPress,
-  disabled = false,
-  title = "Cadastrar-se",
-}: {
-  onPress?: () => void;
-  disabled?: boolean;
-  title?: string;
-}) => (
-  <Button 
-    title={title}
-    variant="secondary" 
-    size="full" 
-    onPress={onPress} 
-    disabled={disabled}
-  />
+export const SignUpButton = ({ onPress, disabled = false, title = "Cadastrar-se" }: { onPress?: () => void; disabled?: boolean; title?: string }) => (
+  <Button title={title} variant="secondary" size="full" onPress={onPress} disabled={disabled} />
 );

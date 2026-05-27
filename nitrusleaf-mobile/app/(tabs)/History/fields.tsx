@@ -113,7 +113,7 @@ export default function HistoryScreen() {
   const handleTalhaoPress = useCallback(
     (talhaoId: string) => {
       router.push({
-        pathname: "/(tabs)/History/field-feet",
+        pathname: "/(tabs)/History/field-detail-screen",
         params: { talhaoId },
       });
     },
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: 25,
     gap: 8,
     backgroundColor: "#FFFFFF",
     marginVertical: 30,
