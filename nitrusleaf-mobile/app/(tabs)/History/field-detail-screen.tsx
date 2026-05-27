@@ -153,7 +153,7 @@ export default function TalhaoDetailScreen() {
   const handleAddArvore = useCallback(() => {
     if (talhaoId) {
       router.push({
-        pathname: "/(tabs)/add-foot",
+        pathname: "/(tabs)/History/add-tree",
         params: { talhaoId, talhaoName: talhao?.name ?? "" },
       });
     }
