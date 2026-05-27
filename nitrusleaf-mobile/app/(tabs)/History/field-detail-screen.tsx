@@ -258,31 +258,32 @@ export default function TalhaoDetailScreen() {
         ) : (
           <ScrollView contentContainerStyle={styles.container}>
             {/* Título com lápis */}
-            <View style={styles.titleRow}>
-              <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-                <Ionicons name="arrow-back" size={24} color="#ffffff" />
-              </TouchableOpacity>
-
-              <View style={styles.titleCenter}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {talhao?.name || "Talhão"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => setEditModalVisible(true)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="create-outline" size={20} color="#58B741" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={{ width: 40 }} />
-            </View>
+            
 
             <CustomCard
               variant="white-large"
               bottomContent={
                 <View style={styles.cardContent}>
+                  <View style={styles.titleRow}>
+                    <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+                      <Ionicons name="arrow-back" size={24} color="#ffffff" />
+                    </TouchableOpacity>
+
+                    <View style={styles.titleCenter}>
+                      <Text style={styles.title} numberOfLines={1}>
+                        {talhao?.name || "Talhão"}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => setEditModalVisible(true)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="create-outline" size={20} color="#58B741" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={{ width: 40 }} />
+                  </View>
                   <View style={styles.searchContainer}>
                     <Input
                       placeholder="Buscar árvore"
@@ -303,27 +304,32 @@ export default function TalhaoDetailScreen() {
                   {/* Filtros */}
                   <View style={styles.filtersContainer}>
                     <Text style={styles.filtersTitle}>Filtros:</Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.filtersRow}
-                    >
+                    <View style={styles.filtersRow}>
                       {filters.map((filter) => {
                         const active = selectedFilter === filter;
+
                         return (
                           <TouchableOpacity
                             key={filter}
-                            style={[styles.filterChip, active && styles.filterChipActive]}
+                            style={[
+                              styles.filterChip,
+                              active && styles.filterChipActive,
+                            ]}
                             onPress={() => setSelectedFilter(filter)}
                             activeOpacity={0.7}
                           >
-                            <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                            <Text
+                              style={[
+                                styles.filterChipText,
+                                active && styles.filterChipTextActive,
+                              ]}
+                            >
                               {filter}
                             </Text>
                           </TouchableOpacity>
                         );
                       })}
-                    </ScrollView>
+                    </View>
                   </View>
 
                   {/* Lista */}
@@ -370,13 +376,6 @@ export default function TalhaoDetailScreen() {
                       </View>
                     </TouchableOpacity>
                   ))}
-
-                  <Button
-                    title="Ver análises detalhadas"
-                    variant="primary"
-                    size="full"
-                    onPress={handleVerAnalises}
-                  />
                 </View>
               }
             />
@@ -540,6 +539,7 @@ const styles = StyleSheet.create({
 
   filtersRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
 
