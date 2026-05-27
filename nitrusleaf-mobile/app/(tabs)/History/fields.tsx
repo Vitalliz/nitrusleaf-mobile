@@ -123,7 +123,7 @@ export default function HistoryScreen() {
   const handleAddTalhao = useCallback(() => {
     if (property) {
       router.push({
-        pathname: "/(tabs)/add-talhao",
+        pathname: "/(tabs)/History/add-talhao",
         params: { propertyId: property.id, propertyName: property.name },
       });
     } else {
