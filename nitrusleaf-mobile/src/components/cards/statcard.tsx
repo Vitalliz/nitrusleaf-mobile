@@ -20,10 +20,16 @@ const StatCard: React.FC<StatCardProps> = React.memo(({
 }) => {
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.iconContainer}>
-        <Ionicons name={icon} size={32} color={iconColor} />
+      <View style={styles.headContainer}>
+        <View style={styles.iconContainer}>
+          <Ionicons name={icon} size={34} color={iconColor} />
+        </View>
+
+        <Text style={styles.label}>
+          {label}
+        </Text>
       </View>
-      <Text style={styles.label}>{label}</Text>
+
       <Text style={styles.value}>{value}</Text>
     </View>
   );
@@ -34,26 +40,40 @@ StatCard.displayName = 'StatCard';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 8,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
     marginHorizontal: 4,
+    justifyContent: "space-between",
+    minHeight: 120,
   },
+
+  headContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+  },
+
   iconContainer: {
-    marginBottom: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   label: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 8,
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    lineHeight: 14,
   },
+
   value: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1A2C3E',
-    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#111",
+    textAlign: "center",
+    marginTop: 5,
   },
 });
 

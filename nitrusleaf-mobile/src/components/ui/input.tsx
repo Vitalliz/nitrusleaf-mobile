@@ -16,6 +16,9 @@ interface InputProps {
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
   mask?: (string | RegExp)[];
+
+  rightIcon?: keyof typeof Ionicons.glyphMap;
+  rightIconColor?: string;
 }
 
 export const Input = ({
@@ -28,6 +31,9 @@ export const Input = ({
   secureTextEntry = false,
   keyboardType = "default",
   mask,
+
+  rightIcon,
+  rightIconColor = "#999",
 }: InputProps) => {
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
 
@@ -39,12 +45,21 @@ export const Input = ({
 
   return (
     <View style={containerStyle}>
-      {/* 👇 Se tiver máscara, usa MaskInput; senão, TextInput normal */}
+      {rightIcon && (
+        <Ionicons
+          name={rightIcon}
+          size={20}
+          color={rightIconColor}
+          style={styles.rightIcon}
+        />
+      )}
+      {/* Se tiver máscara, usa MaskInput; senão, TextInput normal */}
       {mask ? (
         <MaskInput
           style={[         
             styles.input,
             inputVariants[variant],
+            rightIcon && { paddingLeft: 46 },
             secureTextEntry && { paddingRight: 48 }
           ]}
           placeholder={placeholder}
@@ -112,7 +127,13 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: "absolute",
     right: 15,
-
+  },
+  rightIcon: {
+    position: "absolute",
+    right: 14,
+    top: "50%",
+    marginTop: -10,
+    zIndex: 1,
   },
 });
 

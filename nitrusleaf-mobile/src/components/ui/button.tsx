@@ -68,7 +68,7 @@ export const Button = ({
               ? "accent" 
               : "white"
           }
-          style={[styles.text, disabled && styles.disabledText]}
+          style={StyleSheet.flatten([styles.text, ...(disabled ? [styles.disabledText] : [])])}
         />
       </View>
     </TouchableOpacity>
