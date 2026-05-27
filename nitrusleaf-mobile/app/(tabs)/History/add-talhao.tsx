@@ -1,9 +1,8 @@
 // app/(tabs)/add-talhao.tsx - Cadastro de Talhão
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ROUTES, safeBack } from '@/utils/navigation';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNavbar from '@/components/ui/tab-bar';
 import { Background } from '@/components/ui/background';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +13,6 @@ import { Button } from '@/components/ui/button';
 
 export default function AddTalhaoScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { propertyId, propertyName } = useLocalSearchParams<{
     propertyId?: string;
     propertyName?: string;
