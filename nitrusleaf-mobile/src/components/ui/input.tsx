@@ -1,6 +1,7 @@
 import * as React from "react";
 import { TextInput, StyleSheet, DimensionValue, KeyboardTypeOptions, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import MaskInput from 'react-native-mask-input';
 
 type InputVariant = "default" | "error" | "readonly";
 type InputSize = "size-327" | "size-199" | "size-364" | "size-287" | "size-286" | "medium" | "full";
