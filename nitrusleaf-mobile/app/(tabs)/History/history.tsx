@@ -17,8 +17,8 @@ import {
 import { useIsFocused } from "@react-navigation/native";
 
 import { CustomCard } from "@/components/cards/card";
-import StatCard from "@/components/cards/statcard";
-import TalhaoCard, { TalhaoData } from "@/components/cards/talhaocard";
+import StatCard from "@/components/cards/stat-card";
+import TalhaoCard, { TalhaoData } from "@/components/cards/talhao-card";
 import { Background } from "@/components/ui/background";
 import { Button } from "@/components/ui/button";
 import BottomNavbar from "@/components/ui/tab-bar";

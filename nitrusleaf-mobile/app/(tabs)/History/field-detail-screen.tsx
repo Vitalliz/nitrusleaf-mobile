@@ -28,7 +28,7 @@ import { getTalhaoById, updateTalhao, deleteTalhao } from "@/repositories/talhao
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { Input } from "@/components/ui/input";
 import { TalhaoEditModal } from "@/components/modals/talhao-edit-modal";
-import ArvoreCard from "@/components/cards/arvoreCard";
+import ArvoreCard from "@/components/cards/arvore-card";
 
 export default function TalhaoDetailScreen() {
   const router = useRouter();

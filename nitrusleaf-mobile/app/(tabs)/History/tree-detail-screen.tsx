@@ -57,31 +57,33 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 // ── AnalysisCard ──────────────────────────────────────────────────────────────
 const AnalysisCard = React.memo(({
-  analysis,
-  onPress,
-}: {
-  analysis: AnalysisData;
-  onPress: () => void;
-}) => (
-  <TouchableOpacity
-    style={styles.analysisCard}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={styles.cardHeader}>
-      <Text style={styles.analysisLabel}>{analysis.label}</Text>
-      <StatusBadge status={analysis.status} />
-    </View>
-    <View style={styles.cardFooter}>
-      <View style={styles.dateContainer}>
-        <Text style={styles.dateLabel}>Criado em:</Text>
-        <Ionicons name="calendar-outline" size={14} color="#777" />
-        <Text style={styles.dateText}>{analysis.date}</Text>
+    analysis,
+    onPress,
+  }: {
+    analysis: AnalysisData;
+    onPress: () => void;
+  }) => (
+    <TouchableOpacity
+      style={styles.analysisCard}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.cardHeader}>
+        <Text style={styles.analysisLabel}>{analysis.label}</Text>
+        <StatusBadge status={analysis.status} />
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#757575" />
-    </View>
-  </TouchableOpacity>
+      <View style={styles.cardFooter}>
+        <View style={styles.dateContainer}>
+          <Text style={styles.dateLabel}>Criado em:</Text>
+          <Ionicons name="calendar-outline" size={14} color="#777" />
+          <Text style={styles.dateText}>{analysis.date}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#757575" />
+      </View>
+    </TouchableOpacity>
 ));
+
+AnalysisCard.displayName = "AnalysisCard";
 
 // ── Tela Principal ────────────────────────────────────────────────────────────
 export default function HistoryTreeScreen() {
