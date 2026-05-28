@@ -2,7 +2,7 @@ import type { Href, Router } from "expo-router";
 
 export const ROUTES = {
   home: "/(tabs)/AI/home",
-  history: "/(tabs)/History/fields",
+  history: "/(tabs)/History/history",
   scan: "/(tabs)/AI/scan",
   analysisSummary: "/(tabs)/AI/analysis-summary",
   profile: "/(tabs)/Settings/profile-new",

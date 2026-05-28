@@ -28,6 +28,7 @@ import { getTalhaoById, updateTalhao, deleteTalhao } from "@/repositories/talhao
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { Input } from "@/components/ui/input";
 import { TalhaoEditModal } from "@/components/modals/talhao-edit-modal";
+import ArvoreCard from "@/components/cards/arvoreCard";
 
 export default function TalhaoDetailScreen() {
   const router = useRouter();
@@ -47,7 +48,6 @@ export default function TalhaoDetailScreen() {
   const [selectedFilter, setSelectedFilter] = useState("Todos");
   const filters = ["Todos", "Manganês", "Cobre", "Adversos"];
 
-  // ── Modal ──
   const [editModalVisible, setEditModalVisible] = useState(false);
 
   useEffect(() => {
@@ -59,9 +59,7 @@ export default function TalhaoDetailScreen() {
         setDbUser(details);
 
         const props = await getPropertiesByUser(user.id);
-        if (props && props.length > 0) {
-          setProperty(props[0]);
-        }
+        if (props && props.length > 0) setProperty(props[0]);
 
         const tInfo = await getTalhaoById(talhaoId);
         setTalhao(tInfo);
@@ -92,21 +90,14 @@ export default function TalhaoDetailScreen() {
         setLoading(false);
       }
     }
-    if (isFocused) {
-      void loadData();
-    }
+    if (isFocused) void loadData();
   }, [user, talhaoId, isFocused]);
 
   const filteredArvores = arvores.filter((arvore) => {
-    const matchesSearch = arvore.name
-      .toLowerCase()
-      .includes(searchText.toLowerCase());
-
+    const matchesSearch = arvore.name.toLowerCase().includes(searchText.toLowerCase());
     const matchesFilter =
       selectedFilter === "Todos" ||
-      (arvore.deficiency &&
-        arvore.deficiency.includes(selectedFilter));
-
+      (arvore.deficiency && arvore.deficiency.includes(selectedFilter));
     return matchesSearch && matchesFilter;
   });
 
@@ -116,26 +107,6 @@ export default function TalhaoDetailScreen() {
     return sortOrder === "asc" ? numA - numB : numB - numA;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Tratado":       return "#4CAF50";
-      case "Não-Tratado":
-      case "Não tratado":   return "#F44336";
-      case "Em tratamento": return "#FF9800";
-      default:              return "#9E9E9E";
-    }
-  };
-
-  const getStatusBgColor = (status: string) => {
-    switch (status) {
-      case "Tratado":       return "#E8F5E9";
-      case "Não-Tratado":
-      case "Não tratado":   return "#FFEBEE";
-      case "Em tratamento": return "#FFF3E0";
-      default:              return "#F5F5F5";
-    }
-  };
-
   const handleBackPress = useCallback(() => {
     safeBack(router, ROUTES.history);
   }, [router]);
@@ -143,7 +114,7 @@ export default function TalhaoDetailScreen() {
   const handleArvorePress = useCallback(
     (arvoreId: string) => {
       router.push({
-        pathname: "/(tabs)/History/field-three",
+        pathname: "/(tabs)/History/tree-detail-screen",
         params: { treeId: arvoreId },
       });
     },
@@ -159,15 +130,10 @@ export default function TalhaoDetailScreen() {
     }
   }, [talhaoId, talhao?.name, router]);
 
-  const handleVerAnalises = useCallback(() => {
-    router.push("/(tabs)/AI/home");
-  }, [router]);
-
   const handleSortToggle = useCallback(() => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   }, []);
 
-  // ── Handlers do modal ──
   const handleSaveTalhao = useCallback(async (newName: string) => {
     if (!talhaoId) return;
     await updateTalhao(talhaoId, { name: newName });
@@ -180,34 +146,27 @@ export default function TalhaoDetailScreen() {
     safeBack(router, ROUTES.history);
   }, [talhaoId, router]);
 
-  // ─── Barra de título (botão voltar + nome do talhão + lápis) ─────────────
-  const renderTitleRow = () => (
-    <View style={[styles.titleRow, { paddingHorizontal: 12, paddingTop: 25 }]}>
-      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <Ionicons name="arrow-back" size={24} color="#ffffff" />
-      </TouchableOpacity>
-
-      <View style={styles.titleCenter}>
-        <Text style={styles.title} numberOfLines={1}>
-          {talhao?.name || "Talhão"}
-        </Text>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => setEditModalVisible(true)}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="create-outline" size={20} color="#58B741" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ width: 40 }} />
-    </View>
-  );
-
-  // ─── Empty State ──────────────────────────────────────────────────────────
   const renderEmptyFullScreen = () => (
     <View style={styles.emptyFullScreen}>
-      {renderTitleRow()}
+      <View style={styles.titleRow}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Ionicons name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
+        <View style={styles.titleCenter}>
+          <Text style={styles.title} numberOfLines={1}>
+            {talhao?.name || "Talhão"}
+          </Text>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setEditModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="create-outline" size={20} color="#58B741" />
+          </TouchableOpacity>
+        </View>
+        <View style={{ width: 40 }} />
+      </View>
+
       <View style={styles.emptyContent}>
         <Image
           source={require("@/assets/images/empty-state-arvore.png")}
@@ -244,7 +203,7 @@ export default function TalhaoDetailScreen() {
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
           onMenuPress={() => console.log("Menu pressed")}
-          onAvatarPress={() => router.push("/(tabs)/Settings/profile")}
+          onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />
 
         {loading ? (
@@ -257,18 +216,16 @@ export default function TalhaoDetailScreen() {
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.container}>
-            {/* Título com lápis */}
-            
-
             <CustomCard
-              variant="white-large"
+              variant="white"
               bottomContent={
                 <View style={styles.cardContent}>
+
+                  {/* Título + botão voltar + editar */}
                   <View style={styles.titleRow}>
                     <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
                       <Ionicons name="arrow-back" size={24} color="#ffffff" />
                     </TouchableOpacity>
-
                     <View style={styles.titleCenter}>
                       <Text style={styles.title} numberOfLines={1}>
                         {talhao?.name || "Talhão"}
@@ -281,9 +238,10 @@ export default function TalhaoDetailScreen() {
                         <Ionicons name="create-outline" size={20} color="#58B741" />
                       </TouchableOpacity>
                     </View>
-
                     <View style={{ width: 40 }} />
                   </View>
+
+                  {/* Busca + Cadastrar */}
                   <View style={styles.searchContainer}>
                     <Input
                       placeholder="Buscar árvore"
@@ -307,23 +265,14 @@ export default function TalhaoDetailScreen() {
                     <View style={styles.filtersRow}>
                       {filters.map((filter) => {
                         const active = selectedFilter === filter;
-
                         return (
                           <TouchableOpacity
                             key={filter}
-                            style={[
-                              styles.filterChip,
-                              active && styles.filterChipActive,
-                            ]}
+                            style={[styles.filterChip, active && styles.filterChipActive]}
                             onPress={() => setSelectedFilter(filter)}
                             activeOpacity={0.7}
                           >
-                            <Text
-                              style={[
-                                styles.filterChipText,
-                                active && styles.filterChipTextActive,
-                              ]}
-                            >
+                            <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
                               {filter}
                             </Text>
                           </TouchableOpacity>
@@ -332,7 +281,7 @@ export default function TalhaoDetailScreen() {
                     </View>
                   </View>
 
-                  {/* Lista */}
+                  {/* Header da lista */}
                   <View style={styles.listHeader}>
                     <Text style={styles.listCount}>
                       {sortedArvores.length} Árvores cadastradas
@@ -347,35 +296,15 @@ export default function TalhaoDetailScreen() {
                     </TouchableOpacity>
                   </View>
 
+                  {/* Lista de árvores usando ArvoreCard */}
                   {sortedArvores.map((arvore) => (
-                    <TouchableOpacity
+                    <ArvoreCard
                       key={arvore.id}
-                      style={styles.arvoreCard}
+                      arvore={arvore}
                       onPress={() => handleArvorePress(arvore.id)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.arvoreHeader}>
-                        <Text style={styles.arvoreName}>{arvore.name}</Text>
-                        {arvore.deficiency && (
-                          <View style={styles.deficiencyBadge}>
-                            <Text style={styles.deficiencyText}>{arvore.deficiency}</Text>
-                          </View>
-                        )}
-                      </View>
-
-                      <View style={styles.arvoreInfo}>
-                        <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(arvore.status) }]}>
-                          <Text style={[styles.statusText, { color: getStatusColor(arvore.status) }]}>
-                            {arvore.status}
-                          </Text>
-                        </View>
-                        <View style={styles.dateInfo}>
-                          <Ionicons name="calendar-outline" size={12} color="#888" />
-                          <Text style={styles.arvoreDate}>Criado em: {arvore.date}</Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
+                    />
                   ))}
+
                 </View>
               }
             />
@@ -384,7 +313,6 @@ export default function TalhaoDetailScreen() {
 
         <BottomNavbar />
 
-        {/* Modal de edição/exclusão do talhão */}
         <TalhaoEditModal
           visible={editModalVisible}
           talhaoName={talhao?.name ?? ""}
@@ -404,6 +332,8 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
+
+  cardContent: { padding: 16 },
 
   titleRow: {
     flexDirection: "row",
@@ -426,17 +356,13 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 
-  editButton: {
-    padding: 4,
-  },
+  editButton: { padding: 4 },
 
   backButton: {
     padding: 8,
     backgroundColor: "#58B741",
     borderRadius: 500,
   },
-
-  cardContent: { padding: 16 },
 
   searchContainer: { marginBottom: 20 },
 
@@ -463,63 +389,6 @@ const styles = StyleSheet.create({
   },
 
   sortText: { fontSize: 12, color: "#666" },
-
-  arvoreCard: {
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-
-  arvoreHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-
-  arvoreName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A2C3E",
-  },
-
-  deficiencyBadge: {
-    backgroundColor: "#FFEBEE",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-
-  deficiencyText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#D84315",
-  },
-
-  arvoreInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-
-  statusText: { fontSize: 12, fontWeight: "500" },
-
-  dateInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
-  arvoreDate: { fontSize: 12, color: "#888" },
 
   loadingContainer: {
     flex: 1,
