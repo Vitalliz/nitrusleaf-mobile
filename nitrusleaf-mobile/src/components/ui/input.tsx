@@ -87,6 +87,10 @@ export const Input = ({
         numberOfLines={size === "size-364" || size === "size-287" ? 3 : 1}
         secureTextEntry={secureTextEntry ? !isPasswordVisible : false}
         keyboardType={keyboardType}
+        autoComplete="off"
+        autoCorrect={false}         
+        autoCapitalize="sentences"  
+        spellCheck={false}
       />
       )}
 

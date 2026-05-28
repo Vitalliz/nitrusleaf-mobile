@@ -1,4 +1,4 @@
-// components/modals/talhao-edit-modal.tsx
+// components/modals/arvore-edit-modal.tsx
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -13,9 +13,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-interface TalhaoEditModalProps {
+interface ArvoreEditModalProps {
   visible: boolean;
-  talhaoName: string;
+  arvoreName: string;
   onClose: () => void;
   onSave: (newName: string) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -23,26 +23,26 @@ interface TalhaoEditModalProps {
 
 type Step = "edit" | "confirmDelete";
 
-export function TalhaoEditModal({
+export function ArvoreEditModal({
   visible,
-  talhaoName,
+  arvoreName,
   onClose,
   onSave,
   onDelete,
-}: TalhaoEditModalProps) {
+}: ArvoreEditModalProps) {
   const [step, setStep] = useState<Step>("edit");
-  const [name, setName] = useState(talhaoName);
+  const [name, setName] = useState(arvoreName);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (visible) {
-      setName(talhaoName);
+      setName(arvoreName);
       setStep("edit");
       setError("");
     }
-  }, [visible, talhaoName]);
+  }, [visible, arvoreName]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -78,10 +78,9 @@ export function TalhaoEditModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"        // 👈 vem de baixo
+      animationType="slide"
       onRequestClose={onClose}
     >
-      {/* Backdrop clicável */}
       <TouchableOpacity
         style={styles.backdrop}
         activeOpacity={1}
@@ -100,7 +99,7 @@ export function TalhaoEditModal({
           {step === "edit" && (
             <>
               <View style={styles.header}>
-                <Text style={styles.headerTitle}>Editar Talhão</Text>
+                <Text style={styles.headerTitle}>Editar Árvore</Text>
                 <TouchableOpacity
                   onPress={onClose}
                   style={styles.closeButton}
@@ -110,9 +109,9 @@ export function TalhaoEditModal({
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.label}>Nome do talhão</Text>
+              <Text style={styles.label}>Nome da árvore</Text>
               <Input
-                placeholder="Nome do talhão"
+                placeholder="Nome da árvore"
                 value={name}
                 onChangeText={(v) => { setName(v); setError(""); }}
                 variant={error ? "error" : "default"}
@@ -132,7 +131,7 @@ export function TalhaoEditModal({
               <View style={styles.divider} />
 
               <Button
-                title="Excluir talhão"
+                title="Excluir árvore"
                 variant="danger"
                 size="full"
                 icon="trash-outline"
@@ -148,11 +147,11 @@ export function TalhaoEditModal({
                 <Ionicons name="warning-outline" size={40} color="#D32F2F" />
               </View>
 
-              <Text style={styles.confirmTitle}>Excluir talhão?</Text>
+              <Text style={styles.confirmTitle}>Excluir árvore?</Text>
               <Text style={styles.confirmText}>
                 Tem certeza que deseja excluir{" "}
-                <Text style={styles.confirmBold}>&quot;{talhaoName}&quot;</Text>?{"\n"}
-                Todas as árvores cadastradas nele também serão removidas. Essa ação não pode ser desfeita.
+                <Text style={styles.confirmBold}>&quot;{arvoreName}&quot;</Text>?{"\n"}
+                Todas as análises desta árvore também serão removidas. Essa ação não pode ser desfeita.
               </Text>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
   },
   sheetWrapper: {
     flex: 1,
-    justifyContent: "flex-end",   // 👈 ancora na base
+    justifyContent: "flex-end",
   },
   sheet: {
     backgroundColor: "#FFFFFF",
