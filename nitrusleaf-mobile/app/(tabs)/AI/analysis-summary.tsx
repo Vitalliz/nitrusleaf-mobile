@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
+import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { persistAnalysisResult } from "@/services/persistAnalysis";
@@ -38,6 +38,7 @@ import {
 export default function AnalysisSummaryScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { selectedProperty } = useProperty();
   const params = useLocalSearchParams();
 
   const analysisId = (params.analysisId as string) || Date.now().toString();
@@ -82,9 +83,8 @@ export default function AnalysisSummaryScreen() {
         setAuthorName(details?.fullName || user.name || "Usuário");
         setAuthorAvatar(details?.avatarUrl);
 
-        const props = await getPropertiesByUser(user.id);
-        if (props?.length) {
-          const list = await getTalhoesByProperty(props[0].id);
+        if (selectedProperty?.id) {
+          const list = await getTalhoesByProperty(selectedProperty.id);
           setTalhoes(list);
           if (list.length === 1) {
             setSelectedTalhaoId(list[0].id);
@@ -92,6 +92,9 @@ export default function AnalysisSummaryScreen() {
             setPes(peList);
             if (peList.length === 1) setSelectedPeId(peList[0].id);
           }
+        } else {
+          setTalhoes([]);
+          setPes([]);
         }
       } catch (e) {
         console.error("Erro ao carregar contexto da análise:", e);
@@ -100,7 +103,7 @@ export default function AnalysisSummaryScreen() {
       }
     }
     void loadContext();
-  }, [user?.id, user?.name]);
+  }, [user?.id, user?.name, selectedProperty?.id]);
 
   const loadPesForTalhao = useCallback(async (talhaoId: string) => {
     const peList = await getPesByTalhao(talhaoId);

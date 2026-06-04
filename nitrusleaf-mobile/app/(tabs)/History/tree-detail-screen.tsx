@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 
@@ -21,9 +22,10 @@ import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
+import { useProperty } from "@/contexts/PropertyContext";
 import { getPeById, updatePe, deletePe } from "@/repositories/peRepository";
 import { getRelatoriosByPe } from "@/repositories/relatorioRepository";
+import { syncTalhaoStatsFromPes } from "@/services/syncTalhaoStats";
 import { ArvoreEditModal } from "@/components/modals/arvore-edit-modal";
 import AnalysisCard, { AnalysisData } from "@/components/cards/analysis-card";
 import { mapRelatorioToAnalysisData } from "@/utils/relatorioDisplay";
@@ -33,47 +35,50 @@ export default function HistoryTreeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const isFocused = useIsFocused();
+  const { selectedProperty } = useProperty();
 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [dbUser, setDbUser] = useState<any>(null);
-  const [property, setProperty] = useState<any>(null);
   const [arvore, setArvore] = useState<any>(null);
   const [analyses, setAnalyses] = useState<AnalysisData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingTratado, setSavingTratado] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      if (!user?.id || !treeId) return;
-      try {
-        setLoading(true);
-        const details = await getUsuarioDetails(user.id);
-        setDbUser(details);
+  const reloadTreeData = useCallback(async () => {
+    if (!user?.id || !treeId) return;
+    const details = await getUsuarioDetails(user.id);
+    setDbUser(details);
 
-        const props = await getPropertiesByUser(user.id);
-        if (props?.length > 0) setProperty(props[0]);
+    const tree = await getPeById(treeId);
+    setArvore(tree);
 
-        const tree = await getPeById(treeId);
-        setArvore(tree);
+    const relatorios = await getRelatoriosByPe(treeId);
+    setAnalyses(
+      relatorios.map((r) => mapRelatorioToAnalysisData(r, tree?.situacao))
+    );
+  }, [user?.id, treeId]);
 
-        const relatorios = await getRelatoriosByPe(treeId);
-        setAnalyses(
-          relatorios.map((r) =>
-            mapRelatorioToAnalysisData(r, tree?.situacao)
-          )
-        );
-      } catch (err) {
-        console.error("Erro ao carregar árvore:", err);
-      } finally {
-        setLoading(false);
-      }
+  const loadData = useCallback(async () => {
+    if (!user?.id || !treeId) return;
+    try {
+      setLoading(true);
+      await reloadTreeData();
+    } catch (err) {
+      console.error("Erro ao carregar árvore:", err);
+    } finally {
+      setLoading(false);
     }
+  }, [user?.id, treeId, reloadTreeData]);
+
+  React.useEffect(() => {
     if (isFocused) void loadData();
-  }, [user, treeId, isFocused]);
+  }, [isFocused, loadData]);
 
   const sortedAnalyses = useMemo(() => {
     return [...analyses].sort((a, b) => {
-      const nA = parseInt(a.id), nB = parseInt(b.id);
+      const nA = parseInt(a.id, 10);
+      const nB = parseInt(b.id, 10);
       return sortOrder === "asc" ? nA - nB : nB - nA;
     });
   }, [analyses, sortOrder]);
@@ -82,7 +87,7 @@ export default function HistoryTreeScreen() {
     safeBack(router, ROUTES.history);
   }, [router]);
 
-  const handleAnalysisPress = useCallback(
+  const handleViewAnalysis = useCallback(
     (analysis: AnalysisData) => {
       router.push({
         pathname: ROUTES.analysisSummary,
@@ -99,11 +104,55 @@ export default function HistoryTreeScreen() {
     [router, treeId]
   );
 
-  const handleSaveArvore = useCallback(async (newName: string) => {
+  const handleMarkAsTratado = useCallback(async () => {
     if (!treeId) return;
-    await updatePe(treeId, { nome: newName });
-    setArvore((prev: any) => ({ ...prev, nome: newName }));
-  }, [treeId]);
+    setSavingTratado(true);
+    try {
+      await updatePe(treeId, { situacao: "Tratado" });
+      if (arvore?.talhaoId) {
+        try {
+          await syncTalhaoStatsFromPes(arvore.talhaoId);
+        } catch (syncErr) {
+          console.warn("Sync talhão:", syncErr);
+        }
+      }
+      await reloadTreeData();
+      Alert.alert("Sucesso", "Árvore marcada como tratada.");
+    } catch (err) {
+      console.error("Erro ao marcar como tratado:", err);
+      const msg =
+        err instanceof Error ? err.message : "Não foi possível atualizar o status.";
+      Alert.alert("Erro", msg);
+    } finally {
+      setSavingTratado(false);
+    }
+  }, [treeId, arvore?.talhaoId, reloadTreeData]);
+
+  const handleVerAnalisePress = useCallback(
+    (analysis: AnalysisData) => {
+      Alert.alert(analysis.label, "O que deseja fazer?", [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Definir como tratado",
+          onPress: () => void handleMarkAsTratado(),
+        },
+        {
+          text: "Ver análise novamente",
+          onPress: () => handleViewAnalysis(analysis),
+        },
+      ]);
+    },
+    [handleMarkAsTratado, handleViewAnalysis]
+  );
+
+  const handleSaveArvore = useCallback(
+    async (newName: string) => {
+      if (!treeId) return;
+      await updatePe(treeId, { nome: newName });
+      setArvore((prev: any) => ({ ...prev, nome: newName }));
+    },
+    [treeId]
+  );
 
   const handleDeleteArvore = useCallback(async () => {
     if (!treeId) return;
@@ -119,8 +168,12 @@ export default function HistoryTreeScreen() {
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
-          userName={loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
-          userSubtitle={loading ? "Carregando..." : (property?.name || "Sem propriedade")}
+          userName={
+            loading ? "Carregando..." : dbUser?.fullName || user?.name || "Usuário"
+          }
+          userSubtitle={
+            loading ? "Carregando..." : selectedProperty?.name || "Sem propriedade"
+          }
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
           onMenuPress={() => {}}
@@ -140,10 +193,11 @@ export default function HistoryTreeScreen() {
               variant="white"
               bottomContent={
                 <View style={styles.cardContent}>
-
-                  {/* Título + voltar + editar */}
                   <View style={styles.titleRow}>
-                    <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+                    <TouchableOpacity
+                      style={styles.backButton}
+                      onPress={handleBack}
+                    >
                       <Ionicons name="arrow-back" size={24} color="#ffffff" />
                     </TouchableOpacity>
                     <View style={styles.titleCenter}>
@@ -155,20 +209,25 @@ export default function HistoryTreeScreen() {
                         onPress={() => setEditModalVisible(true)}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name="create-outline" size={20} color="#58B741" />
+                        <Ionicons
+                          name="create-outline"
+                          size={20}
+                          color="#58B741"
+                        />
                       </TouchableOpacity>
                     </View>
                     <View style={{ width: 40 }} />
                   </View>
 
-                  {/* Header da lista */}
                   <View style={styles.listHeader}>
                     <Text style={styles.listCount}>
                       {sortedAnalyses.length} Análises realizadas
                     </Text>
                     <TouchableOpacity
                       style={styles.sortButton}
-                      onPress={() => setSortOrder(o => o === "asc" ? "desc" : "asc")}
+                      onPress={() =>
+                        setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
+                      }
                     >
                       <Text style={styles.sortText}>Ordenar</Text>
                       <Ionicons
@@ -179,7 +238,14 @@ export default function HistoryTreeScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Lista de análises */}
+                  {savingTratado && (
+                    <ActivityIndicator
+                      size="small"
+                      color="#6BC24A"
+                      style={styles.savingIndicator}
+                    />
+                  )}
+
                   {sortedAnalyses.length === 0 ? (
                     <Text style={styles.emptyAnalyses}>
                       Nenhuma análise salva para esta árvore. Use o scan na aba IA e
@@ -190,11 +256,10 @@ export default function HistoryTreeScreen() {
                       <AnalysisCard
                         key={analysis.id}
                         analysis={analysis}
-                        onPress={() => handleAnalysisPress(analysis)}
+                        onVerAnalise={() => handleVerAnalisePress(analysis)}
                       />
                     ))
                   )}
-
                 </View>
               }
             />
@@ -263,6 +328,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sortText: { fontSize: 12, color: "#666" },
+  savingIndicator: { marginBottom: 12 },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",

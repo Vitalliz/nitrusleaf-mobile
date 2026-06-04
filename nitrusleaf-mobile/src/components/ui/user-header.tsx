@@ -10,6 +10,9 @@ interface HeaderProps {
   subtitleIcon?: keyof typeof Ionicons.glyphMap;
   onMenuPress?: () => void;
   onAvatarPress?: () => void;
+  /** Toque na linha da propriedade (nome + seta) para trocar propriedade ativa */
+  onPropertyPress?: () => void;
+  showPropertyChevron?: boolean;
 }
 
 export const Header = ({
@@ -19,6 +22,8 @@ export const Header = ({
   subtitleIcon = 'location-outline',
   onMenuPress,
   onAvatarPress,
+  onPropertyPress,
+  showPropertyChevron = false,
 }: HeaderProps) => {
 
   const router = useRouter(); 
@@ -48,18 +53,45 @@ export const Header = ({
         <Text style={styles.name}>{userName}</Text>
 
         {userSubtitle && (
-          <View style={styles.subtitleRow}>
-            <Ionicons
-              name={subtitleIcon}
-              size={13}
-              color="#888"
-              style={styles.subtitleIcon}
-            />
-
-            <Text style={styles.subtitle}>
-              {userSubtitle}
-            </Text>
-          </View>
+          onPropertyPress ? (
+            <TouchableOpacity
+              style={styles.subtitleRow}
+              onPress={onPropertyPress}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Trocar propriedade"
+            >
+              <Ionicons
+                name={subtitleIcon}
+                size={13}
+                color="#888"
+                style={styles.subtitleIcon}
+              />
+              <Text style={styles.subtitle} numberOfLines={1}>
+                {userSubtitle}
+              </Text>
+              {showPropertyChevron && (
+                <Ionicons
+                  name="chevron-down"
+                  size={14}
+                  color="#888"
+                  style={styles.propertyChevron}
+                />
+              )}
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.subtitleRow}>
+              <Ionicons
+                name={subtitleIcon}
+                size={13}
+                color="#888"
+                style={styles.subtitleIcon}
+              />
+              <Text style={styles.subtitle} numberOfLines={1}>
+                {userSubtitle}
+              </Text>
+            </View>
+          )
         )}
       </View>
 
@@ -135,6 +167,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 12,
     color: '#888888',
+    flexShrink: 1,
+  },
+  propertyChevron: {
+    marginLeft: 2,
   },
   configButton: {
     padding: 4,

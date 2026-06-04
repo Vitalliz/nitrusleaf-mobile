@@ -8,6 +8,7 @@ import Footer from '@/components/footer';
 import { Background } from '@/components/ui/background';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProperty } from '@/contexts/PropertyContext';
 import { createProperty } from '@/repositories/propertyRepository';
 import type { CreatePropertyRequest } from '@/types/property';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -17,6 +18,7 @@ export default function AddPropertyScreen() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { refreshProperties, selectProperty } = useProperty();
 
   const handleBack = () => {
     const target = returnTo && String(returnTo).startsWith('/')
@@ -109,7 +111,9 @@ export default function AddPropertyScreen() {
         regiao: formData.regiao.trim() || undefined,
       };
 
-      await createProperty(propertyData);
+      const created = await createProperty(propertyData);
+      await refreshProperties();
+      await selectProperty(created.id);
 
       Alert.alert('Sucesso', 'Propriedade cadastrada com sucesso!', [
         {

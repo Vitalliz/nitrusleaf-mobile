@@ -62,7 +62,14 @@ const MAP_OPTIONS: MapOption[] = [
 
 export default function MapsScreen() {
   const router = useRouter();
-  const { userName, userSubtitle, userAvatar, loading } = useProfileHeader();
+  const {
+    userName,
+    userSubtitle,
+    userAvatar,
+    loading,
+    showPropertyPicker,
+    canSwitchProperty,
+  } = useProfileHeader();
 
   return (
     <Background>
@@ -74,8 +81,9 @@ export default function MapsScreen() {
           userSubtitle={userSubtitle}
           userAvatar={userAvatar}
           subtitleIcon="location-outline"
-          onMenuPress={() => console.log('menu')}
-          onAvatarPress={() => router.push('/(tabs)/Settings/profile')}
+          onPropertyPress={showPropertyPicker}
+          showPropertyChevron={canSwitchProperty}
+          onAvatarPress={() => router.push('/(tabs)/Settings/profile-new')}
         />
 
         <ScrollView

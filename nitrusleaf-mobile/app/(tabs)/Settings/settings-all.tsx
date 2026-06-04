@@ -17,9 +17,7 @@ import { Background } from '@/components/ui/background';
 import BottomNavbar from '@/components/ui/tab-bar';
 import { Header } from '@/components/ui/user-header';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsFocused } from '@react-navigation/native';
-import { getUsuarioDetails } from '@/repositories/profileRepository';
-import { getPropertiesByUser } from '@/repositories/propertyRepository';
+import { useProfileHeader } from '@/hooks/useProfileHeader';
 
 type MenuItem = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -68,31 +66,14 @@ const MENU_ITEMS: MenuItem[] = [
 export default function SettingsAllScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const isFocused = useIsFocused();
-  const [dbUser, setDbUser] = useState<any>(null);
-  const [property, setProperty] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      if (!user?.id) return;
-      try {
-        const details = await getUsuarioDetails(user.id);
-        setDbUser(details);
-        const props = await getPropertiesByUser(user.id);
-        if (props && props.length > 0) {
-          setProperty(props[0]);
-        }
-      } catch (err) {
-        console.error('Erro ao carregar configurações:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (isFocused) {
-      void loadData();
-    }
-  }, [user, isFocused]);
+  const {
+    userName,
+    userSubtitle,
+    userAvatar,
+    loading: headerLoading,
+    showPropertyPicker,
+    canSwitchProperty,
+  } = useProfileHeader();
 
   const handleLogout = () => {
     Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
@@ -123,9 +104,12 @@ export default function SettingsAllScreen() {
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         <Header
-          userName={loading ? 'Carregando...' : dbUser?.fullName || user?.name || 'Usuário'}
-          userSubtitle={loading ? '...' : property?.name || 'Sem propriedade'}
-          userAvatar={dbUser?.avatarUrl}
+          userName={userName}
+          userSubtitle={userSubtitle}
+          userAvatar={userAvatar}
+          subtitleIcon="location-outline"
+          onPropertyPress={showPropertyPicker}
+          showPropertyChevron={canSwitchProperty}
           onAvatarPress={() => router.push('/(tabs)/Settings/profile-new')}
         />
 

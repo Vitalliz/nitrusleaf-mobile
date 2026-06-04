@@ -24,9 +24,9 @@ import { Button } from "@/components/ui/button";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProperty } from "@/contexts/PropertyContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { computeTalhaoPeStats } from "@/utils/peStats";
@@ -36,28 +36,42 @@ export default function HistoryScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const isFocused = useIsFocused();
+  const {
+    selectedProperty,
+    showPropertyPicker,
+    canSwitchProperty,
+    loading: propertyContextLoading,
+  } = useProperty();
 
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [dbUser, setDbUser] = useState<any>(null);
-  const [property, setProperty] = useState<any>(null);
   const [talhoes, setTalhoes] = useState<TalhaoData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadUser() {
       if (!user?.id) return;
       try {
-        setLoading(true);
         const details = await getUsuarioDetails(user.id);
         setDbUser(details);
+      } catch (err) {
+        console.error("Erro ao carregar usuário no histórico:", err);
+      }
+    }
+    if (isFocused) void loadUser();
+  }, [user?.id, isFocused]);
 
-        const props = await getPropertiesByUser(user.id);
-        if (props && props.length > 0) {
-          const mainProp = props[0];
-          setProperty(mainProp);
-
-          const dbTalhoes = await getTalhoesByProperty(mainProp.id);
+  useEffect(() => {
+    async function loadData() {
+      if (!selectedProperty?.id) {
+        setTalhoes([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+          const dbTalhoes = await getTalhoesByProperty(selectedProperty.id);
           const mapped = await Promise.all(
             dbTalhoes.map(async (t) => {
               const pes = await getPesByTalhao(t.id);
@@ -80,9 +94,6 @@ export default function HistoryScreen() {
             })
           );
           setTalhoes(mapped);
-        } else {
-          setTalhoes([]);
-        }
       } catch (err) {
         console.error("Erro ao carregar dados do histórico:", err);
       } finally {
@@ -92,7 +103,7 @@ export default function HistoryScreen() {
     if (isFocused) {
       void loadData();
     }
-  }, [user, isFocused]);
+  }, [selectedProperty?.id, isFocused]);
 
   const filteredTalhoes = useMemo(() => {
     let filtered = talhoes.filter((talhao) =>
@@ -121,15 +132,18 @@ export default function HistoryScreen() {
   );
 
   const handleAddTalhao = useCallback(() => {
-    if (property) {
+    if (selectedProperty) {
       router.push({
         pathname: "/(tabs)/History/add-talhao",
-        params: { propertyId: property.id, propertyName: property.name },
+        params: {
+          propertyId: selectedProperty.id,
+          propertyName: selectedProperty.name,
+        },
       });
     } else {
       Alert.alert("Aviso", "Cadastre uma propriedade primeiro nas configurações.");
     }
-  }, [property, router]);
+  }, [selectedProperty, router]);
 
   const handleSortToggle = useCallback(() => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -176,15 +190,24 @@ export default function HistoryScreen() {
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
-          userName={loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
-          userSubtitle={loading ? "Carregando..." : (property?.name || "Sem propriedade")}
+          userName={
+            propertyContextLoading
+              ? "Carregando..."
+              : dbUser?.fullName || user?.name || "Usuário"
+          }
+          userSubtitle={
+            propertyContextLoading
+              ? "Carregando..."
+              : selectedProperty?.name || "Sem propriedade"
+          }
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
-          onMenuPress={() => console.log("Menu pressed")}
+          onPropertyPress={showPropertyPicker}
+          showPropertyChevron={canSwitchProperty}
           onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />
 
-        {loading ? (
+        {loading || propertyContextLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6BC24A" />
           </View>
@@ -349,6 +372,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     width: "100%",
+    alignItems: "stretch",
   },
 
   /* CARD TALHÕES */

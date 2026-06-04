@@ -88,17 +88,20 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     marginBottom:12,
   },
-  content: { flex: 1, },
+  content: { flex: 1, minWidth: 0 },
   header: {
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
     marginBottom: 6,
+    minWidth: 0,
   },
   name: {
     fontSize: 16,
     fontWeight: "700",
     color: "#1A1A1A",
+    flex: 1,
+    flexShrink: 1,
   },
 
   progressBadge: {
@@ -121,9 +124,10 @@ const styles = StyleSheet.create({
   },
 
   footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 8,
+    width: "100%",
   },
 
   dateContainer: {
@@ -145,12 +149,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
+    alignSelf: "flex-start",
+    maxWidth: "100%",
   },
 
   deficientText: {
     fontSize: 11,
     fontWeight: "600",
     color: "#FF9800",
+    flexShrink: 1,
   },
 
   chevron: {

@@ -32,8 +32,8 @@ import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProperty } from "@/contexts/PropertyContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import type { Pe } from "@/types/pe";
@@ -65,41 +65,54 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const isFocused = useIsFocused();
+  const {
+    selectedProperty,
+    showPropertyPicker,
+    canSwitchProperty,
+    loading: propertyContextLoading,
+  } = useProperty();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("6months");
 
   const [dbUser, setDbUser] = useState<any>(null);
-  const [property, setProperty] = useState<any>(null);
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [allTrees, setAllTrees] = useState<Pe[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadUser() {
       if (!user?.id) return;
       try {
-        setLoading(true);
         const details = await getUsuarioDetails(user.id);
         setDbUser(details);
+      } catch (err) {
+        console.error("Erro ao carregar usuário na home:", err);
+      }
+    }
+    if (isFocused) void loadUser();
+  }, [user?.id, isFocused]);
 
-        const props = await getPropertiesByUser(user.id);
-        if (props && props.length > 0) {
-          const mainProp = props[0];
-          setProperty(mainProp);
+  useEffect(() => {
+    async function loadPropertyData() {
+      if (!selectedProperty?.id) {
+        setTalhoes([]);
+        setAllTrees([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const dbTalhoes = await getTalhoesByProperty(selectedProperty.id);
+        setTalhoes(dbTalhoes);
 
-          const dbTalhoes = await getTalhoesByProperty(mainProp.id);
-          setTalhoes(dbTalhoes);
-
-          if (dbTalhoes.length > 0) {
-            // Busca árvores (pés) de todos os talhões
-            const treesList: Pe[] = [];
-            for (const t of dbTalhoes) {
-              const pts = await getPesByTalhao(t.id);
-              treesList.push(...pts);
-            }
-            setAllTrees(treesList);
-          } else {
-            setAllTrees([]);
+        if (dbTalhoes.length > 0) {
+          const treesList: Pe[] = [];
+          for (const t of dbTalhoes) {
+            const pts = await getPesByTalhao(t.id);
+            treesList.push(...pts);
           }
+          setAllTrees(treesList);
+        } else {
+          setAllTrees([]);
         }
       } catch (err) {
         console.error("Erro ao carregar painel home:", err);
@@ -107,10 +120,8 @@ export default function HomeScreen() {
         setLoading(false);
       }
     }
-    if (isFocused) {
-      void loadData();
-    }
-  }, [user, isFocused]);
+    if (isFocused) void loadPropertyData();
+  }, [selectedProperty?.id, isFocused]);
 
   const hasTalhoes = talhoes.length > 0;
 
@@ -206,15 +217,24 @@ export default function HomeScreen() {
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
-          userName={loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
-          userSubtitle={loading ? "Carregando..." : (property?.name || "Sem propriedade")}
+          userName={
+            propertyContextLoading
+              ? "Carregando..."
+              : dbUser?.fullName || user?.name || "Usuário"
+          }
+          userSubtitle={
+            propertyContextLoading
+              ? "Carregando..."
+              : selectedProperty?.name || "Sem propriedade"
+          }
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
-          onMenuPress={() => console.log('menu')}
-          onAvatarPress={() => router.push("/(tabs)/Settings/profile")}
+          onPropertyPress={showPropertyPicker}
+          showPropertyChevron={canSwitchProperty}
+          onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />
 
-        {loading ? (
+        {loading || propertyContextLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#6BC24A" />
           </View>

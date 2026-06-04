@@ -4,7 +4,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "rea
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
+import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,8 +14,7 @@ export default function LocationMapScreen() {
   const { user } = useAuth();
   const fullName = user?.name || "Usuário";
 
-  const [properties, setProperties] = useState<any[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<any>(null);
+  const { selectedProperty, properties, selectProperty } = useProperty();
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [selectedTalhao, setSelectedTalhao] = useState<any>(null);
   const [pes, setPes] = useState<any[]>([]);
@@ -31,14 +30,10 @@ export default function LocationMapScreen() {
   const [filterOutros, setFilterOutros] = useState(true);
 
   useEffect(() => {
-    loadProperties();
-  }, [user?.id]);
-
-  useEffect(() => {
     if (selectedProperty) {
-      loadTalhoes();
+      void loadTalhoes();
     }
-  }, [selectedProperty]);
+  }, [selectedProperty?.id]);
 
   useEffect(() => {
     if (selectedTalhao) {
@@ -49,20 +44,6 @@ export default function LocationMapScreen() {
   useEffect(() => {
     applyFilters();
   }, [pes, filterTratado, filterNaoTratado, filterSemInfo, filterDeficienciaCobre, filterDeficienciaManganes, filterOutros]);
-
-  const loadProperties = async () => {
-    if (!user?.id) return;
-
-    try {
-      const userProperties = await getPropertiesByUser(user.id);
-      setProperties(userProperties);
-      if (userProperties.length > 0) {
-        setSelectedProperty(userProperties[0]);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar propriedades:', error);
-    }
-  };
 
   const loadTalhoes = async () => {
     if (!selectedProperty) return;
@@ -170,7 +151,7 @@ export default function LocationMapScreen() {
                 styles.selectorChip,
                 selectedProperty?.id === property.id && styles.selectorChipSelected
               ]}
-              onPress={() => setSelectedProperty(property)}
+              onPress={() => void selectProperty(property.id)}
             >
               <Text style={[
                 styles.selectorChipText,

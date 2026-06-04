@@ -16,12 +16,14 @@ import { useRouter } from "expo-router";
 import { ROUTES, openAddProperty, safeBack } from "@/utils/navigation";
 import { Background } from "@/components/ui/background";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPropertiesByUser, updateProperty } from "@/repositories/propertyRepository";
+import { useProperty } from "@/contexts/PropertyContext";
+import { updateProperty } from "@/repositories/propertyRepository";
 import type { Property } from "@/types/property";
 
 export default function PropertyDataScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { selectedProperty, refreshProperties } = useProperty();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [property, setProperty] = useState<Property | null>(null);
@@ -39,18 +41,18 @@ export default function PropertyDataScreen() {
     async function loadData() {
       if (!user?.id) return;
       try {
-        const props = await getPropertiesByUser(user.id);
-        if (props && props.length > 0) {
-          const firstProp = props[0];
-          setProperty(firstProp);
+        if (selectedProperty) {
+          setProperty(selectedProperty);
           setFormData({
-            name: firstProp.name || "",
-            cep: firstProp.cep || "",
-            logradouro: firstProp.logradouro || "",
-            numero: String(firstProp.numero || ""),
-            bairro: firstProp.bairro || "",
-            cidade: firstProp.cidade || "",
+            name: selectedProperty.name || "",
+            cep: selectedProperty.cep || "",
+            logradouro: selectedProperty.logradouro || "",
+            numero: String(selectedProperty.numero || ""),
+            bairro: selectedProperty.bairro || "",
+            cidade: selectedProperty.cidade || "",
           });
+        } else {
+          setProperty(null);
         }
       } catch (error) {
         console.error("Erro ao carregar dados da propriedade:", error);
@@ -60,7 +62,7 @@ export default function PropertyDataScreen() {
       }
     }
     void loadData();
-  }, [user]);
+  }, [user?.id, selectedProperty?.id]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -86,6 +88,7 @@ export default function PropertyDataScreen() {
         bairro: formData.bairro.trim(),
         cidade: formData.cidade.trim(),
       });
+      await refreshProperties();
       Alert.alert("Sucesso", "Propriedade atualizada com sucesso!", [
         { text: "OK", onPress: () => router.replace(ROUTES.profile) },
       ]);

@@ -23,7 +23,7 @@ import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
+import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhaoById, updateTalhao, deleteTalhao } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { Input } from "@/components/ui/input";
@@ -35,12 +35,12 @@ export default function TalhaoDetailScreen() {
   const { talhaoId } = useLocalSearchParams<{ talhaoId?: string }>();
   const { user } = useAuth();
   const isFocused = useIsFocused();
+  const { selectedProperty } = useProperty();
 
   const [searchText, setSearchText] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
 
   const [dbUser, setDbUser] = useState<any>(null);
-  const [property, setProperty] = useState<any>(null);
   const [talhao, setTalhao] = useState<any>(null);
   const [arvores, setArvores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,9 +57,6 @@ export default function TalhaoDetailScreen() {
         setLoading(true);
         const details = await getUsuarioDetails(user.id);
         setDbUser(details);
-
-        const props = await getPropertiesByUser(user.id);
-        if (props && props.length > 0) setProperty(props[0]);
 
         const tInfo = await getTalhaoById(talhaoId);
         setTalhao(tInfo);
@@ -199,7 +196,7 @@ export default function TalhaoDetailScreen() {
 
         <Header
           userName={loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
-          userSubtitle={loading ? "Carregando..." : (property?.name || "Sem propriedade")}
+          userSubtitle={loading ? "Carregando..." : (selectedProperty?.name || "Sem propriedade")}
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
           onMenuPress={() => console.log("Menu pressed")}

@@ -4,43 +4,24 @@ import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "rea
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPropertiesByUser } from "@/repositories/propertyRepository";
+import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 
 export default function HeatMapScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { selectedProperty, properties, selectProperty } = useProperty();
   const fullName = user?.name || "Usuário";
 
-  const [properties, setProperties] = useState<any[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [heatData, setHeatData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProperties();
-  }, [user?.id]);
-
-  useEffect(() => {
     if (selectedProperty) {
-      loadHeatData();
+      void loadHeatData();
     }
-  }, [selectedProperty]);
-
-  const loadProperties = async () => {
-    if (!user?.id) return;
-
-    try {
-      const userProperties = await getPropertiesByUser(user.id);
-      setProperties(userProperties);
-      if (userProperties.length > 0) {
-        setSelectedProperty(userProperties[0]);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar propriedades:', error);
-    }
-  };
+  }, [selectedProperty?.id]);
 
   const loadHeatData = async () => {
     if (!selectedProperty) return;
@@ -145,7 +126,7 @@ const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
               styles.propertyChip,
               selectedProperty?.id === property.id && styles.propertyChipSelected
             ]}
-            onPress={() => setSelectedProperty(property)}
+            onPress={() => void selectProperty(property.id)}
           >
             <Text style={[
               styles.propertyChipText,

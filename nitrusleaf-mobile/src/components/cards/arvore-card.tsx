@@ -141,14 +141,15 @@
 
     content: {
         flex: 1,
+        minWidth: 0,
     },
 
     header: {
         flexDirection: "row",
         gap: 10,
         alignItems: "center",
-        justifyContent: "space-between",
         marginBottom: 10,
+        minWidth: 0,
     },
 
     name: {
@@ -156,6 +157,7 @@
         fontWeight: "700",
         color: "#1A1A1A",
         flex: 1,
+        flexShrink: 1,
     },
 
     statusBadge: {
@@ -170,11 +172,10 @@
     },
 
     footer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 10,
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 8,
+        width: "100%",
     },
 
     dateContainer: {
@@ -199,12 +200,15 @@
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 12,
+        alignSelf: "flex-start",
+        maxWidth: "100%",
     },
 
     deficientText: {
         fontSize: 11,
         fontWeight: "600",
         color: "#FF9800",
+        flexShrink: 1,
     },
 
     chevron: {

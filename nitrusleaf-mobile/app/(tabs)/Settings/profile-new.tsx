@@ -20,7 +20,8 @@ import BottomNavbar from '@/components/ui/tab-bar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsFocused } from '@react-navigation/native';
 import { getUsuarioDetails, updateUsuarioAvatar } from '@/repositories/profileRepository';
-import { getPropertiesByUser } from '@/repositories/propertyRepository';
+import { useProperty } from '@/contexts/PropertyContext';
+import { getRelatorioCountByUsuario } from '@/repositories/relatorioRepository';
 import {
     pickProfileImageFromDevice,
     uploadProfileAvatar,
@@ -52,10 +53,10 @@ export default function ProfileScreen() {
     const { user, logout } = useAuth();
     const isFocused = useIsFocused();
 
+    const { selectedProperty } = useProperty();
     const [dbUser, setDbUser] = useState<any>(null);
-    const [property, setProperty] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [totalAnalyses] = useState<number>(0);
+    const [totalAnalyses, setTotalAnalyses] = useState<number>(0);
     const [avatarUri, setAvatarUri] = useState<string | null>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -66,10 +67,8 @@ export default function ProfileScreen() {
                 const details = await getUsuarioDetails(user.id);
                 setDbUser(details);
                 if (details?.avatarUrl) setAvatarUri(details.avatarUrl);
-                const props = await getPropertiesByUser(user.id);
-                if (props && props.length > 0) {
-                    setProperty(props[0]);
-                }
+                const count = await getRelatorioCountByUsuario(user.id);
+                setTotalAnalyses(count);
             } catch (err) {
                 console.error('Erro ao carregar dados no menu do perfil:', err);
             } finally {
@@ -204,7 +203,7 @@ export default function ProfileScreen() {
                         <View style={styles.propertyBadge}>
                             <Ionicons name="business-outline" size={14} color="#6BC24A" />
                             <Text style={styles.propertyText}>
-                                {loading ? '...' : property?.name || 'Sem propriedade'}
+                                {loading ? '...' : selectedProperty?.name || 'Sem propriedade'}
                             </Text>
                         </View>
 

@@ -40,6 +40,7 @@ StatCard.displayName = 'StatCard';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minWidth: 0,
     borderRadius: 8,
     paddingVertical: 18,
     paddingHorizontal: 14,
@@ -50,9 +51,10 @@ const styles = StyleSheet.create({
 
   headContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 10,
     width: "100%",
+    minWidth: 0,
   },
 
   iconContainer: {
@@ -62,6 +64,7 @@ const styles = StyleSheet.create({
 
   label: {
     flex: 1,
+    flexShrink: 1,
     fontSize: 12,
     fontWeight: "700",
     color: "#1A1A1A",
