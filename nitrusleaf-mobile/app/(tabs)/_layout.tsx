@@ -26,8 +26,6 @@ export default function TabsLayout() {
 
       {/* Rotas extras dentro de (tabs) sem tab bar */}
       <Tabs.Screen name="add-property" options={{ href: null }} />
-      <Tabs.Screen name="add-talhao" options={{ href: null }} />
-      <Tabs.Screen name="add-foot" options={{ href: null }} />
       <Tabs.Screen name="maps-heat" options={{ href: null }} />
       <Tabs.Screen name="maps-location" options={{ href: null }} />
       <Tabs.Screen name="pe-details" options={{ href: null }} />

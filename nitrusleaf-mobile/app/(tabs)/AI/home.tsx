@@ -188,16 +188,16 @@ export default function HomeScreen() {
   }, [allTrees]);
 
   const handleDetailPress = useCallback(() => {
-    router.push("/(tabs)/History/fields");
+    router.push("/(tabs)/History/history");
   }, [router]);
 
   const handlePeriodChange = useCallback((period: TimePeriod) => setSelectedPeriod(period), []);
   const handleVerDetalhes = useCallback(() => {
-    router.push("/(tabs)/History/fields");
+    router.push("/(tabs)/History/history");
   }, [router]);
 
   const handleNutritionalPress = useCallback(() => {
-    router.push("/(tabs)/History/fields");
+    router.push("/(tabs)/History/history");
   }, [router]);
 
   return (
@@ -232,7 +232,7 @@ export default function HomeScreen() {
                 </Text>
                 <TouchableOpacity
                   style={styles.emptyBannerButton}
-                  onPress={() => router.push("/(tabs)/History/fields")}
+                  onPress={() => router.push("/(tabs)/History/history")}
                   activeOpacity={0.85}
                 >
                   <Text style={styles.emptyBannerButtonText}>Cadastrar talhão</Text>

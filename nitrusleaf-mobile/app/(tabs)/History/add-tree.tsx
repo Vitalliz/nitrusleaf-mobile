@@ -70,7 +70,7 @@ export default function AddFootScreen() {
           text: "OK",
           onPress: () =>
             router.replace({
-              pathname: "/(tabs)/History/field-feet",
+              pathname: "/(tabs)/History/field-detail-screen",
               params: { talhaoId },
             }),
         },
@@ -121,7 +121,7 @@ export default function AddFootScreen() {
           style={styles.backBtn}
           onPress={() =>
             safeBack(router, {
-              pathname: "/(tabs)/History/field-feet",
+              pathname: "/(tabs)/History/field-detail-screen",
               params: { talhaoId },
             })
           }

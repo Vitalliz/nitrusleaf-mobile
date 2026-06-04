@@ -104,7 +104,7 @@ export default function PropertyDetailsScreen() {
 
   const handleTalhaoPress = (talhao: Talhao) => {
     router.push({
-      pathname: '/(tabs)/field-feet',
+      pathname: '/(tabs)/History/field-detail-screen',
       params: {
         talhaoId: talhao.id,
         talhaoName: talhao.name,
@@ -232,7 +232,7 @@ export default function PropertyDetailsScreen() {
             <TouchableOpacity
               style={styles.addTalhaoBtn}
               onPress={() => router.push({
-                pathname: '/(tabs)/add-talhao' as any,
+                pathname: '/(tabs)/History/add-talhao',
                 params: { propertyId: property.id, propertyName: property.name }
               })}
             >
