@@ -63,7 +63,11 @@ export default function AddFootScreen() {
         situacao,
         observacoes: observacoes.trim() || undefined,
       });
-      await syncTalhaoStatsFromPes(talhaoId);
+      try {
+        await syncTalhaoStatsFromPes(talhaoId);
+      } catch (syncErr) {
+        console.warn("Sync talhão (opcional):", syncErr);
+      }
 
       Alert.alert("Sucesso", "Árvore cadastrada com sucesso!", [
         {

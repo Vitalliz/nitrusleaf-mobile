@@ -107,6 +107,50 @@ export async function updateUsuarioAvatar(
   throwIfError(error);
 }
 
+/**
+ * Altera a senha no Supabase Auth (valida a senha atual antes).
+ * `id_usuario` é o id da tabela `usuarios` (perfil local).
+ */
+export async function updateUsuarioPassword(
+  id_usuario: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const supabase = getSupabase();
+  const details = await getUsuarioDetails(id_usuario);
+  if (!details?.email) {
+    throw new Error("E-mail da conta não encontrado.");
+  }
+
+  const email = details.email.trim().toLowerCase();
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (signInError) {
+    const msg = (signInError.message ?? "").toLowerCase();
+    if (
+      msg.includes("invalid") ||
+      msg.includes("credentials") ||
+      msg.includes("senha") ||
+      msg.includes("password")
+    ) {
+      throw new Error("Senha atual incorreta.");
+    }
+    throw new Error(signInError.message);
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+}
+
 export async function deleteUsuario(id_usuario: string): Promise<void> {
   const supabase = getSupabase();
 

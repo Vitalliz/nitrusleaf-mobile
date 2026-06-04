@@ -23,18 +23,10 @@ import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getPropertiesByUser } from "@/repositories/propertyRepository";
 import { getPeById, updatePe, deletePe } from "@/repositories/peRepository";
+import { getRelatoriosByPe } from "@/repositories/relatorioRepository";
 import { ArvoreEditModal } from "@/components/modals/arvore-edit-modal";
 import AnalysisCard, { AnalysisData } from "@/components/cards/analysis-card";
-
-// ── MOCK — remover quando getAnalisesByPe estiver disponível ──────────────────
-const MOCK_ANALYSES: AnalysisData[] = [
-  { id: "06", label: "Análise #06", status: "Em tratamento", date: "10 Nov, 2025" },
-  { id: "05", label: "Análise #05", status: "Tratado",        date: "10 Nov, 2025" },
-  { id: "04", label: "Análise #04", status: "Tratado",        date: "10 Nov, 2025" },
-  { id: "03", label: "Análise #03", status: "Tratado",        date: "10 Nov, 2025" },
-  { id: "02", label: "Análise #02", status: "Tratado",        date: "10 Nov, 2025" },
-];
-// ─────────────────────────────────────────────────────────────────────────────
+import { mapRelatorioToAnalysisData } from "@/utils/relatorioDisplay";
 
 export default function HistoryTreeScreen() {
   const { treeId } = useLocalSearchParams<{ treeId: string }>();
@@ -64,10 +56,12 @@ export default function HistoryTreeScreen() {
         const tree = await getPeById(treeId);
         setArvore(tree);
 
-        // TODO: substituir mock pelo repositório real quando disponível
-        // const dbAnalyses = await getAnalisesByPe(treeId);
-        // setAnalyses(dbAnalyses.map(a => ({ ... })));
-        setAnalyses(MOCK_ANALYSES); // 👈 MOCK — remover quando integrar API
+        const relatorios = await getRelatoriosByPe(treeId);
+        setAnalyses(
+          relatorios.map((r) =>
+            mapRelatorioToAnalysisData(r, tree?.situacao)
+          )
+        );
       } catch (err) {
         console.error("Erro ao carregar árvore:", err);
       } finally {
@@ -88,17 +82,22 @@ export default function HistoryTreeScreen() {
     safeBack(router, ROUTES.history);
   }, [router]);
 
-  const handleAnalysisPress = useCallback((analysisId: string) => {
-    router.push({
-      pathname: ROUTES.analysisSummary,
-      params: {
-        analysisId,
-        returnTo: treeId
-          ? `/(tabs)/History/tree-detail-screen?treeId=${treeId}`
-          : ROUTES.history,
-      },
-    });
-  }, [router, treeId]);
+  const handleAnalysisPress = useCallback(
+    (analysis: AnalysisData) => {
+      router.push({
+        pathname: ROUTES.analysisSummary,
+        params: {
+          analysisId: analysis.id,
+          probability: String(analysis.probability ?? 0),
+          deficiencyType: analysis.deficiencyType ?? "",
+          returnTo: treeId
+            ? `/(tabs)/History/tree-detail-screen?treeId=${treeId}`
+            : ROUTES.history,
+        },
+      });
+    },
+    [router, treeId]
+  );
 
   const handleSaveArvore = useCallback(async (newName: string) => {
     if (!treeId) return;
@@ -181,13 +180,20 @@ export default function HistoryTreeScreen() {
                   </View>
 
                   {/* Lista de análises */}
-                  {sortedAnalyses.map((analysis) => (
-                    <AnalysisCard
-                      key={analysis.id}
-                      analysis={analysis}
-                      onPress={() => handleAnalysisPress(analysis.id)}
-                    />
-                  ))}
+                  {sortedAnalyses.length === 0 ? (
+                    <Text style={styles.emptyAnalyses}>
+                      Nenhuma análise salva para esta árvore. Use o scan na aba IA e
+                      vincule ao pé no resumo técnico.
+                    </Text>
+                  ) : (
+                    sortedAnalyses.map((analysis) => (
+                      <AnalysisCard
+                        key={analysis.id}
+                        analysis={analysis}
+                        onPress={() => handleAnalysisPress(analysis)}
+                      />
+                    ))
+                  )}
 
                 </View>
               }
@@ -262,5 +268,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 40,
+  },
+  emptyAnalyses: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 20,
+    paddingVertical: 16,
   },
 });

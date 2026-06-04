@@ -18,5 +18,26 @@ export async function syncTalhaoStatsFromPes(talhaoId: string): Promise<void> {
     })
     .eq("id_talhao", Number(talhaoId));
 
-  if (error) throw new Error(error.message);
+  if (!error) return;
+
+  const msg = (error.message ?? "").toLowerCase();
+  const missingColumn =
+    msg.includes("pes_analisados") ||
+    msg.includes("pes_diagnosticados") ||
+    msg.includes("total_pes") ||
+    msg.includes("schema cache") ||
+    msg.includes("column") ||
+    msg.includes("coluna");
+
+  if (missingColumn) {
+    console.warn(
+      "[syncTalhaoStats] Colunas de contagem não existem em `talhoes` no Supabase. " +
+        "Execute docs/supabase/add_talhao_count_columns.sql no SQL Editor. " +
+        "O app continua calculando os totais a partir da tabela `pes`.",
+      error.message
+    );
+    return;
+  }
+
+  throw new Error(error.message);
 }

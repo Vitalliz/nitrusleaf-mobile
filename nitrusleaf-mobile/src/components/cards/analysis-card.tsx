@@ -8,6 +8,9 @@ export interface AnalysisData {
     label: string;
     status: "Tratado" | "Em tratamento" | "Não tratado" | "Não-Tratado" | string;
     date: string;
+    /** Preenchido a partir de `relatorios.observacoes` (scan IA). */
+    probability?: number;
+    deficiencyType?: string;
 }
 
 // ── StatusBadge ───────────────────────────────────────────────────────────────
@@ -17,6 +20,7 @@ const StatusBadge = ({ status }: { status: string }) => {
         Tratado:         { bg: "#10B981", text: "#FFFFFF", icon: "checkmark-done-outline" },
         "Não tratado":   { bg: "#F44336", text: "#FFFFFF", icon: "close-circle-outline" },
         "Não-Tratado":   { bg: "#F44336", text: "#FFFFFF", icon: "close-circle-outline" },
+        "Sem-informações": { bg: "#9E9E9E", text: "#FFFFFF", icon: "help-circle-outline" },
     };
 
     const { bg, text, icon } = config[status] ?? {
