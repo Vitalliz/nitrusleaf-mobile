@@ -11,16 +11,17 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}>
+    <Tabs screenOptions={{ 
+      headerShown: false, 
+      tabBarStyle: { display: 'none', height: 0 },
+    }}>
+
       {/* Aba 1 — Home */}
       <Tabs.Screen name="AI" />
-
       {/* Aba 2 — Histórico */}
       <Tabs.Screen name="History" />
-
       {/* Aba 4 — Mapas */}
       <Tabs.Screen name="Maps" />
-
       {/* Aba 5 — Configurações */}
       <Tabs.Screen name="Settings" />
 

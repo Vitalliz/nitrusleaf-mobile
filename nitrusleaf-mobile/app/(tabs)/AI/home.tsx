@@ -213,7 +213,7 @@ export default function HomeScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea}  edges={['top', 'left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
@@ -242,6 +242,7 @@ export default function HomeScreen() {
           <ScrollView
             contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}
+            style={styles.scrollView} 
           >
             {!hasTalhoes && (
               <View style={styles.emptyBanner}>
@@ -326,11 +327,14 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
+  scrollView: {
+    flex: 1,         
+  },
   container: {
     padding: 16,
     paddingBottom: 40,
     paddingHorizontal: 25,
-    gap: 5,
+    gap: 8,
   },
   dateRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   cardContent: { padding: 16, width: "100%" },

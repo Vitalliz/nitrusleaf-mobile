@@ -6,9 +6,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Background } from '@/components/ui/background';
@@ -73,7 +73,7 @@ export default function MapsScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea}  edges={['top', 'left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
