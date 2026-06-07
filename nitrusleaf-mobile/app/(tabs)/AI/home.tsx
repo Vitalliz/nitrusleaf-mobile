@@ -213,7 +213,7 @@ export default function HomeScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}  edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
