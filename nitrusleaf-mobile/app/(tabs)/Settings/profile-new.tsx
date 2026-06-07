@@ -140,7 +140,7 @@ export default function ProfileScreen() {
     return (
         <Background>
             <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
-                <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+                <StatusBar barStyle="dark-content" backgroundColor="#FFA62B" />
 
                 <ScrollView
                     contentContainerStyle={styles.container}
