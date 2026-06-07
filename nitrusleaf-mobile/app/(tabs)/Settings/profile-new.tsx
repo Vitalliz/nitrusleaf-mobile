@@ -11,7 +11,7 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView,useSafeAreaInsets  } from "react-native-safe-area-context";
 
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -60,6 +60,8 @@ export default function ProfileScreen() {
     const [totalAnalyses, setTotalAnalyses] = useState<number>(0);
     const [avatarUri, setAvatarUri] = useState<string | null>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const insets = useSafeAreaInsets();
+
 
     useEffect(() => {
         async function loadData() {
@@ -140,14 +142,14 @@ export default function ProfileScreen() {
     return (
         <Background>
             <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
-                <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+                <StatusBar barStyle="dark-content" backgroundColor="#FFA62B" />
 
                 <ScrollView
                     contentContainerStyle={styles.container}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* TOPO LARANJA */}
-                    <View style={styles.header}>
+                    <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                         <View style={styles.headerRow}>
                             <TouchableOpacity
                                 style={styles.backButton}
@@ -290,7 +292,6 @@ const styles = StyleSheet.create({
     header: {
         backgroundColor: '#FFA62B',
         height: 260,
-        paddingTop: 45,
         paddingHorizontal: 20,
     },
     headerRow: {
