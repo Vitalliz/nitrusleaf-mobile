@@ -328,9 +328,10 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     paddingBottom: 40,
+    marginHorizontal: 8,
   },
 
-  cardContent: { padding: 16 },
+  cardContent: { padding: 12 },
 
   titleRow: {
     flexDirection: "row",
