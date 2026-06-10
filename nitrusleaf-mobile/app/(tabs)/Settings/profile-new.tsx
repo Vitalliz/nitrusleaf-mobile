@@ -6,12 +6,13 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    SafeAreaView,
     StatusBar,
     Image,
     Alert,
     ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { openAddProperty } from '@/utils/navigation';
@@ -138,8 +139,8 @@ export default function ProfileScreen() {
 
     return (
         <Background>
-            <SafeAreaView style={styles.safeArea}>
-                <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+            <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
+                <StatusBar barStyle="dark-content" backgroundColor="#FFA62B" />
 
                 <ScrollView
                     contentContainerStyle={styles.container}

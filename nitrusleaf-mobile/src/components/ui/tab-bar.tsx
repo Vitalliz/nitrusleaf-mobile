@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
   cameraWrapper: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     marginTop: -9,
   },
   cameraButton: {
     width: 64,
-    height: 64,
+    flexGrow: 1,  
     borderRadius: 12,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,

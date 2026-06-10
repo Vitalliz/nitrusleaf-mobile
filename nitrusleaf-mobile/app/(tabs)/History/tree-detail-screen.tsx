@@ -282,8 +282,8 @@ export default function HistoryTreeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 80 },
-  cardContent: { padding: 16 },
+  scrollContent: { padding: 16, paddingBottom: 80, marginHorizontal: 8 },
+  cardContent: { padding: 10 },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",

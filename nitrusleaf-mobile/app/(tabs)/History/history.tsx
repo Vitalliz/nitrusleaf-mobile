@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   FlatList,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -14,6 +13,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsFocused } from "@react-navigation/native";
 
 import { CustomCard } from "@/components/cards/card";
@@ -186,7 +186,7 @@ export default function HistoryScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea}  edges={['left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header

@@ -1,7 +1,9 @@
+// components/ui/user-header.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; 
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderProps {
   userName: string;
@@ -10,7 +12,6 @@ interface HeaderProps {
   subtitleIcon?: keyof typeof Ionicons.glyphMap;
   onMenuPress?: () => void;
   onAvatarPress?: () => void;
-  /** Toque na linha da propriedade (nome + seta) para trocar propriedade ativa */
   onPropertyPress?: () => void;
   showPropertyChevron?: boolean;
 }
@@ -25,14 +26,14 @@ export const Header = ({
   onPropertyPress,
   showPropertyChevron = false,
 }: HeaderProps) => {
-
-  const router = useRouter(); 
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const getInitial = () => userName.charAt(0).toUpperCase();
 
   return (
-    <View style={styles.container}>
-      
+    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+
       {/* Avatar - Esquerda */}
       <TouchableOpacity
         onPress={onAvatarPress}
@@ -61,35 +62,16 @@ export const Header = ({
               accessibilityRole="button"
               accessibilityLabel="Trocar propriedade"
             >
-              <Ionicons
-                name={subtitleIcon}
-                size={13}
-                color="#888"
-                style={styles.subtitleIcon}
-              />
-              <Text style={styles.subtitle} numberOfLines={1}>
-                {userSubtitle}
-              </Text>
+              <Ionicons name={subtitleIcon} size={13} color="#888" style={styles.subtitleIcon} />
+              <Text style={styles.subtitle} numberOfLines={1}>{userSubtitle}</Text>
               {showPropertyChevron && (
-                <Ionicons
-                  name="chevron-down"
-                  size={14}
-                  color="#888"
-                  style={styles.propertyChevron}
-                />
+                <Ionicons name="chevron-down" size={14} color="#888" style={styles.propertyChevron} />
               )}
             </TouchableOpacity>
           ) : (
             <View style={styles.subtitleRow}>
-              <Ionicons
-                name={subtitleIcon}
-                size={13}
-                color="#888"
-                style={styles.subtitleIcon}
-              />
-              <Text style={styles.subtitle} numberOfLines={1}>
-                {userSubtitle}
-              </Text>
+              <Ionicons name={subtitleIcon} size={13} color="#888" style={styles.subtitleIcon} />
+              <Text style={styles.subtitle} numberOfLines={1}>{userSubtitle}</Text>
             </View>
           )
         )}
@@ -98,15 +80,10 @@ export const Header = ({
       {/* Configuração - Direita */}
       <TouchableOpacity
         onPress={() => router.push('/(tabs)/Settings/settings-all')}
-
         style={styles.configButton}
         activeOpacity={0.7}
       >
-        <Ionicons
-          name="settings-outline"
-          size={28}
-          color="#2D2D2D"
-        />
+        <Ionicons name="settings-outline" size={28} color="#2D2D2D" />
       </TouchableOpacity>
     </View>
   );
@@ -116,16 +93,14 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 52,
+    paddingHorizontal: 18,
+    paddingBottom: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
+    marginTop: 12,
   },
-  avatarButton: {
-    marginRight: 12,
-  },
+  avatarButton: { marginRight: 12 },
   avatar: {
     width: 40,
     height: 40,
@@ -148,9 +123,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#555',
   },
-  textContainer: {
-    flex: 1,
-  },
+  textContainer: { flex: 1 },
   name: {
     fontSize: 15,
     fontWeight: '700',
@@ -161,18 +134,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 2,
   },
-  subtitleIcon: {
-    marginRight: 3,
-  },
+  subtitleIcon: { marginRight: 3 },
   subtitle: {
     fontSize: 12,
     color: '#888888',
     flexShrink: 1,
   },
-  propertyChevron: {
-    marginLeft: 2,
-  },
-  configButton: {
-    padding: 4,
-  },
+  propertyChevron: { marginLeft: 2 },
+  configButton: { padding: 4 },
 });

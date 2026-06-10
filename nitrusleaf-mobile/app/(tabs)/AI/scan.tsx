@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ROUTES, exitAnalysisFlow } from '@/utils/navigation';
@@ -42,6 +44,7 @@ export default function RealCameraScreen() {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (permission && !permission.granted) {
@@ -239,7 +242,7 @@ export default function RealCameraScreen() {
           )}
 
           {/* Controles inferiores */}
-          <View style={styles.bottomControls}>
+          <View style={[styles.bottomControls, { bottom: insets.bottom + 5 }]}>
             <TouchableOpacity style={styles.sideButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={28} color="#2B2B2B" />
             </TouchableOpacity>
@@ -361,8 +364,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 30,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10,
     shadowRadius: 4,
     elevation: 5,
   },
@@ -388,7 +391,7 @@ const styles = StyleSheet.create({
   },
   instructionContainer: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 120,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -440,10 +443,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10,
     shadowRadius: 4,
-    elevation: 8,
+    elevation: 5,
   },
   captureButton: {
     width: 75,
@@ -453,10 +456,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 5,
   },
   captureButtonDisabled: {
     backgroundColor: '#CCCCCC',
@@ -495,263 +498,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-// app/camera/DemoCameraScreen.tsx
-// import React, { useState, useEffect } from 'react';
-// import {
-//   View,
-//   StyleSheet,
-//   ImageBackground,
-//   TouchableOpacity,
-//   Text,
-//   ActivityIndicator,
-// } from 'react-native';
-// import { Ionicons } from '@expo/vector-icons';
-// import { useRouter } from 'expo-router';
-
-// export default function DemoCameraScreen() {
-//   const router = useRouter();
-//   const [isScanning, setIsScanning] = useState(true);
-
-//   useEffect(() => {
-//     // Simula o escaneamento por 3 segundos
-//     const timer = setTimeout(() => {
-//       setIsScanning(false);
-//     }, 3000);
-
-//     return () => clearTimeout(timer);
-//   }, []);
-
-//   const handleBack = () => {
-//     router.back();
-//   };
-
-//   const handleCapture = () => {
-//     // Simular captura e navegar para resultado
-//     console.log('Simulando captura de folha');
-//     router.push({
-//       pathname: '/(tabs)/AI/analysis-summary',
-//       params: {
-//         analysisId: '007',
-//         percentage: 87,
-//         deficiencyType: 'Manganês',
-//         probability: 87,
-//       },
-//     });
-//   };
-
-//   const handleLocation = () => {
-//     router.push('/(tabs)/AI/analysis-summary');
-//   };
-
-//   return (
-//     <ImageBackground
-//       source={require('@/assets/images/icons/analise_exemplo.png')}
-//       style={styles.background}
-//       resizeMode="cover"
-//     >
-//       {/* Overlay escuro para melhor visibilidade dos elementos */}
-//       <View style={styles.overlay}>
-//         {/* Grid de enquadramento */}
-//         <View style={styles.gridContainer}>
-//           <View style={styles.gridLineHorizontal} />
-//           <View style={styles.gridLineVertical} />
-//           <View style={styles.gridCornerTL} />
-//           <View style={styles.gridCornerTR} />
-//           <View style={styles.gridCornerBL} />
-//           <View style={styles.gridCornerBR} />
-//         </View>
-
-//         {/* Badge superior "ESCANEANDO" */}
-//         <View style={styles.topBadgeContainer}>
-//           <View style={styles.badge}>
-//             <Text style={styles.badgeText}>ESCANEANDO</Text>
-//             <ActivityIndicator color="#FFFFFF" size="small" style={styles.badgeIndicator} />
-//           </View>
-//         </View>
-
-//         {/* Texto instrucional */}
-//         <View style={styles.instructionContainer}>
-//           <Text style={styles.instructionText}>
-//             Centralize a câmera para realizar escaneamento
-//           </Text>
-//         </View>
-
-//         {/* Controles inferiores */}
-//         <View style={styles.bottomControls}>
-//           <TouchableOpacity style={styles.sideButton} onPress={handleBack}>
-//             <Ionicons name="arrow-back" size={28} color="#2B2B2B" />
-//           </TouchableOpacity>
-
-//           <TouchableOpacity style={styles.captureButton} onPress={handleCapture}>
-//             <Ionicons name="camera" size={36} color="#FFFFFF" />
-//           </TouchableOpacity>
-
-//           <TouchableOpacity style={styles.sideButton} onPress={handleLocation}>
-//             <Ionicons name="map-outline" size={28} color="#2B2B2B" />
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     </ImageBackground>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   background: {
-//     flex: 1,
-//     backgroundColor: '#000',
-//   },
-//   overlay: {
-//     flex: 1,
-//     backgroundColor: 'rgba(0, 0, 0, 0.3)',
-//   },
-//   gridContainer: {
-//     position: 'absolute',
-//     top: '20%',
-//     left: '10%',
-//     right: '10%',
-//     bottom: '20%',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-//   gridLineHorizontal: {
-//     position: 'absolute',
-//     top: '50%',
-//     left: 0,
-//     right: 0,
-//     height: 1,
-//     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-//   },
-//   gridLineVertical: {
-//     position: 'absolute',
-//     left: '50%',
-//     top: 0,
-//     bottom: 0,
-//     width: 1,
-//     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-//   },
-//   gridCornerTL: {
-//     position: 'absolute',
-//     top: 0,
-//     left: 0,
-//     width: 30,
-//     height: 30,
-//     borderTopWidth: 2,
-//     borderLeftWidth: 2,
-//     borderColor: '#FFFFFF',
-//   },
-//   gridCornerTR: {
-//     position: 'absolute',
-//     top: 0,
-//     right: 0,
-//     width: 30,
-//     height: 30,
-//     borderTopWidth: 2,
-//     borderRightWidth: 2,
-//     borderColor: '#FFFFFF',
-//   },
-//   gridCornerBL: {
-//     position: 'absolute',
-//     bottom: 0,
-//     left: 0,
-//     width: 30,
-//     height: 30,
-//     borderBottomWidth: 2,
-//     borderLeftWidth: 2,
-//     borderColor: '#FFFFFF',
-//   },
-//   gridCornerBR: {
-//     position: 'absolute',
-//     bottom: 0,
-//     right: 0,
-//     width: 30,
-//     height: 30,
-//     borderBottomWidth: 2,
-//     borderRightWidth: 2,
-//     borderColor: '#FFFFFF',
-//   },
-//   topBadgeContainer: {
-//     position: 'absolute',
-//     top: 60,
-//     left: 0,
-//     right: 0,
-//     alignItems: 'center',
-//   },
-//   badge: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     backgroundColor: '#6BC24A',
-//     paddingHorizontal: 20,
-//     paddingVertical: 10,
-//     borderRadius: 30,
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.25,
-//     shadowRadius: 4,
-//     elevation: 5,
-//   },
-//   badgeText: {
-//     color: '#FFFFFF',
-//     fontWeight: '700',
-//     letterSpacing: 1,
-//     fontSize: 14,
-//   },
-//   badgeIndicator: {
-//     marginLeft: 8,
-//   },
-//   instructionContainer: {
-//     position: 'absolute',
-//     bottom: 100,
-//     left: 0,
-//     right: 0,
-//     alignItems: 'center',
-//   },
-//   instructionText: {
-//     color: '#FFFFFF',
-//     fontSize: 14,
-//     textAlign: 'center',
-//     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-//     paddingHorizontal: 20,
-//     paddingVertical: 8,
-//     borderRadius: 20,
-//     overflow: 'hidden',
-//   },
-//   bottomControls: {
-//     position: 'absolute',
-//     bottom: 30,
-//     left: 0,
-//     right: 0,
-//     flexDirection: 'row',
-//     justifyContent: 'space-evenly',
-//     alignItems: 'center',
-//     paddingHorizontal: 20,
-//   },
-//   sideButton: {
-//     width: 56,
-//     height: 56,
-//     borderRadius: 28,
-//     backgroundColor: '#FFFFFF',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.25,
-//     shadowRadius: 4,
-//     elevation: 8,
-//   },
-//   captureButton: {
-//     width: 84,
-//     height: 84,
-//     borderRadius: 42,
-//     backgroundColor: '#6BC24A',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     shadowColor: '#000',
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.3,
-//     shadowRadius: 8,
-//     elevation: 10,
-//     borderWidth: 4,
-//     borderColor: 'rgba(255, 255, 255, 0.9)',
-//   },
-// });
