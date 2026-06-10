@@ -37,7 +37,10 @@ import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import type { Pe } from "@/types/pe";
-import { isPeAnalyzed } from "@/utils/peStats";
+import {
+  computePropertyDeficiencyStats,
+  isPeAnalyzed,
+} from "@/utils/peStats";
 
 // Gera os nomes dos últimos N meses a partir da data atual
 function getLastMonths(n: number): string[] {
@@ -131,31 +134,45 @@ export default function HomeScreen() {
   const analyzedTrees = allTrees.filter(isPeAnalyzed).length;
   const notAnalyzedTrees = totalTrees - analyzedTrees;
 
-  const totalCopper = allTrees.filter((t) => t.deficienciaCobre).length;
-  const totalManganese = allTrees.filter((t) => t.deficienciaManganes).length;
-  const totalOutros = allTrees.filter((t) => t.outros).length;
-  const totalDeficient = totalCopper + totalManganese + totalOutros;
+  const deficiencyStats = useMemo(
+    () => computePropertyDeficiencyStats(allTrees),
+    [allTrees]
+  );
 
-  const nutritionalData = useMemo(() => {
-    const copPerc = analyzedTrees > 0 ? Math.round((totalCopper / analyzedTrees) * 100) : 0;
-    const manPerc = analyzedTrees > 0 ? Math.round((totalManganese / analyzedTrees) * 100) : 0;
-    return { manganes: manPerc, cobre: copPerc };
-  }, [analyzedTrees, totalCopper, totalManganese]);
+  const nutritionalData = useMemo(
+    () => ({
+      manganes: deficiencyStats.nutritionalManganesPct,
+      cobre: deficiencyStats.nutritionalCobrePct,
+    }),
+    [deficiencyStats]
+  );
 
   const coverageData = useMemo(() => {
     return { analyzed: analyzedTrees, total: totalTrees, notAnalyzed: notAnalyzedTrees };
   }, [analyzedTrees, totalTrees, notAnalyzedTrees]);
 
   const donutData = useMemo(() => {
-    const copPerc = analyzedTrees > 0 ? Math.round((totalCopper / analyzedTrees) * 100) : 0;
-    const manPerc = analyzedTrees > 0 ? Math.round((totalManganese / analyzedTrees) * 100) : 0;
-    const outPerc = analyzedTrees > 0 ? Math.round((totalOutros / analyzedTrees) * 100) : 0;
     return [
-      { name: "Cobre", percentage: copPerc, value: totalCopper, color: "#E65723" },
-      { name: "Manganês", percentage: manPerc, value: totalManganese, color: "#FBBF24" },
-      { name: "Adversos", percentage: outPerc, value: totalOutros, color: "#9CA3AF" },
+      {
+        name: "Cobre",
+        percentage: deficiencyStats.cobrePct,
+        value: deficiencyStats.cobre,
+        color: "#E65723",
+      },
+      {
+        name: "Manganês",
+        percentage: deficiencyStats.manganesPct,
+        value: deficiencyStats.manganes,
+        color: "#FBBF24",
+      },
+      {
+        name: "Adversos",
+        percentage: deficiencyStats.adversosPct,
+        value: deficiencyStats.adversos,
+        color: "#9CA3AF",
+      },
     ];
-  }, [analyzedTrees, totalCopper, totalManganese, totalOutros]);
+  }, [deficiencyStats]);
 
   const groupedColumnData: GroupedColumnData[] = useMemo(() => {
     return talhoes.map(t => {
@@ -176,17 +193,18 @@ export default function HomeScreen() {
     const currentMonth = getCurrentMonth();
 
     const getEvolutionForPeriods = (periods: string[]) => {
-      return periods.map(monthLabel => {
-        const monthTrees = allTrees.filter(tree => {
-          if (!tree.createdAt) return false;
-          return getMonthLabel(tree.createdAt) === monthLabel;
+      return periods.map((monthLabel) => {
+        const monthTrees = allTrees.filter((tree) => {
+          if (!isPeAnalyzed(tree)) return false;
+          const dateStr = tree.updatedAt || tree.createdAt;
+          if (!dateStr) return false;
+          return getMonthLabel(dateStr) === monthLabel;
         });
-        const cobre = monthTrees.filter(tree => tree.deficienciaCobre).length;
-        const manganes = monthTrees.filter(tree => tree.deficienciaManganes).length;
+        const stats = computePropertyDeficiencyStats(monthTrees);
         return {
           period: monthLabel,
-          cobre: monthTrees.length > 0 ? Math.round((cobre / monthTrees.length) * 100) : 0,
-          manganes: monthTrees.length > 0 ? Math.round((manganes / monthTrees.length) * 100) : 0,
+          cobre: stats.nutritionalCobrePct,
+          manganes: stats.nutritionalManganesPct,
         };
       });
     };

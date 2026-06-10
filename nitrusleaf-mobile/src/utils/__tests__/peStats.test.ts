@@ -1,4 +1,9 @@
-import { computeTalhaoPeStats, isPeAnalyzed, isPeDeficient } from "../peStats";
+import {
+  computePropertyDeficiencyStats,
+  computeTalhaoPeStats,
+  isPeAnalyzed,
+  isPeDeficient,
+} from "../peStats";
 import type { Pe } from "@/types/pe";
 
 const basePe = (overrides: Partial<Pe>): Pe => ({
@@ -38,5 +43,28 @@ describe("peStats", () => {
   it("identifica pé deficiente", () => {
     expect(isPeDeficient(basePe({ deficienciaManganes: true }))).toBe(true);
     expect(isPeDeficient(basePe({ situacao: "Tratado" }))).toBe(false);
+  });
+
+  it("calcula % nutricional só entre cobre e manganês", () => {
+    const pes = [
+      basePe({ id: "1", deficienciaCobre: true, situacao: "Não-Tratado" }),
+      basePe({ id: "2", situacao: "Tratado" }),
+    ];
+    const stats = computePropertyDeficiencyStats(pes);
+    expect(stats.nutritionalCobrePct).toBe(100);
+    expect(stats.nutritionalManganesPct).toBe(0);
+    expect(stats.adversos).toBe(1);
+    expect(stats.cobrePct).toBe(50);
+    expect(stats.adversosPct).toBe(50);
+  });
+
+  it("conta saudável e indefinido em adversos", () => {
+    const pes = [
+      basePe({ id: "1", outros: true, situacao: "Não-Tratado" }),
+      basePe({ id: "2", situacao: "Tratado" }),
+    ];
+    const stats = computePropertyDeficiencyStats(pes);
+    expect(stats.adversos).toBe(2);
+    expect(stats.adversosPct).toBe(100);
   });
 });

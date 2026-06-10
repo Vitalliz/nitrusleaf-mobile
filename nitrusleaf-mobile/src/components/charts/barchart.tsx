@@ -50,7 +50,10 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
   const safeData = data.length > 0 ? data : [{ period: "-", cobre: 0, manganes: 0 }];
   const maxValue = Math.max(...safeData.flatMap((d) => [d.cobre, d.manganes]), 1);
   const yAxisMax = Math.max(10, Math.ceil(maxValue / 10) * 10);
-  const yAxisSteps = [0, 10, 20, 30, 40, 50].filter(s => s <= yAxisMax);
+  const yAxisSteps = Array.from(
+    { length: yAxisMax / 10 + 1 },
+    (_, i) => i * 10
+  );
 
   const drawHeight = height - 32 - TOP_PADDING;
   const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 10;

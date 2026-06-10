@@ -254,6 +254,8 @@ A URL da IA **não** vai no `.env`: o app monta `http://<host>:5000/predict` em 
 | Login/cadastro falha | Confirme `.env`, RLS e tabela `usuarios` no Supabase |
 | Histórico 0/0 | Cadastre **pés** no talhão; após scan + salvar, contador sobe |
 | Gráficos home vazios | Precisa de talhões, pés e pelo menos uma análise salva |
+| Erro `pes_analisados` / schema cache | Rode `docs/supabase/add_talhao_count_columns.sql` no SQL Editor do Supabase (ou ignore: o app calcula pelos `pes`) |
+| Troca de senha falha | Confirme senha atual; no Supabase, Auth deve permitir `updateUser` |
 
 ---
 
