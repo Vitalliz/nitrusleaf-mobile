@@ -2,8 +2,7 @@
 
 Aplicativo React Native com **Expo Router**, **Supabase** e integração com a API de IA em `../BeckAI`.
 
-**Documentação completa do monorepo (instalação do zero, BeckAI com `.venv`, testes, diretórios):**  
-→ [README na raiz do repositório](../README.md)
+**Documentação completa do monorepo:** [README na raiz do repositório](../README.md)
 
 ## Início rápido
 
@@ -27,13 +26,14 @@ npm run start
 | Comando | Descrição |
 |---------|-----------|
 | `npm run start` | Expo dev server |
-| `npm run test` | Jest (`src/utils/__tests__/`) |
+| `npm run test` | Jest (`backend/utils/__tests__/`) |
 | `npm run typecheck` | TypeScript |
-| `npm run validate` | typecheck + test (CI) |
+| `npm run validate` | typecheck + test |
+| `npm run ci` | typecheck + test com cobertura + lint (igual ao job *quality* no GitHub Actions) |
 
 ## Estrutura interna
 
-- `app/` — telas e rotas
-- `src/repositories/` — Supabase
-- `src/services/` — análise, avatar, sync de talhão
-- `src/components/` — UI e gráficos
+- `frontend/` — telas e rotas (Expo Router)
+- `backend/repositories/` — Supabase
+- `backend/services/` — análise, avatar, sync de talhão
+- `backend/components/` — UI e gráficos

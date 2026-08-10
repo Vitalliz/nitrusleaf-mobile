@@ -13,15 +13,14 @@ nitrusleaf-mobile/          ← raiz do repositório Git
 ├── BeckAI/                 ← API Python da IA (classificação de folhas)
 │   ├── Api.py              ← servidor Flask (porta 5000)
 │   ├── requirements.txt    ← dependências Python
-│   ├── folhas_mexerica_modelo.keras
-│   └── .venv/              ← ambiente virtual (você cria localmente)
+│   └── folhas_mexerica_modelo.keras
 │
 ├── nitrusleaf-mobile/      ← aplicativo Expo / React Native
-│   ├── app/                ← rotas (Expo Router, file-based)
+│   ├── frontend/           ← rotas (Expo Router, file-based)
 │   │   ├── (tabs)/         ← abas: AI, History, Maps, Settings
 │   │   ├── login.tsx, register.tsx, welcome.tsx
 │   │   └── _layout.tsx     ← layout raiz + AuthProvider
-│   ├── src/
+│   ├── backend/
 │   │   ├── repositories/   ← acesso Supabase (usuarios, talhoes, pes, etc.)
 │   │   ├── services/       ← Supabase, persistência de análise, avatar
 │   │   ├── components/     ← UI, gráficos, cards
@@ -32,15 +31,16 @@ nitrusleaf-mobile/          ← raiz do repositório Git
 │   ├── package.json
 │   └── app.json            ← config Expo
 │
-├── .github/workflows/      ← CI (build, testes, lint)
+├── .github/workflows/      ← CI/CD (qualidade, build web, deploy Pages)
 └── README.md               ← este arquivo
 ```
 
 | Pasta | Função |
 |--------|--------|
 | **BeckAI** | Recebe foto da folha, roda o modelo Keras e devolve classe + probabilidade (`POST /predict`). |
-| **nitrusleaf-mobile** | App do produtor: cadastro, talhões, pés, scan com câmera, histórico e gráficos na home. |
-| **.github** | Pipeline automático em push/PR (Node 22, `npm run validate`). |
+| **nitrusleaf-mobile/frontend** | Telas e navegação do app (Expo Router). |
+| **nitrusleaf-mobile/backend** | Lógica de negócio, Supabase, componentes e utilitários. |
+| **.github** | CI: `npm run ci`, build web, deploy Pages (`main`). |
 
 ---
 
@@ -82,7 +82,7 @@ SUPABASE_ANON_KEY=sua-chave-anon
 EXPO_PUBLIC_ENV=development
 ```
 
-4. Garanta que as tabelas existem (`usuarios`, `propriedades`, `talhoes`, `pes`, `foto`, `relatorios`, …). O schema de referência está em `nitrusleaf-mobile/src/db/schema.sql`.
+4. Garanta que as tabelas existem (`usuarios`, `propriedades`, `talhoes`, `pes`, `foto`, `relatorios`, …) no painel do Supabase.
 
 5. Em desenvolvimento, em **Authentication → Providers → Email**, você pode desativar “Confirm email” para testar cadastro mais rápido.
 
@@ -176,7 +176,8 @@ No terminal do Expo:
 | `npm run typecheck` | Verificação TypeScript |
 | `npm run test` | Testes unitários (Jest) |
 | `npm run lint` | ESLint |
-| `npm run validate` | `typecheck` + `test` (igual ao CI) |
+| `npm run validate` | `typecheck` + `test` |
+| `npm run ci` | `validate` + cobertura + lint (GitHub Actions) |
 
 ---
 
@@ -198,38 +199,29 @@ Se aparecer **0/0**, cadastre pelo menos um **pé** no talhão (Histórico → t
 
 ---
 
-## 5. Testes unitários
+## 5. Testes
 
-Os testes ficam em `nitrusleaf-mobile/src/utils/__tests__/`.
+Local: `nitrusleaf-mobile/backend/utils/__tests__/` (`validation.test.ts`, `peStats.test.ts`).
 
 ```powershell
 cd nitrusleaf-mobile
 npm run test
-```
-
-Arquivos atuais:
-
-- `validation.test.ts` — e-mail, senha, nome, telefone
-- `peStats.test.ts` — regras de “pé analisado” e totais por talhão
-
-Para validar tudo como no CI:
-
-```powershell
-npm run validate
+npm run ci
 ```
 
 ---
 
-## 6. CI (GitHub Actions)
+## 6. CI/CD (GitHub Actions)
 
-O workflow `.github/workflows/ci.yml` executa, na pasta `nitrusleaf-mobile/`:
+Workflow: `.github/workflows/ci.yml` (pasta `nitrusleaf-mobile/`).
 
-- `npm ci`
-- `npm run typecheck`
-- `npm run test`
-- `npm run lint:ci`
+| Job | O que faz |
+|-----|-----------|
+| **quality** | `npm run ci` |
+| **build** | `expo export --platform web` |
+| **deploy** | GitHub Pages (`main`, push) |
 
-Não executa a API Python nem o Expo em nuvem — apenas qualidade do código TypeScript.
+Habilite Pages em *Settings → Pages → GitHub Actions*. Não roda BeckAI nem build Android/iOS.
 
 ---
 
@@ -241,7 +233,7 @@ Não executa a API Python nem o Expo em nuvem — apenas qualidade do código Ty
 | `SUPABASE_ANON_KEY` | `nitrusleaf-mobile/.env` | Chave anon (pública no app) |
 | `EXPO_PUBLIC_*` | `.env` | Flags opcionais (analytics, etc.) |
 
-A URL da IA **não** vai no `.env`: o app monta `http://<host>:5000/predict` em tempo de execução (ver `app/(tabs)/AI/scan.tsx`).
+A URL da IA **não** vai no `.env`: o app monta `http://<host>:5000/predict` em tempo de execução (ver `frontend/(tabs)/AI/scan.tsx`).
 
 ---
 
@@ -254,15 +246,7 @@ A URL da IA **não** vai no `.env`: o app monta `http://<host>:5000/predict` em 
 | Login/cadastro falha | Confirme `.env`, RLS e tabela `usuarios` no Supabase |
 | Histórico 0/0 | Cadastre **pés** no talhão; após scan + salvar, contador sobe |
 | Gráficos home vazios | Precisa de talhões, pés e pelo menos uma análise salva |
-| Erro `pes_analisados` / schema cache | Rode `docs/supabase/add_talhao_count_columns.sql` no SQL Editor do Supabase (ou ignore: o app calcula pelos `pes`) |
 | Troca de senha falha | Confirme senha atual; no Supabase, Auth deve permitir `updateUser` |
-
----
-
-## 9. Documentação adicional
-
-- Detalhes só do app: `nitrusleaf-mobile/README.md`
-- Schema SQL de referência: `nitrusleaf-mobile/src/db/schema.sql`
 
 ---
 

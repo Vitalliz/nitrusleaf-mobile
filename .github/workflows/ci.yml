@@ -1,79 +1,94 @@
-# Pipeline CI/CD — NitrusLeaf Mobile
-# build → test → deploy (main)
-
-name: CI
+name: CI/CD
 
 on:
   push:
+    branches: [main]
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: "22"
 
 defaults:
   run:
     working-directory: nitrusleaf-mobile
 
 jobs:
-  build:
-    name: Build
+  quality:
+    name: quality
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: nitrusleaf-mobile/package-lock.json
 
-      - name: Instalar dependências
-        run: npm ci
+      - run: npm ci
+      - run: npm run ci
 
-      - name: Verificar dependências Expo
+      - name: expo-doctor
         continue-on-error: true
         run: npx expo-doctor
 
-  test:
-    name: Test
-    needs: build
+  build:
+    name: build
+    needs: quality
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: nitrusleaf-mobile/package-lock.json
 
-      - name: Instalar dependências
-        run: npm ci
+      - run: npm ci
 
-      - name: Verificação de tipos
-        run: npm run typecheck
+      - name: export web
+        env:
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_ANON_KEY: placeholder-anon-key
+          EXPO_PUBLIC_ENV: ci
+        run: npx expo export --platform web --output-dir dist
 
-      - name: Testes unitários
-        run: npm test -- --ci --coverage=false
-
-      - name: Lint (camada core)
-        run: npm run lint:ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: nitrusleaf-mobile/dist
+          retention-days: 14
 
   deploy:
-    name: Deploy
-    needs: test
+    name: deploy
+    needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: dist
 
-      - name: Integração na main
-        run: |
-          echo "CI verde: código pronto para merge/revisão na branch main."
-        
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

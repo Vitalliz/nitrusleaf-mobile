@@ -4,7 +4,7 @@
     "slug": "nitrusleaf-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/icon.png",
+    "icon": "./backend/assets/images/icon.png",
     "scheme": "nitrusleafmobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,21 +14,26 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/adaptive-icon.png"
+        "foregroundImage": "./backend/assets/images/adaptive-icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./src/assets/images/icon.png"
+      "favicon": "./backend/assets/images/icon.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "root": "./frontend"
+        }
+      ],
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/images/icon.png",
+          "image": "./backend/assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -39,7 +44,6 @@
       ],
       "expo-web-browser",
       "expo-font",
-      "expo-sqlite",
       [
         "expo-image-picker",
         {
