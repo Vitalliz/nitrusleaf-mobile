@@ -1,6 +1,5 @@
-import { Colors } from '@/constants/theme';
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 type CardVariant = 'yellow' | 'gray' | 'white' | 'red' | 'red-large' | 'yellow-large' | 'white-large-analysis' | 'white-large-feet' | 'white-large';
 

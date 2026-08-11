@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, G } from 'react-native-svg';
 import { CustomCard } from '@/components/cards/card';
-import { Button } from '@/components/ui/button';
 
 export interface GroupedColumnData {
   talhao: string;

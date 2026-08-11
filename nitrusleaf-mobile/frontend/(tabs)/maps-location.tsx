@@ -247,7 +247,7 @@ export default function LocationMapScreen() {
                 latitude: selectedProperty.latitude || -24.68964,
                 longitude: selectedProperty.longitude || -47.85112
               }}
-              title={selectedProperty.nome}
+              title={selectedProperty.name}
               description="Centro da propriedade"
             />
           </MapView>

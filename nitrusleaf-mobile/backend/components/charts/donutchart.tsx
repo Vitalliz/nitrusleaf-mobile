@@ -44,7 +44,6 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 
   const describeArc = (startAngle: number, endAngle: number) => {
     const start = polarToCartesian(startAngle);
-    const end = polarToCartesian(endAngle);
     const safeEnd = endAngle - startAngle >= 360 ? endAngle - 0.01 : endAngle;
     const safeEndPoint = polarToCartesian(safeEnd);
     const largeArcFlag = safeEnd - startAngle > 180 ? 1 : 0;
