@@ -7,7 +7,8 @@ import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@
 import React from "react";
 
 export default function RootLayout() {
-  const theme = useColorScheme() ?? "light";
+  const scheme = useColorScheme();
+  const theme: keyof typeof Colors = scheme === "dark" || scheme === "light" ? scheme : "light";
   const bg = Colors[theme].background;
   const [fontsLoaded] = useFonts({
     Roboto_400Regular,

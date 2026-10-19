@@ -1,3 +1,4 @@
+import { Palette } from '@/constants/theme';
 import React, { ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 
@@ -8,7 +9,7 @@ export const Background = ({ children }: { children: ReactNode }) => {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#FAF1E5',
+    backgroundColor: Palette.white,
   },
 });
 

@@ -1,14 +1,16 @@
+import React from "react";
+import { StyleSheet, View, useWindowDimensions, StatusBar } from "react-native";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { Background } from "@/components/ui/background";
 import { LoginButton, SignUpButton } from "@/components/ui/button";
-import { useRouter } from "expo-router";
-import React from "react";
-import { StyleSheet, Text, View, Dimensions } from "react-native"; // Adicionado Dimensions
-import NitrusleafLogo from "@/assets/images/nitrusleaf-logo.svg";
-import WaveBg from "@/assets/images/wave-bg.svg";
-const { width: screenWidth } = Dimensions.get("window");
+import NitrusleafLogoPhrase from "@/assets/images/nitrusleaf-logo-phrase.svg";
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const handleLoginNavigation = () => {
     router.push("/login");
@@ -18,28 +20,42 @@ export default function WelcomeScreen() {
     router.push("/register");
   };
 
+  const logoWidth = Math.min(screenWidth * 0.78, 310);
+  const logoHeight = logoWidth * (86 / 255);
+
   return (
     <Background>
-      <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      
+      <View 
+        style={[
+          styles.container, 
+          { 
+            paddingTop: insets.top, 
+            paddingBottom: Math.max(insets.bottom, 16) + 16,
+          }
+        ]}
+      >
+        <View 
+          style={[
+            styles.logoContainer, 
+            { paddingTop: screenHeight * 0.06 } 
+          ]}
+        >
+          <NitrusleafLogoPhrase width={logoWidth} height={logoHeight} />
+        </View>
 
-        <View style={styles.logoSection}>
-          <NitrusleafLogo width={316} height={96} /><Text style={styles.subtitle}>Cuidando da sua plantação!</Text>
-        </View><View style={styles.buttonGroup}>
+        {/* RodapÃ© fixo */}
+        <View style={styles.buttonGroup}>
           <LoginButton 
             onPress={handleLoginNavigation} 
             title="Entrar" 
           />
           <SignUpButton 
             onPress={handleRegisterNavigation}
+            title="Cadastrar-se"
           />
         </View>
-
-      </View><View style={styles.waveContainer}>
-        <WaveBg 
-          width={screenWidth} 
-          height={140} 
-          preserveAspectRatio="none" 
-        />
       </View>
     </Background>
   );
@@ -48,26 +64,15 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
+    paddingHorizontal: 28,
+  },
+  logoContainer: {
+    flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 38,
-    gap: 60,
-  },
-  logoSection: {
     alignItems: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
   },
   buttonGroup: {
     width: "100%",
-    gap: 15,
-  },
-  waveContainer: {
-    position: "absolute",
-    bottom: -1, // Ajustado para -1 para evitar frestas no fundo da tela
-    left: 0,
-    right: 0,
+    gap: 14,
   },
 });

@@ -1,16 +1,15 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import NitrusleafLogo from '@/assets/images/nitrusleaf-logo.svg';
 import WaveBgBig from '@/assets/images/wave-bg-big.svg';
-
-
-const { width: screenWidth } = Dimensions.get('window');
+import { Palette } from '@/constants/theme';
 
 export default function SplashScreen() {
   const router = useRouter();
   const { isInitializing, isSignedIn } = useAuth();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   useEffect(() => {
     if (isInitializing) return;
@@ -22,13 +21,24 @@ export default function SplashScreen() {
     return () => clearTimeout(timer);
   }, [router, isInitializing, isSignedIn]);
 
+  const BLEED_OFFSET = 20;
+
+  const logoWidth = screenWidth * 0.72;
+  const logoHeight = logoWidth * (100 / 316);
+  const waveHeight = screenHeight * 0.33;
+
   return (
     <View style={styles.container}>
-      <NitrusleafLogo width={316} height={100} />
-      <View style={styles.waveContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+
+      <View style={[styles.contentArea, { paddingBottom: waveHeight * 0.35 }]}>
+        <NitrusleafLogo width={logoWidth} height={logoHeight} />
+      </View>
+
+      <View style={[styles.waveContainer, { bottom: -BLEED_OFFSET }]}>
         <WaveBgBig
           width={screenWidth}
-          height={200}
+          height={waveHeight + BLEED_OFFSET}
           preserveAspectRatio="none"
         />
       </View>
@@ -39,16 +49,17 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F0E8',
+    backgroundColor: Palette.white,
+  },
+  contentArea: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   waveContainer: {
     position: 'absolute',
-    bottom: -1,
     left: 0,
     right: 0,
     width: '100%',
   },
 });
-
