@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ScrollView,
   StatusBar,
@@ -10,8 +10,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { useIsFocused } from "@react-navigation/native";
+import { useRouter, useFocusEffect } from "expo-router";
 
 import { CustomCard } from "@/components/cards/card";
 import {
@@ -40,6 +39,7 @@ import {
   computePropertyDeficiencyStats,
   isPeAnalyzed,
 } from "@/utils/peStats";
+
 function getLastMonths(n: number): string[] {
   const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const now = new Date();
@@ -48,6 +48,7 @@ function getLastMonths(n: number): string[] {
     return monthNames[d.getMonth()];
   });
 }
+
 function getCurrentMonth(): string {
   const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   return monthNames[new Date().getMonth()];
@@ -62,7 +63,6 @@ function getMonthLabel(dateStr: string): string {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const isFocused = useIsFocused();
   const {
     selectedProperty,
     showPropertyPicker,
@@ -76,50 +76,75 @@ export default function HomeScreen() {
   const [allTrees, setAllTrees] = useState<Pe[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadUser() {
-      if (!user?.id) return;
-      try {
-        const details = await getUsuarioDetails(user.id);
-        setDbUser(details);
-      } catch (err) {
-        console.error("Erro ao carregar usuário na home:", err);
-      }
-    }
-    if (isFocused) void loadUser();
-  }, [user?.id, isFocused]);
+  // Carrega dados do usuário ao focar na tela
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-  useEffect(() => {
-    async function loadPropertyData() {
-      if (!selectedProperty?.id) {
-        setTalhoes([]);
-        setAllTrees([]);
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const dbTalhoes = await getTalhoesByProperty(selectedProperty.id);
-        setTalhoes(dbTalhoes);
-
-        if (dbTalhoes.length > 0) {
-          const treesList: Pe[] = [];
-          for (const t of dbTalhoes) {
-            const pts = await getPesByTalhao(t.id);
-            treesList.push(...pts);
-          }
-          setAllTrees(treesList);
-        } else {
-          setAllTrees([]);
+      async function loadUser() {
+        if (!user?.id) return;
+        try {
+          const details = await getUsuarioDetails(user.id);
+          if (isActive) setDbUser(details);
+        } catch (err) {
+          console.error("Erro ao carregar usuário na home:", err);
         }
-      } catch (err) {
-        console.error("Erro ao carregar painel home:", err);
-      } finally {
-        setLoading(false);
       }
-    }
-    if (isFocused) void loadPropertyData();
-  }, [selectedProperty?.id, isFocused]);
+
+      loadUser();
+
+      return () => {
+        isActive = false;
+      };
+    }, [user?.id])
+  );
+
+  // Carrega dados da propriedade ao focar na tela ou trocar de propriedade
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function loadPropertyData() {
+        if (!selectedProperty?.id) {
+          if (isActive) {
+            setTalhoes([]);
+            setAllTrees([]);
+            setLoading(false);
+          }
+          return;
+        }
+
+        try {
+          if (isActive) setLoading(true);
+          const dbTalhoes = await getTalhoesByProperty(selectedProperty.id);
+          if (!isActive) return;
+
+          setTalhoes(dbTalhoes);
+
+          if (dbTalhoes.length > 0) {
+            const treesList: Pe[] = [];
+            for (const t of dbTalhoes) {
+              const pts = await getPesByTalhao(t.id);
+              treesList.push(...pts);
+            }
+            if (isActive) setAllTrees(treesList);
+          } else {
+            if (isActive) setAllTrees([]);
+          }
+        } catch (err) {
+          console.error("Erro ao carregar painel home:", err);
+        } finally {
+          if (isActive) setLoading(false);
+        }
+      }
+
+      loadPropertyData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [selectedProperty?.id])
+  );
 
   const hasTalhoes = talhoes.length > 0;
   const totalTrees = allTrees.length;
@@ -167,10 +192,10 @@ export default function HomeScreen() {
   }, [deficiencyStats]);
 
   const groupedColumnData: GroupedColumnData[] = useMemo(() => {
-    return talhoes.map(t => {
-      const tTrees = allTrees.filter(tree => tree.talhaoId === t.id);
-      const cobre = tTrees.filter(tree => tree.deficienciaCobre).length;
-      const manganes = tTrees.filter(tree => tree.deficienciaManganes).length;
+    return talhoes.map((t) => {
+      const tTrees = allTrees.filter((tree) => tree.talhaoId === t.id);
+      const cobre = tTrees.filter((tree) => tree.deficienciaCobre).length;
+      const manganes = tTrees.filter((tree) => tree.deficienciaManganes).length;
       return {
         talhao: t.name,
         cobre,
@@ -223,7 +248,7 @@ export default function HomeScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
@@ -252,7 +277,7 @@ export default function HomeScreen() {
           <ScrollView
             contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}
-            style={styles.scrollView} 
+            style={styles.scrollView}
           >
             {!hasTalhoes && (
               <View style={styles.emptyBanner}>
@@ -269,7 +294,9 @@ export default function HomeScreen() {
                   <Text style={styles.emptyBannerButtonText}>Cadastrar talhão</Text>
                 </TouchableOpacity>
               </View>
-            )}<View style={styles.sectionHeader}>
+            )}
+
+            <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Análises Gerais</Text>
               <View style={styles.dateRow}>
                 <Ionicons name="calendar-outline" size={14} color="#888" />
@@ -277,15 +304,21 @@ export default function HomeScreen() {
                   {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </Text>
               </View>
-            </View><NutritionalStatusCard
+            </View>
+
+            <NutritionalStatusCard
               manganesPercentage={nutritionalData.manganes}
               cobrePercentage={nutritionalData.cobre}
               onPress={handleNutritionalPress}
-            /><CoverageCard
+            />
+
+            <CoverageCard
               analyzed={coverageData.analyzed}
               total={coverageData.total}
               notAnalyzed={coverageData.notAnalyzed}
-            /><CustomCard variant="white-large">
+            />
+
+            <CustomCard variant="white-large">
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>
                   Ocorrências totais de deficiências em %
@@ -299,10 +332,14 @@ export default function HomeScreen() {
                   onDetailPress={handleVerDetalhes}
                 />
               </View>
-            </CustomCard><GroupedColumnChart
+            </CustomCard>
+
+            <GroupedColumnChart
               data={groupedColumnData}
               height={180}
-            /><EvolutionBarChart
+            />
+
+            <EvolutionBarChart
               data={evolutionData[selectedPeriod]}
               onPeriodChange={handlePeriodChange}
               onDetailPress={handleDetailPress}
@@ -320,7 +357,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollView: {
-    flex: 1,         
+    flex: 1,
   },
   container: {
     padding: 16,

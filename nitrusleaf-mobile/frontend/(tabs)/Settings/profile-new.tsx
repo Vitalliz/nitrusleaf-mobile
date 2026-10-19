@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     View,
     Text,
@@ -13,12 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { openAddProperty } from '@/utils/navigation';
 import { Background } from '@/components/ui/background';
 import BottomNavbar from '@/components/ui/tab-bar';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsFocused } from '@react-navigation/native';
 import { getUsuarioDetails, updateUsuarioAvatar } from '@/repositories/profileRepository';
 import { useProperty } from '@/contexts/PropertyContext';
 import { getRelatorioCountByUsuario } from '@/repositories/relatorioRepository';
@@ -51,7 +50,6 @@ const MENU_ITEMS: MenuItem[] = [
 export default function ProfileScreen() {
     const router = useRouter();
     const { user, logout } = useAuth();
-    const isFocused = useIsFocused();
 
     const { selectedProperty } = useProperty();
     const [dbUser, setDbUser] = useState<any>(null);
@@ -60,25 +58,34 @@ export default function ProfileScreen() {
     const [avatarUri, setAvatarUri] = useState<string | null>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-    useEffect(() => {
-        async function loadData() {
-            if (!user?.id) return;
-            try {
-                const details = await getUsuarioDetails(user.id);
-                setDbUser(details);
-                if (details?.avatarUrl) setAvatarUri(details.avatarUrl);
-                const count = await getRelatorioCountByUsuario(user.id);
-                setTotalAnalyses(count);
-            } catch (err) {
-                console.error('Erro ao carregar dados no menu do perfil:', err);
-            } finally {
-                setLoading(false);
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            async function loadData() {
+                if (!user?.id) return;
+                try {
+                    const details = await getUsuarioDetails(user.id);
+                    if (isActive) {
+                        setDbUser(details);
+                        if (details?.avatarUrl) setAvatarUri(details.avatarUrl);
+                    }
+                    const count = await getRelatorioCountByUsuario(user.id);
+                    if (isActive) setTotalAnalyses(count);
+                } catch (err) {
+                    console.error('Erro ao carregar dados no menu do perfil:', err);
+                } finally {
+                    if (isActive) setLoading(false);
+                }
             }
-        }
-        if (isFocused) {
-            void loadData();
-        }
-    }, [user, isFocused]);
+
+            loadData();
+
+            return () => {
+                isActive = false;
+            };
+        }, [user?.id])
+    );
 
     const applyPickedAvatar = async (useCamera: boolean) => {
         if (!user?.id) return;
@@ -138,13 +145,14 @@ export default function ProfileScreen() {
 
     return (
         <Background>
-            <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
+            <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
                 <StatusBar barStyle="dark-content" backgroundColor="#FFA62B" />
 
                 <ScrollView
                     contentContainerStyle={styles.container}
                     showsVerticalScrollIndicator={false}
-                ><View style={styles.header}>
+                >
+                    <View style={styles.header}>
                         <View style={styles.headerRow}>
                             <TouchableOpacity
                                 style={styles.backButton}
@@ -157,7 +165,10 @@ export default function ProfileScreen() {
 
                             <View style={{ width: 42 }} />
                         </View>
-                    </View><View style={styles.profileCard}><TouchableOpacity
+                    </View>
+
+                    <View style={styles.profileCard}>
+                        <TouchableOpacity
                             style={styles.avatarWrapper}
                             onPress={handleChangePhoto}
                             disabled={uploadingAvatar}
@@ -180,24 +191,35 @@ export default function ProfileScreen() {
                                     <Ionicons name="camera" size={22} color="#FFF" />
                                 )}
                             </View>
-                        </TouchableOpacity><Text style={styles.userName}>
+                        </TouchableOpacity>
+
+                        <Text style={styles.userName}>
                             {loading ? 'Carregando...' : dbUser?.fullName || user?.name || 'Usuário'}
-                        </Text><Text style={styles.userEmail}>
+                        </Text>
+                        <Text style={styles.userEmail}>
                             {loading ? '' : dbUser?.email || user?.email || ''}
-                        </Text><View style={styles.propertyBadge}>
+                        </Text>
+
+                        <View style={styles.propertyBadge}>
                             <Ionicons name="business-outline" size={14} color="#6BC24A" />
                             <Text style={styles.propertyText}>
                                 {loading ? '...' : selectedProperty?.name || 'Sem propriedade'}
                             </Text>
-                        </View><View style={styles.analysesCard}>
+                        </View>
+
+                        <View style={styles.analysesCard}>
                             <Text style={styles.analysesLabel}>Total de Análises Feitas</Text>
                             <View style={styles.analysesBadge}>
                                 <Text style={styles.analysesValue}>{totalAnalyses}</Text>
                             </View>
                         </View>
-                    </View><View style={styles.sectionHeader}>
+                    </View>
+
+                    <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Configurações</Text>
-                    </View><View style={styles.menuCard}>
+                    </View>
+
+                    <View style={styles.menuCard}>
                         {MENU_ITEMS.map((item, index) => (
                             <TouchableOpacity
                                 key={item.label}
@@ -222,14 +244,18 @@ export default function ProfileScreen() {
                                 <Ionicons name="chevron-forward" size={18} color="#BDBDBD" />
                             </TouchableOpacity>
                         ))}
-                    </View><TouchableOpacity
+                    </View>
+
+                    <TouchableOpacity
                         style={styles.editButton}
                         activeOpacity={0.8}
                         onPress={() => router.push('/(tabs)/Settings/profile-edit')}
                     >
                         <Ionicons name="pencil-outline" size={18} color="#FFF" />
                         <Text style={styles.editButtonText}>Editar Perfil</Text>
-                    </TouchableOpacity><TouchableOpacity
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                         style={styles.logoutButton}
                         activeOpacity={0.8}
                         onPress={handleLogout}

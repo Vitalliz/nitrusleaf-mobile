@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
 
 import { CustomCard } from "@/components/cards/card";
 import { Background } from "@/components/ui/background";
@@ -34,7 +33,6 @@ export default function TalhaoDetailScreen() {
   const router = useRouter();
   const { talhaoId } = useLocalSearchParams<{ talhaoId?: string }>();
   const { user } = useAuth();
-  const isFocused = useIsFocused();
   const { selectedProperty } = useProperty();
 
   const [searchText, setSearchText] = useState("");
@@ -50,45 +48,58 @@ export default function TalhaoDetailScreen() {
 
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      if (!user?.id || !talhaoId) return;
-      try {
-        setLoading(true);
-        const details = await getUsuarioDetails(user.id);
-        setDbUser(details);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-        const tInfo = await getTalhaoById(talhaoId);
-        setTalhao(tInfo);
+      async function loadData() {
+        if (!user?.id || !talhaoId) return;
+        try {
+          if (isActive) setLoading(true);
+          const details = await getUsuarioDetails(user.id);
+          if (isActive) setDbUser(details);
 
-        const dbTrees = await getPesByTalhao(talhaoId);
-        const mapped = dbTrees.map(tree => {
-          const defs = [];
-          if (tree.deficienciaCobre) defs.push("Cobre");
-          if (tree.deficienciaManganes) defs.push("Manganês");
-          if (tree.outros) defs.push("Outros");
+          const tInfo = await getTalhaoById(talhaoId);
+          if (isActive) setTalhao(tInfo);
 
-          const dateStr = tree.createdAt
-            ? new Date(tree.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-            : 'Sem data';
+          const dbTrees = await getPesByTalhao(talhaoId);
+          const mapped = dbTrees.map((tree) => {
+            const defs = [];
+            if (tree.deficienciaCobre) defs.push("Cobre");
+            if (tree.deficienciaManganes) defs.push("Manganês");
+            if (tree.outros) defs.push("Outros");
 
-          return {
-            id: tree.id,
-            name: tree.nome,
-            deficiency: defs.length > 0 ? defs.join(", ") : null,
-            status: tree.situacao || "Sem-informações",
-            date: dateStr,
-          };
-        });
-        setArvores(mapped);
-      } catch (err) {
-        console.error("Erro ao carregar dados do talhão:", err);
-      } finally {
-        setLoading(false);
+            const dateStr = tree.createdAt
+              ? new Date(tree.createdAt).toLocaleDateString('pt-BR', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'Sem data';
+
+            return {
+              id: tree.id,
+              name: tree.nome,
+              deficiency: defs.length > 0 ? defs.join(", ") : null,
+              status: tree.situacao || "Sem-informações",
+              date: dateStr,
+            };
+          });
+          if (isActive) setArvores(mapped);
+        } catch (err) {
+          console.error("Erro ao carregar dados do talhão:", err);
+        } finally {
+          if (isActive) setLoading(false);
+        }
       }
-    }
-    if (isFocused) void loadData();
-  }, [user, talhaoId, isFocused]);
+
+      loadData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [user?.id, talhaoId])
+  );
 
   const filteredArvores = arvores.filter((arvore) => {
     const matchesSearch = arvore.name.toLowerCase().includes(searchText.toLowerCase());
@@ -216,7 +227,8 @@ export default function TalhaoDetailScreen() {
             <CustomCard
               variant="white"
               bottomContent={
-                <View style={styles.cardContent}><View style={styles.titleRow}>
+                <View style={styles.cardContent}>
+                  <View style={styles.titleRow}>
                     <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
                       <Ionicons name="arrow-back" size={24} color="#ffffff" />
                     </TouchableOpacity>
@@ -233,7 +245,9 @@ export default function TalhaoDetailScreen() {
                       </TouchableOpacity>
                     </View>
                     <View style={{ width: 40 }} />
-                  </View><View style={styles.searchContainer}>
+                  </View>
+
+                  <View style={styles.searchContainer}>
                     <Input
                       placeholder="Buscar árvore"
                       value={searchText}
@@ -248,7 +262,9 @@ export default function TalhaoDetailScreen() {
                       icon="add-circle-outline"
                       onPress={handleAddArvore}
                     />
-                  </View><View style={styles.filtersContainer}>
+                  </View>
+
+                  <View style={styles.filtersContainer}>
                     <Text style={styles.filtersTitle}>Filtros:</Text>
                     <View style={styles.filtersRow}>
                       {filters.map((filter) => {
@@ -267,7 +283,9 @@ export default function TalhaoDetailScreen() {
                         );
                       })}
                     </View>
-                  </View><View style={styles.listHeader}>
+                  </View>
+
+                  <View style={styles.listHeader}>
                     <Text style={styles.listCount}>
                       {sortedArvores.length} Árvores cadastradas
                     </Text>
@@ -279,14 +297,15 @@ export default function TalhaoDetailScreen() {
                         color="#666"
                       />
                     </TouchableOpacity>
-                  </View>{sortedArvores.map((arvore) => (
+                  </View>
+
+                  {sortedArvores.map((arvore) => (
                     <ArvoreCard
                       key={arvore.id}
                       arvore={arvore}
                       onPress={() => handleArvorePress(arvore.id)}
                     />
                   ))}
-
                 </View>
               }
             />

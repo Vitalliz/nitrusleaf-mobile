@@ -14,8 +14,9 @@ import { useRouter } from 'expo-router';
 import { ROUTES, exitAnalysisFlow } from '@/utils/navigation';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused } from 'expo-router/react-navigation';
 import Constants from 'expo-constants';
+
 const getApiUrl = () => {
   const hostUri = Constants.expoConfig?.hostUri;
   const hostIp = hostUri ? hostUri.split(':')[0] : null;
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   processingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',

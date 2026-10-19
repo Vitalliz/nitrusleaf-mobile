@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   StatusBar,
@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useIsFocused } from "@react-navigation/native";
 
 import { CustomCard } from "@/components/cards/card";
 import StatCard from "@/components/cards/stat-card";
@@ -34,7 +33,6 @@ import { Input } from "@/components/ui/input";
 export default function HistoryScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const isFocused = useIsFocused();
   const {
     selectedProperty,
     showPropertyPicker,
@@ -48,28 +46,43 @@ export default function HistoryScreen() {
   const [talhoes, setTalhoes] = useState<TalhaoData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadUser() {
-      if (!user?.id) return;
-      try {
-        const details = await getUsuarioDetails(user.id);
-        setDbUser(details);
-      } catch (err) {
-        console.error("Erro ao carregar usuário no histórico:", err);
-      }
-    }
-    if (isFocused) void loadUser();
-  }, [user?.id, isFocused]);
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-  useEffect(() => {
-    async function loadData() {
-      if (!selectedProperty?.id) {
-        setTalhoes([]);
-        setLoading(false);
-        return;
+      async function loadUser() {
+        if (!user?.id) return;
+        try {
+          const details = await getUsuarioDetails(user.id);
+          if (isActive) setDbUser(details);
+        } catch (err) {
+          console.error("Erro ao carregar usuário no histórico:", err);
+        }
       }
-      try {
-        setLoading(true);
+
+      loadUser();
+
+      return () => {
+        isActive = false;
+      };
+    }, [user?.id])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function loadData() {
+        if (!selectedProperty?.id) {
+          if (isActive) {
+            setTalhoes([]);
+            setLoading(false);
+          }
+          return;
+        }
+
+        try {
+          if (isActive) setLoading(true);
           const dbTalhoes = await getTalhoesByProperty(selectedProperty.id);
           const mapped = await Promise.all(
             dbTalhoes.map(async (t) => {
@@ -92,17 +105,22 @@ export default function HistoryScreen() {
               };
             })
           );
-          setTalhoes(mapped);
-      } catch (err) {
-        console.error("Erro ao carregar dados do histórico:", err);
-      } finally {
-        setLoading(false);
+
+          if (isActive) setTalhoes(mapped);
+        } catch (err) {
+          console.error("Erro ao carregar dados do histórico:", err);
+        } finally {
+          if (isActive) setLoading(false);
+        }
       }
-    }
-    if (isFocused) {
-      void loadData();
-    }
-  }, [selectedProperty?.id, isFocused]);
+
+      loadData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [selectedProperty?.id])
+  );
 
   const filteredTalhoes = useMemo(() => {
     let filtered = talhoes.filter((talhao) =>
@@ -116,9 +134,18 @@ export default function HistoryScreen() {
     return filtered;
   }, [talhoes, searchText, sortOrder]);
 
-  const totalAnalyzed = useMemo(() => talhoes.reduce((acc, t) => acc + t.analyzed, 0), [talhoes]);
-  const totalTrees = useMemo(() => talhoes.reduce((acc, t) => acc + t.total, 0), [talhoes]);
-  const totalDeficient = useMemo(() => talhoes.reduce((acc, t) => acc + t.deficientTrees, 0), [talhoes]);
+  const totalAnalyzed = useMemo(
+    () => talhoes.reduce((acc, t) => acc + t.analyzed, 0),
+    [talhoes]
+  );
+  const totalTrees = useMemo(
+    () => talhoes.reduce((acc, t) => acc + t.total, 0),
+    [talhoes]
+  );
+  const totalDeficient = useMemo(
+    () => talhoes.reduce((acc, t) => acc + t.deficientTrees, 0),
+    [talhoes]
+  );
 
   const handleTalhaoPress = useCallback(
     (talhaoId: string) => {
@@ -156,6 +183,7 @@ export default function HistoryScreen() {
   );
 
   const keyExtractor = useCallback((item: TalhaoData) => item.id, []);
+
   const renderEmptyFullScreen = () => (
     <View style={styles.emptyFullScreen}>
       <Image
@@ -183,7 +211,7 @@ export default function HistoryScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}  edges={['left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
         <Header
@@ -221,13 +249,18 @@ export default function HistoryScreen() {
                 <View style={styles.dateRow}>
                   <Ionicons name="calendar-outline" size={14} color="#888" />
                   <Text style={styles.date}>
-                    {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {new Date().toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
                   </Text>
                 </View>
               </View>
             }
             ListFooterComponent={
-              <><View style={styles.dadosGeraisCard}>
+              <>
+                <View style={styles.dadosGeraisCard}>
                   <Text style={styles.cardTitle}>Dados Gerais</Text>
                   <View style={styles.statsRow}>
                     <StatCard
@@ -245,7 +278,9 @@ export default function HistoryScreen() {
                       value={String(totalDeficient)}
                     />
                   </View>
-                </View><CustomCard variant="white-large-feet">
+                </View>
+
+                <CustomCard variant="white-large-feet">
                   <View style={styles.cardInnerContent}>
                     <Text style={styles.cardTitle}>Talhões</Text>
                     <Input

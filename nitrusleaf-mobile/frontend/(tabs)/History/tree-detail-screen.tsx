@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
 
 import { CustomCard } from "@/components/cards/card";
 import { Background } from "@/components/ui/background";
@@ -34,7 +33,6 @@ export default function HistoryTreeScreen() {
   const { treeId } = useLocalSearchParams<{ treeId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const isFocused = useIsFocused();
   const { selectedProperty } = useProperty();
 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -71,9 +69,11 @@ export default function HistoryTreeScreen() {
     }
   }, [user?.id, treeId, reloadTreeData]);
 
-  React.useEffect(() => {
-    if (isFocused) void loadData();
-  }, [isFocused, loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      void loadData();
+    }, [loadData])
+  );
 
   const sortedAnalyses = useMemo(() => {
     return [...analyses].sort((a, b) => {

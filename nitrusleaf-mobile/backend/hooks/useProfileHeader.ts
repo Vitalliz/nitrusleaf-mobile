@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useIsFocused } from "@react-navigation/native";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
@@ -10,7 +10,6 @@ import {
 
 export function useProfileHeader() {
   const { user } = useAuth();
-  const isFocused = useIsFocused();
   const {
     selectedProperty,
     loading: propertyLoading,
@@ -21,27 +20,34 @@ export function useProfileHeader() {
   const [dbUser, setDbUser] = useState<UsuarioDetails | null>(null);
   const [userLoading, setUserLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      if (!user?.id) {
-        setUserLoading(false);
-        return;
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function load() {
+        if (!user?.id) {
+          if (isActive) setUserLoading(false);
+          return;
+        }
+        try {
+          if (isActive) setUserLoading(true);
+          const details = await getUsuarioDetails(user.id);
+          if (isActive) setDbUser(details);
+        } catch (err) {
+          console.error("[useProfileHeader]", err);
+        } finally {
+          if (isActive) setUserLoading(false);
+        }
       }
-      try {
-        setUserLoading(true);
-        const details = await getUsuarioDetails(user.id);
-        setDbUser(details);
-      } catch (err) {
-        console.error("[useProfileHeader]", err);
-      } finally {
-        setUserLoading(false);
-      }
-    }
-    if (isFocused) {
+
       void load();
       void refreshProperties();
-    }
-  }, [user?.id, isFocused, refreshProperties]);
+
+      return () => {
+        isActive = false;
+      };
+    }, [user?.id, refreshProperties])
+  );
 
   const loading = userLoading || propertyLoading;
 
