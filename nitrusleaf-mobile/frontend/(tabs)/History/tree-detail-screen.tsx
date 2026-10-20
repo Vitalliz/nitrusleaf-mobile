@@ -11,13 +11,12 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 
-import { CustomCard } from "@/components/cards/card";
 import { Background } from "@/components/ui/background";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
+import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
@@ -28,6 +27,7 @@ import { syncTalhaoStatsFromPes } from "@/services/syncTalhaoStats";
 import { ArvoreEditModal } from "@/components/modals/arvore-edit-modal";
 import AnalysisCard, { AnalysisData } from "@/components/cards/analysis-card";
 import { mapRelatorioToAnalysisData } from "@/utils/relatorioDisplay";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 export default function HistoryTreeScreen() {
   const { treeId } = useLocalSearchParams<{ treeId: string }>();
@@ -42,6 +42,32 @@ export default function HistoryTreeScreen() {
   const [loading, setLoading] = useState(true);
   const [savingTratado, setSavingTratado] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    onCloseAction?: () => void;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
+  const showAlert = useCallback(
+    (title: string, message: string, type: AlertType = "info", onCloseAction?: () => void) => {
+      setAlertConfig({ visible: true, title, message, type, onCloseAction });
+    },
+    []
+  );
+
+  const handleCloseAlert = useCallback(() => {
+    const action = alertConfig.onCloseAction;
+    setAlertConfig((prev) => ({ ...prev, visible: false }));
+    if (action) action();
+  }, [alertConfig.onCloseAction]);
 
   const reloadTreeData = useCallback(async () => {
     if (!user?.id || !treeId) return;
@@ -104,54 +130,14 @@ export default function HistoryTreeScreen() {
     [router, treeId]
   );
 
-  const handleMarkAsTratado = useCallback(async () => {
-    if (!treeId) return;
-    setSavingTratado(true);
-    try {
-      await updatePe(treeId, { situacao: "Tratado" });
-      if (arvore?.talhaoId) {
-        try {
-          await syncTalhaoStatsFromPes(arvore.talhaoId);
-        } catch (syncErr) {
-          console.warn("Sync talhão:", syncErr);
-        }
-      }
-      await reloadTreeData();
-      Alert.alert("Sucesso", "Árvore marcada como tratada.");
-    } catch (err) {
-      console.error("Erro ao marcar como tratado:", err);
-      const msg =
-        err instanceof Error ? err.message : "Não foi possível atualizar o status.";
-      Alert.alert("Erro", msg);
-    } finally {
-      setSavingTratado(false);
-    }
-  }, [treeId, arvore?.talhaoId, reloadTreeData]);
-
-  const handleVerAnalisePress = useCallback(
-    (analysis: AnalysisData) => {
-      Alert.alert(analysis.label, "O que deseja fazer?", [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Definir como tratado",
-          onPress: () => void handleMarkAsTratado(),
-        },
-        {
-          text: "Ver análise novamente",
-          onPress: () => handleViewAnalysis(analysis),
-        },
-      ]);
-    },
-    [handleMarkAsTratado, handleViewAnalysis]
-  );
-
   const handleSaveArvore = useCallback(
     async (newName: string) => {
       if (!treeId) return;
       await updatePe(treeId, { nome: newName });
       setArvore((prev: any) => ({ ...prev, nome: newName }));
+      showAlert("Sucesso", "O nome da árvore foi alterado.", "success");
     },
-    [treeId]
+    [treeId, showAlert]
   );
 
   const handleDeleteArvore = useCallback(async () => {
@@ -165,7 +151,7 @@ export default function HistoryTreeScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
 
         <Header
           userName={
@@ -176,93 +162,95 @@ export default function HistoryTreeScreen() {
           }
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
-          onMenuPress={() => {}}
           onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6BC24A" />
+            <ActivityIndicator size="large" color={Palette.primary} />
           </View>
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            <CustomCard
-              variant="white"
-              bottomContent={
-                <View style={styles.cardContent}>
-                  <View style={styles.titleRow}>
-                    <TouchableOpacity
-                      style={styles.backButton}
-                      onPress={handleBack}
-                    >
-                      <Ionicons name="arrow-back" size={24} color="#ffffff" />
-                    </TouchableOpacity>
-                    <View style={styles.titleCenter}>
-                      <Text style={styles.title} numberOfLines={1}>
-                        {treeName}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => setEditModalVisible(true)}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons
-                          name="create-outline"
-                          size={20}
-                          color="#58B741"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={{ width: 40 }} />
-                  </View>
+            {/* Header da Árvore */}
+            <View style={styles.titleRow}>
+              <TouchableOpacity
+                style={styles.backButtonCircle}
+                onPress={handleBack}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="chevron-back" size={20} color={Palette.white} />
+              </TouchableOpacity>
 
-                  <View style={styles.listHeader}>
-                    <Text style={styles.listCount}>
-                      {sortedAnalyses.length} Análises realizadas
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.sortButton}
-                      onPress={() =>
-                        setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
-                      }
-                    >
-                      <Text style={styles.sortText}>Ordenar</Text>
-                      <Ionicons
-                        name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
-                        size={14}
-                        color="#666"
-                      />
-                    </TouchableOpacity>
-                  </View>
+              <Text style={styles.title} numberOfLines={1}>
+                {treeName}
+              </Text>
 
-                  {savingTratado && (
-                    <ActivityIndicator
-                      size="small"
-                      color="#6BC24A"
-                      style={styles.savingIndicator}
-                    />
-                  )}
+              {/* Ícone de edição original mantido */}
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setEditModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={20}
+                  color={Palette.primary}
+                />
+              </TouchableOpacity>
+            </View>
 
-                  {sortedAnalyses.length === 0 ? (
-                    <Text style={styles.emptyAnalyses}>
-                      Nenhuma análise salva para esta árvore. Use o scan na aba IA e
-                      vincule ao pé no resumo técnico.
-                    </Text>
-                  ) : (
-                    sortedAnalyses.map((analysis) => (
-                      <AnalysisCard
-                        key={analysis.id}
-                        analysis={analysis}
-                        onVerAnalise={() => handleVerAnalisePress(analysis)}
-                      />
-                    ))
-                  )}
-                </View>
-              }
-            />
+            {/* Cabeçalho da Lista de Análises */}
+            <View style={styles.listHeader}>
+              <Text style={styles.listCount}>
+                {sortedAnalyses.length} Análises realizadas
+              </Text>
+              <TouchableOpacity
+                style={styles.sortButton}
+                activeOpacity={0.7}
+                onPress={() =>
+                  setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
+                }
+              >
+                <Ionicons
+                  name="reorder-three-outline"
+                  size={18}
+                  color={Palette.textPrimary}
+                />
+                <Text style={styles.sortText}>Ordenar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {savingTratado && (
+              <ActivityIndicator
+                size="small"
+                color={Palette.primary}
+                style={styles.savingIndicator}
+              />
+            )}
+
+            {/* Lista de Análises */}
+            {sortedAnalyses.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="leaf-outline" size={48} color={Palette.borderDisabled} />
+                <Text style={styles.emptyAnalyses}>
+                  Nenhuma análise salva para esta árvore.
+                </Text>
+                <Text style={styles.emptyAnalysesSub}>
+                  Use a Câmera na aba inferior para fotografar e iniciar um novo relatório.
+                </Text>
+              </View>
+            ) : (
+              sortedAnalyses.map((analysis) => (
+                <AnalysisCard
+                  key={analysis.id}
+                  analysis={analysis}
+                  onVerAnalise={() => handleViewAnalysis(analysis)}
+                />
+              ))
+            )}
           </ScrollView>
         )}
 
@@ -275,71 +263,107 @@ export default function HistoryTreeScreen() {
           onSave={handleSaveArvore}
           onDelete={handleDeleteArvore}
         />
+
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          onClose={handleCloseAlert}
+        />
       </SafeAreaView>
     </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 80, marginHorizontal: 8 },
-  cardContent: { padding: 10 },
+  safeArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 80,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 10,
     marginBottom: 20,
   },
-  titleCenter: {
-    flex: 1,
-    flexDirection: "row",
+  backButtonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Palette.primary,
     alignItems: "center",
-    gap: 8,
+    justifyContent: "center",
   },
   title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A2C3E",
-    flexShrink: 1,
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    flex: 1,
   },
-  editButton: { padding: 4 },
-  backButton: {
-    padding: 8,
-    backgroundColor: "#58B741",
-    borderRadius: 500,
+  editButton: {
+    padding: 4,
   },
   listHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
   },
   listCount: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A2C3E",
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
+    color: Palette.textSecondary,
   },
   sortButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    backgroundColor: Palette.surfaceGray,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 6,
   },
-  sortText: { fontSize: 12, color: "#666" },
-  savingIndicator: { marginBottom: 12 },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
+  sortText: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
+  },
+  savingIndicator: {
+    marginBottom: 16,
+  },
+  emptyContainer: {
     alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 40,
+    paddingHorizontal: 20,
+    backgroundColor: Palette.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    borderStyle: "dashed",
+    marginTop: 10,
   },
   emptyAnalyses: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: "center",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  emptyAnalysesSub: {
+    fontSize: FontSizes.sm,
+    color: Palette.textSecondary,
     textAlign: "center",
     lineHeight: 20,
-    paddingVertical: 16,
   },
 });

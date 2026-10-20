@@ -10,11 +10,11 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
-export type AlertType = "error" | "warning" | "success";
+export type AlertType = "error" | "warning" | "success" | "info";
 
 interface CustomAlertProps {
   visible: boolean;
-  title: string;
+  title?: string;
   message: string;
   type?: AlertType;
   buttonText?: string;
@@ -23,91 +23,77 @@ interface CustomAlertProps {
 
 const config = {
   error: {
-    icon: "close-circle" as const,
+    icon: "close" as const,
     color: Palette.error,
   },
   warning: {
-    icon: "alert-circle" as const,
+    icon: "alert" as const,
     color: Palette.orangePrimary,
   },
   success: {
-    icon: "checkmark-circle" as const,
-    color: Palette.success,
+    icon: "checkmark" as const,
+    color: Palette.primary,
+  },
+  info: {
+    icon: "information" as const,
+    color: Palette.info,
   },
 };
 
 /**
- * Mapeia erros comuns em inglês (Firebase, Supabase, Axios e APIs REST)
- * para mensagens amigáveis em português.
+ * Mapeia erros comuns em inglês para mensagens amigáveis em português.
  */
 function translateErrorMessage(msg: string): string {
   if (!msg) return "Ocorreu um erro inesperado. Tente novamente.";
 
   const lower = msg.toLowerCase();
 
-  // Erros de credenciais e senha
   if (
     lower.includes("invalid-credential") ||
     lower.includes("wrong-password") ||
     lower.includes("invalid login credentials") ||
     lower.includes("invalid username or password")
   ) {
-    return "E-mail ou senha incorretos. Verifique seus dados e tente novamente.";
+    return "E-mail ou senha incorretos. Verifique seus dados.";
   }
 
-  // Usuário não encontrado
   if (lower.includes("user-not-found")) {
-    return "Nenhuma conta encontrada com este endereço de e-mail.";
+    return "Nenhuma conta encontrada com este e-mail.";
   }
 
-  // E-mail inválido
   if (lower.includes("invalid-email") || lower.includes("email is invalid")) {
     return "O formato do e-mail informado não é válido.";
   }
 
-  // E-mail já cadastrado
   if (
     lower.includes("email-already-in-use") ||
     lower.includes("user already registered") ||
     lower.includes("email already exists")
   ) {
-    return "Este endereço de e-mail já está em uso por outra conta.";
+    return "Este e-mail já está em uso por outra conta.";
   }
 
-  // Senha fraca / curta
   if (
     lower.includes("weak-password") ||
     lower.includes("password should be at least")
   ) {
-    return "A senha é muito curta. Crie uma senha com pelo menos 6 a 8 caracteres.";
+    return "A senha deve ter pelo menos 6 caracteres.";
   }
 
-  // Muitas tentativas / bloqueio temporário
   if (
     lower.includes("too-many-requests") ||
     lower.includes("rate limit")
   ) {
-    return "Acesso bloqueado temporariamente por excesso de tentativas. Tente novamente mais tarde.";
+    return "Muitas tentativas. Aguarde um momento e tente novamente.";
   }
 
-  // Conexão e rede
   if (
     lower.includes("network") ||
     lower.includes("connection") ||
     lower.includes("failed to fetch") ||
     lower.includes("timeout")
   ) {
-    return "Não foi possível conectar ao servidor. Verifique sua conexão com a internet.";
-  }
-
-  // E-mail não confirmado
-  if (lower.includes("email not confirmed")) {
-    return "Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.";
-  }
-
-  // Não autorizado / token expirado
-  if (lower.includes("unauthorized") || lower.includes("jwt expired")) {
-    return "Sua sessão expirou. Faça login novamente.";
+    return "Falha de conexão. Verifique sua internet.";
   }
 
   return msg;
@@ -118,7 +104,7 @@ export function CustomAlert({
   title,
   message,
   type = "error",
-  buttonText = "Entendido",
+  buttonText = "Ok",
   onClose,
 }: CustomAlertProps) {
   const current = config[type] || config.error;
@@ -135,21 +121,43 @@ export function CustomAlert({
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.card}>
-              {/* Ícone com fundo suave */}
+              {/* Botão de Fechar discreto */}
+              <TouchableOpacity
+                style={styles.closeIconBtn}
+                onPress={onClose}
+                hitSlop={12}
+                activeOpacity={0.6}
+              >
+                <Ionicons
+                  name="close"
+                  size={18}
+                  color={Palette.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {/* Ícone reduzido e delicado */}
               <View
                 style={[
                   styles.iconCircle,
-                  { backgroundColor: `${current.color}18` },
+                  { backgroundColor: `${current.color}14` },
                 ]}
               >
-                <Ionicons name={current.icon} size={38} color={current.color} />
+                <Ionicons
+                  name={current.icon}
+                  size={20}
+                  color={current.color}
+                />
               </View>
 
-              <Text style={styles.title}>{title}</Text>
+              {/* Título opcional */}
+              {title ? <Text style={styles.title}>{title}</Text> : null}
+
+              {/* Mensagem compacta */}
               <Text style={styles.message}>{translatedMessage}</Text>
 
+              {/* Botão compacto */}
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: Palette.primary }]}
+                style={styles.button}
                 activeOpacity={0.8}
                 onPress={onClose}
               >
@@ -166,55 +174,70 @@ export function CustomAlert({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: 36,
   },
   card: {
+    position: "relative",
     width: "100%",
+    maxWidth: 310,
     backgroundColor: Palette.white,
-    borderRadius: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 24,
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
     alignItems: "center",
-    elevation: 6,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
     shadowColor: Palette.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  closeIconBtn: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    padding: 4,
+    zIndex: 1,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 10,
   },
   title: {
-    fontSize: FontSizes.xl,
+    fontSize: FontSizes.md,
     fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   message: {
-    fontSize: FontSizes.base,
+    fontSize: FontSizes.sm,
     color: Palette.textSecondary,
     textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
+    lineHeight: 18,
+    marginBottom: 16,
+    paddingHorizontal: 6,
   },
   button: {
-    width: "100%",
-    height: 46,
-    borderRadius: 8,
+    height: 38,
+    paddingHorizontal: 24,
+    borderRadius: 19,
+    backgroundColor: Palette.primary,
     justifyContent: "center",
     alignItems: "center",
+    minWidth: 100,
   },
   buttonText: {
-    fontSize: FontSizes.base,
+    fontSize: FontSizes.sm,
     fontWeight: FontWeights.semiBold,
     color: Palette.white,
   },

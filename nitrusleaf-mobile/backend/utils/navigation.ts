@@ -9,7 +9,7 @@ export const ROUTES = {
   maps: "/(tabs)/Maps/maps",
   login: "/login",
   welcome: "/welcome",
-  addProperty: "/(tabs)/add-property",
+  addProperty: "/(tabs)/Settings/add-property",
 } as const satisfies Record<string, Href>;
 
 export function safeBack(router: Router, fallback: Href) {

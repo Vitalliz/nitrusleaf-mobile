@@ -1,219 +1,174 @@
-    import React from "react";
-    import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    } from "react-native";
-    import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
-    interface ArvoreData {
-    id: string;
-    name: string;
-    deficiency: string | null;
-    status: string;
-    date: string;
-    }
+export interface ArvoreData {
+  id: string;
+  name: string;
+  deficiency: string | null;
+  status: string;
+  date: string;
+}
 
-    interface ArvoreCardProps {
-    arvore: ArvoreData;
-    onPress: () => void;
-    }
+interface ArvoreCardProps {
+  arvore: ArvoreData;
+  onPress: () => void;
+}
 
-    const getStatusColor = (status: string) => {
-    switch (status) {
-        case "Tratado":
-        return "#4CAF50";
+const statusConfig: Record<string, { bg: string; text: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  "Tratado": {
+    bg: Palette.primary,
+    text: Palette.white,
+    icon: "checkmark",
+  },
+  "Não-Tratado": {
+    bg: Palette.error,
+    text: Palette.white,
+    icon: "remove-circle-outline",
+  },
+  "Não tratado": {
+    bg: Palette.error,
+    text: Palette.white,
+    icon: "remove-circle-outline",
+  },
+  "Em tratamento": {
+    bg: Palette.orangePrimary,
+    text: Palette.white,
+    icon: "time-outline",
+  },
+  "Sem-informações": {
+    bg: Palette.surfaceGray,
+    text: Palette.textSecondary,
+    icon: "remove-outline",
+  },
+};
 
-        case "Não-Tratado":
-        case "Não tratado":
-        return "#F44336";
+const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(({ arvore, onPress }) => {
+  const currentStatus = statusConfig[arvore.status] ?? statusConfig["Sem-informações"];
 
-        case "Em tratamento":
-        return "#FF9800";
+  return (
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.content}>
+        <Text style={styles.name}>{arvore.name}</Text>
 
-        default:
-        return "#9E9E9E";
-    }
-    };
-
-    const getStatusBg = (status: string) => {
-    switch (status) {
-        case "Tratado":
-        return "#E8F5E9";
-
-        case "Não-Tratado":
-        case "Não tratado":
-        return "#FFEBEE";
-
-        case "Em tratamento":
-        return "#FFF3E0";
-
-        default:
-        return "#F5F5F5";
-    }
-    };
-
-    const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(
-    ({ arvore, onPress }) => {
-        return (
-        <TouchableOpacity
-            style={styles.container}
-            onPress={onPress}
-            activeOpacity={0.7}
-        >
-            <View style={styles.content}>
-            <View style={styles.header}>
-                <Text style={styles.name}>{arvore.name}</Text>
-
-                <View
-                style={[
-                    styles.statusBadge,
-                    {
-                    backgroundColor: getStatusBg(arvore.status),
-                    },
-                ]}
-                >
-                <Text
-                    style={[
-                    styles.statusText,
-                        {
-                            color: getStatusColor(arvore.status),
-                        },
-                    ]}
-                >
-                    {arvore.status}
-                </Text>
-                </View>
+        <View style={styles.badgesRow}>
+          {arvore.deficiency && (
+            <View
+              style={[
+                styles.badge,
+                arvore.deficiency === "Manganês"
+                  ? styles.badgeManganes
+                  : styles.badgeAdverso,
+              ]}
+            >
+              <Text style={styles.badgeTextWhite}>{arvore.deficiency}</Text>
             </View>
+          )}
 
-            <View style={styles.footer}>
-                <View style={styles.dateContainer}>
-                <Text style={styles.dateLabel}>Criado em:</Text>
+          <View style={[styles.badge, { backgroundColor: currentStatus.bg }]}>
+            <Ionicons name={currentStatus.icon} size={12} color={currentStatus.text} />
+            <Text style={[styles.badgeText, { color: currentStatus.text }]}>
+              {arvore.status === "Sem-informações" ? "Não informado" : arvore.status}
+            </Text>
+          </View>
+        </View>
 
-                <Ionicons
-                    name="calendar-outline"
-                    size={14}
-                    color="#777"
-                />
+        <View style={styles.dateContainer}>
+          <Text style={styles.dateLabel}>Criado em: </Text>
+          <Ionicons name="calendar-outline" size={12} color={Palette.textSecondary} />
+          <Text style={styles.date}> {arvore.date}</Text>
+        </View>
+      </View>
 
-                <Text style={styles.date}>
-                    {arvore.date}
-                </Text>
-                </View>
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={Palette.textPrimary}
+        style={styles.chevron}
+      />
+    </TouchableOpacity>
+  );
+});
 
-                {arvore.deficiency && (
-                <View style={styles.deficientBadge}>
-                    <Text style={styles.deficientText}>
-                    ⚠️ {arvore.deficiency}
-                    </Text>
-                </View>
-                )}
-            </View>
-            </View>
+ArvoreCard.displayName = "ArvoreCard";
 
-            <Ionicons
-            name="chevron-forward"
-            size={30}
-            color="#757575"
-            style={styles.chevron}
-            />
-        </TouchableOpacity>
-        );
-    }
-    );
+export default ArvoreCard;
 
-    ArvoreCard.displayName = "ArvoreCard";
-
-    const styles = StyleSheet.create({
-    container: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#D9D9D9",
-        borderRadius: 6,
-        paddingHorizontal: 20,
-        paddingVertical: 18,
-        marginBottom: 12,
-    },
-
-    content: {
-        flex: 1,
-        minWidth: 0,
-    },
-
-    header: {
-        flexDirection: "row",
-        gap: 10,
-        alignItems: "center",
-        marginBottom: 10,
-        minWidth: 0,
-    },
-
-    name: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#1A1A1A",
-        flex: 1,
-        flexShrink: 1,
-    },
-
-    statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 14,
-    },
-
-    statusText: {
-        fontSize: 12,
-        fontWeight: "700",
-    },
-
-    footer: {
-        flexDirection: "column",
-        alignItems: "flex-start",
-        gap: 8,
-        width: "100%",
-    },
-
-    dateContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-    },
-
-    dateLabel: {
-        fontSize: 14,
-        fontWeight: "700",
-        color: "#666",
-    },
-
-    date: {
-        fontSize: 14,
-        color: "#777",
-    },
-
-    deficientBadge: {
-        backgroundColor: "#FFF4E5",
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
-        alignSelf: "flex-start",
-        maxWidth: "100%",
-    },
-
-    deficientText: {
-        fontSize: 11,
-        fontWeight: "600",
-        color: "#FF9800",
-        flexShrink: 1,
-    },
-
-    chevron: {
-        marginLeft: 14,
-    },
-    });
-
-    export default ArvoreCard;
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: Palette.white,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  content: {
+    flex: 1,
+  },
+  name: {
+    fontSize: FontSizes.base + 1,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 8,
+  },
+  badgesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  badgeManganes: {
+    backgroundColor: Palette.deficiencyManganese,
+  },
+  badgeAdverso: {
+    backgroundColor: Palette.textSecondary,
+  },
+  badgeTextWhite: {
+    color: Palette.white,
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semiBold,
+  },
+  badgeText: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semiBold,
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dateLabel: {
+    fontSize: FontSizes.xs - 1,
+    color: Palette.textSecondary,
+  },
+  date: {
+    fontSize: FontSizes.xs - 1,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
+  chevron: {
+    marginLeft: 12,
+  },
+});

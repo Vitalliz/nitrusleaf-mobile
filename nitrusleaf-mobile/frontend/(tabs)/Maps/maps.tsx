@@ -31,7 +31,7 @@ const MAP_OPTIONS: MapOption[] = [
     description: 'Visualize a saúde da vegetação',
     color: '#4CAF50',
     bg: '#E8F5E9',
-    route: '/(tabs)/maps-heat',
+    route: '/(tabs)/Maps/maps-heat',
   },
   {
     icon: 'planet-outline',
@@ -39,7 +39,7 @@ const MAP_OPTIONS: MapOption[] = [
     description: 'Imagem de satélite da propriedade',
     color: '#2196F3',
     bg: '#E3F2FD',
-    route: '/(tabs)/maps-location',
+    route: '/(tabs)/Maps/maps-location',
   },
   {
     icon: 'flame-outline',
@@ -47,7 +47,7 @@ const MAP_OPTIONS: MapOption[] = [
     description: 'Regiões com maior deficiência',
     color: '#FF5722',
     bg: '#FBE9E7',
-    route: '/(tabs)/maps-heat',
+    route: '/(tabs)/Maps/maps-heat',
   },
   {
     icon: 'location-outline',
@@ -55,7 +55,7 @@ const MAP_OPTIONS: MapOption[] = [
     description: 'Mapeamento individual de árvores',
     color: '#FF9800',
     bg: '#FFF3E0',
-    route: '/(tabs)/maps-location',
+    route: '/(tabs)/Maps/maps-location',
   },
 ];
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,24 +6,28 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Alert,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+
 import { ROUTES, openAddProperty, safeBack } from "@/utils/navigation";
 import { Background } from "@/components/ui/background";
+import { Button } from "@/components/ui/button";
+import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
 import { updateProperty } from "@/repositories/propertyRepository";
 import type { Property } from "@/types/property";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 export default function PropertyDataScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { selectedProperty, refreshProperties } = useProperty();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [property, setProperty] = useState<Property | null>(null);
@@ -36,6 +40,32 @@ export default function PropertyDataScreen() {
     bairro: "",
     cidade: "",
   });
+
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title?: string;
+    message: string;
+    type: AlertType;
+    onCloseAction?: () => void;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    type: "error",
+  });
+
+  const showAlert = useCallback(
+    (message: string, title?: string, type: AlertType = "error", onCloseAction?: () => void) => {
+      setAlertConfig({ visible: true, title, message, type, onCloseAction });
+    },
+    []
+  );
+
+  const handleCloseAlert = useCallback(() => {
+    const action = alertConfig.onCloseAction;
+    setAlertConfig((prev) => ({ ...prev, visible: false }));
+    if (action) action();
+  }, [alertConfig.onCloseAction]);
 
   useEffect(() => {
     async function loadData() {
@@ -56,13 +86,13 @@ export default function PropertyDataScreen() {
         }
       } catch (error) {
         console.error("Erro ao carregar dados da propriedade:", error);
-        Alert.alert("Erro", "Não foi possível carregar os dados da propriedade.");
+        showAlert("Não foi possível carregar os dados da propriedade.", "Erro", "error");
       } finally {
         setLoading(false);
       }
     }
     void loadData();
-  }, [user?.id, selectedProperty?.id]);
+  }, [user?.id, selectedProperty?.id, showAlert]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -70,11 +100,11 @@ export default function PropertyDataScreen() {
 
   const handleSave = async () => {
     if (!property?.id) {
-      Alert.alert("Erro", "Nenhuma propriedade cadastrada para atualizar.");
+      showAlert("Nenhuma propriedade selecionada para atualizar.", "Atenção", "warning");
       return;
     }
     if (!formData.name.trim()) {
-      Alert.alert("Erro", "O nome da propriedade é obrigatório.");
+      showAlert("O nome da propriedade é obrigatório.", "Atenção", "warning");
       return;
     }
 
@@ -89,12 +119,12 @@ export default function PropertyDataScreen() {
         cidade: formData.cidade.trim(),
       });
       await refreshProperties();
-      Alert.alert("Sucesso", "Propriedade atualizada com sucesso!", [
-        { text: "OK", onPress: () => router.replace(ROUTES.profile) },
-      ]);
+      showAlert("Propriedade atualizada com sucesso!", "Sucesso", "success", () => {
+        safeBack(router, ROUTES.profile);
+      });
     } catch (error: any) {
       console.error("Erro ao salvar propriedade:", error);
-      Alert.alert("Erro", error.message || "Não foi possível salvar as alterações.");
+      showAlert(error.message || "Não foi possível salvar as alterações.", "Erro", "error");
     } finally {
       setSaving(false);
     }
@@ -102,120 +132,136 @@ export default function PropertyDataScreen() {
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" /><View style={styles.header}>
-          <TouchableOpacity onPress={() => safeBack(router, ROUTES.profile)} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => safeBack(router, ROUTES.profile)}
+            style={styles.backBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Dados da Propriedade</Text>
-          <View style={{ width: 24 }} />
+          <View style={styles.headerSpacer} />
         </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6BC24A" />
+            <ActivityIndicator size="large" color={Palette.primary} />
           </View>
         ) : !property ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="business-outline" size={48} color="#CCC" />
+            <Ionicons name="business-outline" size={54} color={Palette.borderDisabled} />
             <Text style={styles.emptyText}>
               Você ainda não possui propriedade cadastrada.
             </Text>
-            <TouchableOpacity
-              style={styles.addPropertyBtn}
-              onPress={() => openAddProperty(router, ROUTES.profile)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.addPropertyBtnText}>Cadastrar propriedade</Text>
-            </TouchableOpacity>
+            <View style={styles.addPropertyBtnWrapper}>
+              <Button
+                title="Cadastrar propriedade"
+                variant="primary"
+                size="full"
+                onPress={() => openAddProperty(router, ROUTES.profile)}
+              />
+            </View>
           </View>
         ) : (
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Informações da Propriedade</Text>
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.sectionTitle}>Informações da Propriedade</Text>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Nome da Propriedade *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.name}
-                  onChangeText={(text) => handleInputChange("name", text)}
-                  placeholder="Digite o nome da fazenda ou sítio"
-                  placeholderTextColor="#CCC"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>CEP</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.cep}
-                  onChangeText={(text) => handleInputChange("cep", text)}
-                  placeholder="00000-000"
-                  placeholderTextColor="#CCC"
-                  keyboardType="numeric"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Logradouro</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.logradouro}
-                  onChangeText={(text) => handleInputChange("logradouro", text)}
-                  placeholder="Rua, avenida, etc."
-                  placeholderTextColor="#CCC"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Número</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.numero}
-                  onChangeText={(text) => handleInputChange("numero", text)}
-                  placeholder="Ex: 123"
-                  placeholderTextColor="#CCC"
-                  keyboardType="numeric"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Bairro</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.bairro}
-                  onChangeText={(text) => handleInputChange("bairro", text)}
-                  placeholder="Digite o bairro"
-                  placeholderTextColor="#CCC"
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.label}>Cidade</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.cidade}
-                  onChangeText={(text) => handleInputChange("cidade", text)}
-                  placeholder="Digite a cidade"
-                  placeholderTextColor="#CCC"
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                <Text style={styles.saveButtonText}>
-                  {saving ? "Salvando..." : "Salvar Alterações"}
-                </Text>
-              </TouchableOpacity>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Nome da Propriedade *</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.name}
+                onChangeText={(text) => handleInputChange("name", text)}
+                placeholder="Ex: Fazenda Santa Maria"
+                placeholderTextColor={Palette.textSecondary}
+              />
             </View>
 
-            <View style={styles.spacer} />
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>CEP</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.cep}
+                onChangeText={(text) => handleInputChange("cep", text)}
+                placeholder="00000-000"
+                placeholderTextColor={Palette.textSecondary}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Logradouro</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.logradouro}
+                onChangeText={(text) => handleInputChange("logradouro", text)}
+                placeholder="Rua, rodovia, km, etc."
+                placeholderTextColor={Palette.textSecondary}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Número</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.numero}
+                onChangeText={(text) => handleInputChange("numero", text)}
+                placeholder="Ex: 123 ou S/N"
+                placeholderTextColor={Palette.textSecondary}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Bairro</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.bairro}
+                onChangeText={(text) => handleInputChange("bairro", text)}
+                placeholder="Digite o bairro ou zona rural"
+                placeholderTextColor={Palette.textSecondary}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Cidade</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.cidade}
+                onChangeText={(text) => handleInputChange("cidade", text)}
+                placeholder="Digite a cidade"
+                placeholderTextColor={Palette.textSecondary}
+              />
+            </View>
+
+            <View style={styles.saveButtonContainer}>
+              <Button
+                title={saving ? "Salvando..." : "Salvar Alterações"}
+                variant="primary"
+                size="full"
+                onPress={handleSave}
+                disabled={saving}
+              />
+            </View>
           </ScrollView>
         )}
+
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          type={alertConfig.type}
+          onClose={handleCloseAlert}
+        />
       </SafeAreaView>
     </Background>
   );
@@ -224,25 +270,30 @@ export default function PropertyDataScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: Palette.white,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 35,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Palette.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
+    borderBottomColor: Palette.surfaceGray,
   },
   backBtn: {
-    padding: 4,
+    padding: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  headerSpacer: {
+    width: 36,
   },
   loadingContainer: {
     flex: 1,
@@ -253,80 +304,54 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    paddingHorizontal: 24,
     gap: 12,
   },
   emptyText: {
-    fontSize: 15,
-    color: "#666",
+    fontSize: FontSizes.base,
+    color: Palette.textSecondary,
     textAlign: "center",
     lineHeight: 22,
   },
-  addPropertyBtn: {
-    backgroundColor: "#6BC24A",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 50,
+  addPropertyBtnWrapper: {
+    width: "100%",
+    maxWidth: 240,
     marginTop: 8,
-  },
-  addPropertyBtnText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 15,
   },
   content: {
     flex: 1,
-    padding: 20,
   },
-  formContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    marginBottom: 20,
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A2C3E",
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     marginBottom: 16,
   },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
+    marginBottom: 6,
   },
   input: {
-    borderWidth: 1.5,
-    borderColor: "#E8D7BD",
+    borderWidth: 1,
+    borderColor: Palette.borderDisabled,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: "#2B2B2B",
-    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    height: 48,
+    fontSize: FontSizes.base,
+    color: Palette.textPrimary,
+    backgroundColor: Palette.white,
   },
-  saveButton: {
-    backgroundColor: "#6BC24A",
-    paddingVertical: 14,
-    borderRadius: 50,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#9CA3AF",
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  spacer: {
-    height: 40,
+  saveButtonContainer: {
+    marginTop: 16,
   },
 });

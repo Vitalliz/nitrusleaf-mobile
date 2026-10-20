@@ -32,20 +32,7 @@ function formatDisplayDate(dateStr?: string | Date): string {
   const d = dateStr ? new Date(dateStr) : new Date();
   if (isNaN(d.getTime())) return "Sem data";
   const day = String(d.getDate()).padStart(2, "0");
-  const monthNames = [
-    "Jan",
-    "Fev",
-    "Mar",
-    "Abr",
-    "Mai",
-    "Jun",
-    "Jul",
-    "Ago",
-    "Set",
-    "Out",
-    "Nov",
-    "Dez",
-  ];
+  const monthNames = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez",];
   const month = monthNames[d.getMonth()];
   const year = d.getFullYear();
   return `${day} ${month}, ${year}`;

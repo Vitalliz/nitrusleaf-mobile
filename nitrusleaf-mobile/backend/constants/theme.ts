@@ -79,7 +79,7 @@ export const Fonts = Platform.select({
 
 // Escala de tamanhos de fonte padronizada
 export const FontSizes = {
-  xs: 12,    // Legendas mínimas, badges, tags pequenas
+  xs: 13,    // Legendas mínimas, badges, tags pequenas
   sm: 13,    // Checkboxes, textos secundários ("Esqueci a senha", "ou")
   base: 14,  // Textos corridos, links de rodapé ("Fazer cadastro")
   md: 16,    // Labels de inputs, botões principais, subtítulos leves

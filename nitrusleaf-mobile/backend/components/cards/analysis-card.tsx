@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 export interface AnalysisData {
   id: string;
@@ -12,25 +13,41 @@ export interface AnalysisData {
   deficiencyType?: string;
 }
 
-const StatusBadge = ({ status }: { status: string }) => {
-  const config: Record<string, { bg: string; text: string; icon: string }> = {
-    "Em tratamento": { bg: "#FBBF24", text: "#92400E", icon: "time-outline" },
-    Tratado: { bg: "#10B981", text: "#FFFFFF", icon: "checkmark-done-outline" },
-    "Não tratado": { bg: "#F44336", text: "#FFFFFF", icon: "close-circle-outline" },
-    "Não-Tratado": { bg: "#F44336", text: "#FFFFFF", icon: "close-circle-outline" },
-    "Sem-informações": { bg: "#9E9E9E", text: "#FFFFFF", icon: "help-circle-outline" },
-  };
-
-  const { bg, text, icon } = config[status] ?? {
-    bg: "#9E9E9E",
-    text: "#FFFFFF",
+const statusConfig: Record<string, { bg: string; text: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  "Tratado": {
+    bg: Palette.primary,
+    text: Palette.white,
+    icon: "checkmark",
+  },
+  "Não tratado": {
+    bg: Palette.error,
+    text: Palette.white,
+    icon: "close-circle-outline",
+  },
+  "Não-Tratado": {
+    bg: Palette.error,
+    text: Palette.white,
+    icon: "close-circle-outline",
+  },
+  "Em tratamento": {
+    bg: Palette.orangePrimary,
+    text: Palette.white,
+    icon: "time-outline",
+  },
+  "Sem-informações": {
+    bg: Palette.surfaceGray,
+    text: Palette.textSecondary,
     icon: "help-circle-outline",
-  };
+  },
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const current = statusConfig[status] ?? statusConfig["Sem-informações"];
 
   return (
-    <View style={[styles.statusBadge, { backgroundColor: bg }]}>
-      <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={14} color={text} />
-      <Text style={[styles.statusText, { color: text }]}>{status}</Text>
+    <View style={[styles.statusBadge, { backgroundColor: current.bg }]}>
+      <Ionicons name={current.icon} size={13} color={current.text} />
+      <Text style={[styles.statusText, { color: current.text }]}>{status}</Text>
     </View>
   );
 };
@@ -45,12 +62,15 @@ const AnalysisCard = React.memo(
   }) => (
     <View style={styles.container}>
       <Text style={styles.label}>{analysis.label}</Text>
+
       <StatusBadge status={analysis.status} />
+
       <View style={styles.dateContainer}>
         <Text style={styles.dateLabel}>Criado em:</Text>
-        <Ionicons name="calendar-outline" size={14} color="#777" />
+        <Ionicons name="calendar-outline" size={13} color={Palette.textSecondary} />
         <Text style={styles.date}>{analysis.date}</Text>
       </View>
+
       <Button
         title="Ver análise"
         variant="primary"
@@ -67,47 +87,48 @@ export default AnalysisCard;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 6,
-    paddingHorizontal: 20,
+    borderColor: Palette.surfaceGray,
+    borderRadius: 10,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 12,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontSize: FontSizes.base + 1,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     marginBottom: 8,
   },
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    gap: 6,
+    gap: 4,
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
+    paddingVertical: 4,
+    borderRadius: 6,
     marginBottom: 10,
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semiBold,
   },
   dateContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   dateLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#666",
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.medium,
+    color: Palette.textSecondary,
   },
   date: {
-    fontSize: 14,
-    color: "#777",
+    fontSize: FontSizes.xs,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
 });

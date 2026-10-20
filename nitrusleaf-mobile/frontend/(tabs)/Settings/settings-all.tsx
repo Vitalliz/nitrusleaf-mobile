@@ -1,28 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+
 import { openAddProperty } from '@/utils/navigation';
 import { Background } from '@/components/ui/background';
 import BottomNavbar from '@/components/ui/tab-bar';
 import { Header } from '@/components/ui/user-header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfileHeader } from '@/hooks/useProfileHeader';
+import { Palette, FontSizes, FontWeights } from '@/constants/theme';
 
 type MenuItem = {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle: string;
   route?: string;
+  isAction?: boolean;
 };
 
 const MENU_ITEMS: MenuItem[] = [
@@ -39,37 +42,38 @@ const MENU_ITEMS: MenuItem[] = [
     route: '/(tabs)/Settings/property-data',
   },
   {
-    icon: 'settings-outline',
+    icon: 'build-outline',
     label: 'Configurações da Conta',
     subtitle: 'Alertas e preferências',
     route: '/(tabs)/Settings/account-config',
   },
   {
-    icon: 'add-circle-outline',
+    icon: 'cube-outline',
     label: 'Nova Propriedade',
-    subtitle: 'Cadastrar nova propriedade',
-    route: '/(tabs)/add-property',
+    subtitle: 'Cadastrar nova propriedade', 
+    isAction: true,
   },
   {
     icon: 'notifications-outline',
     label: 'Notificações',
     subtitle: 'Alertas e preferências',
+    route: '/(tabs)/Settings/notifications',
   },
   {
     icon: 'help-circle-outline',
     label: 'Ajuda e Suporte',
     subtitle: 'Contate nossa Equipe',
+    route: '/(tabs)/Settings/help-support',
   },
 ];
 
 export default function SettingsAllScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const {
     userName,
     userSubtitle,
     userAvatar,
-    loading: headerLoading,
     showPropertyPicker,
     canSwitchProperty,
   } = useProfileHeader();
@@ -89,18 +93,19 @@ export default function SettingsAllScreen() {
   };
 
   const handleMenuPress = (item: MenuItem) => {
-    if (!item.route) return;
-    if (item.route === '/(tabs)/add-property') {
+    if (item.isAction) {
       openAddProperty(router);
       return;
     }
-    router.push(item.route as any);
+    if (item.route) {
+      router.push(item.route as any);
+    }
   };
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
 
         <Header
           userName={userName}
@@ -115,40 +120,49 @@ export default function SettingsAllScreen() {
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
-        ><View style={styles.sectionHeader}>
-            <Ionicons name="settings-outline" size={18} color="#1A2C3E" />
+        >
+          {/* Barra de Subcabeçalho */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name="settings-outline" size={18} color={Palette.textPrimary} />
             <Text style={styles.sectionTitle}>Configurações</Text>
-          </View><View style={styles.menuCard}>
-            {MENU_ITEMS.map((item, index) => (
+          </View>
+
+          {/* Lista de Opções */}
+          <View style={styles.listContainer}>
+            {MENU_ITEMS.map((item) => (
               <TouchableOpacity
                 key={item.label}
-                style={[
-                  styles.menuItem,
-                  index < MENU_ITEMS.length - 1 && styles.menuItemBorder,
-                ]}
+                style={styles.menuItem}
                 activeOpacity={0.7}
                 onPress={() => handleMenuPress(item)}
               >
-                <View style={styles.menuIcon}>
-                  <Ionicons name={item.icon} size={20} color="#6BC24A" />
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name={item.icon} size={20} color={Palette.textPrimary} />
                 </View>
+
                 <View style={styles.menuContent}>
                   <Text style={styles.menuLabel}>{item.label}</Text>
                   <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#CCC" />
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={Palette.textPrimary}
+                />
               </TouchableOpacity>
-            ))}<TouchableOpacity
-                style={styles.logoutButton}
-                activeOpacity={0.8}
-                onPress={handleLogout}
+            ))}
+
+            {/* Botão Sair mantido de forma discreta na base da rolagem */}
+            <TouchableOpacity
+              style={styles.logoutButton}
+              activeOpacity={0.8}
+              onPress={handleLogout}
             >
-                <Ionicons name="log-out-outline" size={18} color="#E53E3E"/>
-                <Text style={styles.logoutText}>Sair da Conta</Text>
+              <Ionicons name="log-out-outline" size={18} color={Palette.error} />
+              <Text style={styles.logoutText}>Sair da Conta</Text>
             </TouchableOpacity>
           </View>
-          
-          
         </ScrollView>
 
         <BottomNavbar />
@@ -158,49 +172,48 @@ export default function SettingsAllScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: Palette.white,
+  },
   container: {
     paddingBottom: 40,
+    backgroundColor: Palette.white,
   },
 
-  /* Seção */
+  /* Subcabeçalho */
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FDF8F2',
+    backgroundColor: Palette.surfaceGray,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0EDE8',
+    borderBottomColor: '#EAEAEA',
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1A2C3E',
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
 
-  /* Menu */
-  menuCard: {
-    backgroundColor: '#FFFFFF',
-    paddingBottom: 20,
+  /* Lista */
+  listContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingVertical: 12,
+    gap: 14,
   },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  menuIcon: {
-    width: 40,
-    height: 40,
+  menuIconContainer: {
+    width: 42,
+    height: 42,
     borderRadius: 10,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Palette.surfaceGray,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -208,33 +221,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1A2C3E',
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 12,
-    color: '#888',
-    marginTop: 1,
+    color: Palette.textSecondary,
   },
 
   /* Logout */
   logoutButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: '#fff4f4',
-      borderRadius: 25,
-      paddingVertical: 14,
-      borderWidth: 1,
-      borderColor: '#FED7D7',
-      marginHorizontal: 20,
-      marginTop: 140,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Palette.white,
+    borderRadius: 22,
+    height: 44,
+    borderWidth: 1,
+    borderColor: Palette.error,
+    marginTop: 36,
   },
   logoutText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#E53E3E',
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.error,
   },
 });

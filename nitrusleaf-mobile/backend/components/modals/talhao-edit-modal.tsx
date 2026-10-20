@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 interface TalhaoEditModalProps {
   visible: boolean;
@@ -45,7 +46,7 @@ export function TalhaoEditModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("O nome não pode estar vazio.");
+      setError("O nome do talhão não pode estar vazio.");
       return;
     }
     try {
@@ -54,7 +55,7 @@ export function TalhaoEditModal({
       await onSave(name.trim());
       onClose();
     } catch {
-      setError("Erro ao salvar. Tente novamente.");
+      setError("Falha ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -66,7 +67,7 @@ export function TalhaoEditModal({
       await onDelete();
       onClose();
     } catch {
-      setError("Erro ao excluir. Tente novamente.");
+      setError("Falha ao excluir o talhão.");
       setStep("edit");
     } finally {
       setDeleting(false);
@@ -77,9 +78,10 @@ export function TalhaoEditModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"        // 👈 vem de baixo
+      animationType="slide"
       onRequestClose={onClose}
-    ><TouchableOpacity
+    >
+      <TouchableOpacity
         style={styles.backdrop}
         activeOpacity={1}
         onPress={onClose}
@@ -91,7 +93,9 @@ export function TalhaoEditModal({
         pointerEvents="box-none"
       >
         <View style={styles.sheet}>
-          <View style={styles.handle} />{step === "edit" && (
+          <View style={styles.handle} />
+
+          {step === "edit" && (
             <>
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>Editar Talhão</Text>
@@ -99,21 +103,26 @@ export function TalhaoEditModal({
                   onPress={onClose}
                   style={styles.closeButton}
                   activeOpacity={0.7}
+                  hitSlop={10}
                 >
-                  <Ionicons name="close" size={18} color="#FFFFFF" />
+                  <Ionicons name="close" size={20} color={Palette.textSecondary} />
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.label}>Nome do talhão</Text>
-              <Input
-                placeholder="Nome do talhão"
-                value={name}
-                onChangeText={(v) => { setName(v); setError(""); }}
-                variant={error ? "error" : "default"}
-                size="full"
-                rightIcon="create-outline"
-              />
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nome do talhão</Text>
+                <Input
+                  placeholder="Ex: Talhão Norte 01"
+                  value={name}
+                  onChangeText={(v) => {
+                    setName(v);
+                    setError("");
+                  }}
+                  variant={error ? "error" : "default"}
+                  size="full"
+                />
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              </View>
 
               <Button
                 title={saving ? "Salvando..." : "Salvar alterações"}
@@ -133,26 +142,30 @@ export function TalhaoEditModal({
                 onPress={() => setStep("confirmDelete")}
               />
             </>
-          )}{step === "confirmDelete" && (
+          )}
+
+          {step === "confirmDelete" && (
             <>
               <View style={styles.confirmIconWrapper}>
-                <Ionicons name="warning-outline" size={40} color="#D32F2F" />
+                <View style={styles.dangerCircle}>
+                  <Ionicons name="warning" size={32} color={Palette.error} />
+                </View>
               </View>
 
               <Text style={styles.confirmTitle}>Excluir talhão?</Text>
               <Text style={styles.confirmText}>
                 Tem certeza que deseja excluir{" "}
                 <Text style={styles.confirmBold}>&quot;{talhaoName}&quot;</Text>?{"\n"}
-                Todas as árvores cadastradas nele também serão removidas. Essa ação não pode ser desfeita.
+                Todas as árvores cadastradas nele e seus respectivos relatórios serão removidos. Essa ação é irreversível.
               </Text>
 
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? <Text style={styles.errorTextCentered}>{error}</Text> : null}
 
               <Button
-                title={deleting ? "Excluindo..." : "Sim, excluir"}
+                title={deleting ? "Excluindo..." : "Sim, excluir talhão"}
                 variant="danger"
                 size="full"
-                icon="trash-outline"
+                icon="trash"
                 onPress={handleDelete}
                 disabled={deleting}
               />
@@ -160,10 +173,13 @@ export function TalhaoEditModal({
               <View style={styles.cancelSpacing} />
 
               <Button
-                title="Cancelar"
-                variant="secondary"
+                title="Voltar e cancelar"
+                variant="outline"
                 size="full"
-                onPress={() => { setStep("edit"); setError(""); }}
+                onPress={() => {
+                  setStep("edit");
+                  setError("");
+                }}
               />
             </>
           )}
@@ -175,33 +191,36 @@ export function TalhaoEditModal({
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   sheetWrapper: {
     flex: 1,
-    justifyContent: "flex-end",   // 👈 ancora na base
+    justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
+    backgroundColor: Palette.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 40,
-    shadowColor: "#000",
+    shadowColor: Palette.black,
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 10,
   },
   handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 2,
+    width: 44,
+    height: 5,
+    backgroundColor: Palette.borderDisabled,
+    borderRadius: 3,
     alignSelf: "center",
-    marginBottom: 20,
+    marginBottom: 24,
   },
+  
+  /* Step Edit */
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -209,57 +228,77 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#1A2C3E",
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#58B741",
+    backgroundColor: Palette.surfaceGray,
     alignItems: "center",
     justifyContent: "center",
   },
+  inputGroup: {
+    marginBottom: 20,
+  },
   label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#555",
-    marginBottom: 4,
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
+    marginBottom: 8,
   },
   errorText: {
-    fontSize: 12,
-    color: "#FF5C5C",
+    fontSize: FontSizes.xs,
+    color: Palette.error,
     marginTop: -10,
-    marginBottom: 8,
     marginLeft: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: "#c3c3c3",
-    marginVertical: 12,
+    backgroundColor: Palette.surfaceGray,
+    marginVertical: 8,
   },
-  cancelSpacing: { height: 8 },
+
+  /* Step Confirm Delete */
   confirmIconWrapper: {
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  dangerCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${Palette.error}15`,
+    justifyContent: "center",
+    alignItems: "center",
   },
   confirmTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A2C3E",
+    fontSize: FontSizes.xl,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   confirmText: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: FontSizes.base,
+    color: Palette.textSecondary,
     textAlign: "center",
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   confirmBold: {
-    fontWeight: "700",
-    color: "#1A2C3E",
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  errorTextCentered: {
+    fontSize: FontSizes.sm,
+    color: Palette.error,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  cancelSpacing: {
+    height: 8,
   },
 });

@@ -239,12 +239,12 @@ export default function TalhaoDetailScreen() {
 
           <View style={styles.dateRow}>
             <Text style={styles.dateLabel}>Criado em: </Text>
-            <Ionicons name="calendar-outline" size={12} color={Palette.textSecondary} />
+            <Ionicons name="calendar-outline" size={12} color="#888" />
             <Text style={styles.dateValue}> {item.date}</Text>
           </View>
         </View>
 
-        <Ionicons name="chevron-forward" size={18} color={Palette.textPrimary} />
+        <Ionicons name="chevron-forward" size={18} color="#374151" />
       </TouchableOpacity>
     ),
     [handleArvorePress]
@@ -253,7 +253,7 @@ export default function TalhaoDetailScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         <Header
           userName={
@@ -306,9 +306,9 @@ export default function TalhaoDetailScreen() {
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name="pencil-outline"
-                      size={18}
-                      color={Palette.textSecondary}
+                      name="create-outline"
+                      size={20}
+                      color={Palette.primary}
                     />
                   </TouchableOpacity>
                 </View>
@@ -325,7 +325,7 @@ export default function TalhaoDetailScreen() {
                   <Ionicons
                     name="search-outline"
                     size={20}
-                    color={Palette.textSecondary}
+                    color="#888"
                     style={styles.searchIcon}
                   />
                 </View>
@@ -387,7 +387,7 @@ export default function TalhaoDetailScreen() {
                     <Ionicons
                       name="reorder-three-outline"
                       size={18}
-                      color={Palette.textPrimary}
+                      color="#374151"
                     />
                     <Text style={styles.sortText}>Ordenar</Text>
                   </TouchableOpacity>
@@ -395,7 +395,8 @@ export default function TalhaoDetailScreen() {
               </>
             }
             ListEmptyComponent={() => {
-              const isFiltered = selectedFilter !== "Todos" || searchText.trim().length > 0;
+              const isFiltered =
+                selectedFilter !== "Todos" || searchText.trim().length > 0;
 
               const emptyTitle = !isFiltered
                 ? "Você ainda não cadastrou nenhuma árvore."
@@ -449,7 +450,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 40,
   },
 
@@ -457,8 +458,9 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "space-between",
     marginBottom: 16,
+    paddingTop: 4,
   },
   backButtonCircle: {
     width: 36,
@@ -469,9 +471,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   talhaoTitle: {
-    fontSize: FontSizes.lg,
+    flex: 1,
+    fontSize: 17,
     fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
+    marginHorizontal: 12,
   },
   editButton: {
     padding: 4,
@@ -485,7 +489,7 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Palette.borderDisabled,
+    borderColor: "#D1D5DB",
     justifyContent: "center",
     marginBottom: 12,
   },
@@ -524,15 +528,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   filtersTitle: {
-    fontSize: FontSizes.sm,
-    fontWeight: FontWeights.semiBold,
+    fontSize: 14,
+    fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   filtersDivider: {
     height: 1,
-    backgroundColor: Palette.surfaceGray,
-    marginBottom: 10,
+    backgroundColor: "#EEF0F2",
+    marginBottom: 12,
   },
   filtersRow: {
     flexDirection: "row",
@@ -545,10 +549,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   filterChipActive: {
-    backgroundColor: Palette.borderDisabled,
+    backgroundColor: "#E5E7EB",
   },
   filterChipInactive: {
-    backgroundColor: Palette.surfaceGray,
+    backgroundColor: "#F3F4F6",
   },
   filterChipText: {
     fontSize: FontSizes.sm,
@@ -568,23 +572,23 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   listCount: {
-    fontSize: FontSizes.sm,
+    fontSize: 13,
     fontWeight: FontWeights.medium,
     color: Palette.textSecondary,
   },
   sortButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Palette.surfaceGray,
+    backgroundColor: "#F3F4F6",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
     gap: 6,
   },
   sortText: {
-    fontSize: FontSizes.xs,
+    fontSize: 12,
     fontWeight: FontWeights.semiBold,
-    color: Palette.textPrimary,
+    color: "#374151",
   },
 
   /* Card Individual de Árvore */
@@ -592,7 +596,7 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Palette.surfaceGray,
+    borderColor: "#E5E7EB",
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 10,
@@ -604,16 +608,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   arvoreName: {
-    fontSize: FontSizes.base + 1,
+    fontSize: 15,
     fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   badgesRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   badge: {
     flexDirection: "row",
@@ -636,16 +640,16 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.error,
   },
   badgeSemInfo: {
-    backgroundColor: Palette.surfaceGray,
+    backgroundColor: "#F3F4F6",
   },
   badgeTextWhite: {
     color: Palette.white,
-    fontSize: FontSizes.xs,
+    fontSize: 11,
     fontWeight: FontWeights.semiBold,
   },
   badgeTextGray: {
     color: Palette.textSecondary,
-    fontSize: FontSizes.xs,
+    fontSize: 11,
     fontWeight: FontWeights.medium,
   },
   dateRow: {
@@ -653,11 +657,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateLabel: {
-    fontSize: FontSizes.xs - 1,
+    fontSize: 11,
     color: Palette.textSecondary,
   },
   dateValue: {
-    fontSize: FontSizes.xs - 1,
+    fontSize: 11,
     color: Palette.textSecondary,
     fontWeight: FontWeights.medium,
   },
@@ -666,8 +670,12 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 40,
+    paddingVertical: 30,
+    paddingHorizontal: 25,
     gap: 8,
+    backgroundColor: Palette.white,
+    marginVertical: 20,
+    borderRadius: 16,
   },
   emptyImage: {
     width: 220,
@@ -675,16 +683,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    fontSize: FontSizes.md,
+    fontSize: 16,
     fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
     textAlign: "center",
   },
   emptyText: {
-    fontSize: FontSizes.base,
+    fontSize: 14,
     color: Palette.textSecondary,
     textAlign: "center",
     lineHeight: 20,
-    paddingHorizontal: 20,
+    marginBottom: 12,
   },
 });

@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Palette, FontSizes, FontWeights } from '@/constants/theme';
 
 interface StatCardProps {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
-  backgroundColor: string;
+  backgroundColor?: string;
   label: string;
   value: string;
 }
@@ -13,15 +14,15 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = React.memo(({
   icon,
   iconColor,
-  backgroundColor,
+  backgroundColor = Palette.surfaceGray,
   label,
-  value
+  value,
 }) => {
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.headContainer}>
         <View style={styles.iconContainer}>
-          <Ionicons name={icon} size={34} color={iconColor} />
+          <Ionicons name={icon} size={22} color={iconColor} />
         </View>
 
         <Text style={styles.label}>
@@ -39,43 +40,34 @@ StatCard.displayName = 'StatCard';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minWidth: 0,
-    borderRadius: 8,
-    paddingVertical: 18,
-    paddingHorizontal: 14,
-    marginHorizontal: 4,
+    borderRadius: 10,
+    padding: 12,
     justifyContent: "space-between",
-    minHeight: 120,
+    minHeight: 105,
   },
-
   headContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
+    gap: 8,
     width: "100%",
-    minWidth: 0,
   },
-
   iconContainer: {
     justifyContent: "center",
     alignItems: "center",
   },
-
   label: {
     flex: 1,
-    flexShrink: 1,
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontSize: 11,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
     lineHeight: 14,
   },
-
   value: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111",
+    fontSize: 22,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     textAlign: "center",
-    marginTop: 5,
+    marginTop: 8,
   },
 });
 

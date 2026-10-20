@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Palette, FontSizes, FontWeights } from '@/constants/theme';
 
 export interface TalhaoData {
   id: string;
@@ -22,8 +23,6 @@ interface TalhaoCardProps {
 }
 
 const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) => {
-  const progress = Math.round((talhao.analyzed / talhao.total) * 100);
-  
   return (
     <TouchableOpacity 
       style={styles.container}
@@ -33,28 +32,19 @@ const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) =
       accessibilityHint={`${talhao.analyzed} de ${talhao.total} árvores analisadas`}
     >
       <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.name}>{talhao.name}</Text>
-          <View style={styles.progressBadge}>
-            <Text style={styles.progressText}>{progress}%</Text>
-          </View>
-        </View>
+        <Text style={styles.name}>{talhao.name}</Text>
         
         <Text style={styles.stats}>
-          {talhao.analyzed}/{talhao.total} árvores analisadas
+          <Text style={styles.statsBold}>
+            {talhao.analyzed}/{talhao.total}
+          </Text>{" "}
+          árvores analisadas
         </Text>
         
-        <View style={styles.footer}>
         <View style={styles.dateContainer}>
-          <Text style={styles.dateLabel}>Criado em:</Text>
-
-          <Ionicons
-            name="calendar-outline"
-            size={14}
-            color="#777"
-          />
-
-          <Text style={styles.date}>{talhao.date}</Text>
+          <Text style={styles.dateLabel}>Criado em: </Text>
+          <Ionicons name="calendar-outline" size={12} color={Palette.textSecondary} />
+          <Text style={styles.date}> {talhao.date}</Text>
         </View>
 
         {talhao.deficientTrees > 0 && (
@@ -65,9 +55,13 @@ const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) =
           </View>
         )}
       </View>
-      </View>
       
-      <Ionicons name="chevron-forward" size={30} color="#757575" style={styles.chevron} />
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={Palette.textPrimary}
+        style={styles.chevron}
+      />
     </TouchableOpacity>
   );
 });
@@ -79,88 +73,60 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 6,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    marginBottom:12,
-  },
-  content: { flex: 1, minWidth: 0 },
-  header: {
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-    marginBottom: 6,
-    minWidth: 0,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    flex: 1,
-    flexShrink: 1,
-  },
-
-  progressBadge: {
-    backgroundColor: "#EAF8E5",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-
-  progressText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#6BC24A",
-  },
-
-  stats: {
-    fontSize: 16,
-    color: "#1A1A1A",
+    borderColor: Palette.surfaceGray,
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     marginBottom: 10,
   },
-
-  footer: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 8,
-    width: "100%",
+  content: {
+    flex: 1,
   },
-
+  name: {
+    fontSize: 15,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 4,
+  },
+  stats: {
+    fontSize: 13,
+    color: Palette.textPrimary,
+    marginBottom: 6,
+  },
+  statsBold: {
+    fontWeight: FontWeights.bold,
+  },
   dateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4, 
   },
-
   dateLabel: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#666",
-  },
-
-  date: { fontSize: 14, color: "#777", },
-
-  deficientBadge: {
-    backgroundColor: "#FFF4E5",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-    maxWidth: "100%",
-  },
-
-  deficientText: {
     fontSize: 11,
-    fontWeight: "600",
-    color: "#FF9800",
-    flexShrink: 1,
+    color: Palette.textSecondary,
   },
-
+  date: {
+    fontSize: 11,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
+  deficientBadge: {
+    backgroundColor: `${Palette.orangePrimary}15`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    marginTop: 6,
+  },
+  deficientText: {
+    fontSize: FontSizes.xs - 1,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.orangePrimary,
+  },
   chevron: {
-    marginLeft: 14,
+    marginLeft: 12,
   },
 });
+
 export default TalhaoCard;

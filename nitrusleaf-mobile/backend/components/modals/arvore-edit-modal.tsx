@@ -11,6 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 interface ArvoreEditModalProps {
   visible: boolean;
@@ -45,7 +46,7 @@ export function ArvoreEditModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("O nome não pode estar vazio.");
+      setError("O nome da árvore não pode estar vazio.");
       return;
     }
     try {
@@ -54,7 +55,7 @@ export function ArvoreEditModal({
       await onSave(name.trim());
       onClose();
     } catch {
-      setError("Erro ao salvar. Tente novamente.");
+      setError("Falha ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -66,7 +67,7 @@ export function ArvoreEditModal({
       await onDelete();
       onClose();
     } catch {
-      setError("Erro ao excluir. Tente novamente.");
+      setError("Falha ao excluir a árvore.");
       setStep("edit");
     } finally {
       setDeleting(false);
@@ -92,7 +93,9 @@ export function ArvoreEditModal({
         pointerEvents="box-none"
       >
         <View style={styles.sheet}>
-          <View style={styles.handle} />{step === "edit" && (
+          <View style={styles.handle} />
+
+          {step === "edit" && (
             <>
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>Editar Árvore</Text>
@@ -100,21 +103,26 @@ export function ArvoreEditModal({
                   onPress={onClose}
                   style={styles.closeButton}
                   activeOpacity={0.7}
+                  hitSlop={10}
                 >
-                  <Ionicons name="close" size={18} color="#FFFFFF" />
+                  <Ionicons name="close" size={18} color={Palette.textSecondary} />
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.label}>Nome da árvore</Text>
-              <Input
-                placeholder="Nome da árvore"
-                value={name}
-                onChangeText={(v) => { setName(v); setError(""); }}
-                variant={error ? "error" : "default"}
-                size="full"
-                rightIcon="create-outline"
-              />
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nome da árvore</Text>
+                <Input
+                  placeholder="Ex: Árvore Norte 02"
+                  value={name}
+                  onChangeText={(v) => {
+                    setName(v);
+                    setError("");
+                  }}
+                  variant={error ? "error" : "default"}
+                  size="full"
+                />
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              </View>
 
               <Button
                 title={saving ? "Salvando..." : "Salvar alterações"}
@@ -124,6 +132,7 @@ export function ArvoreEditModal({
                 disabled={saving}
               />
 
+              {/* Divisor com espaçamento reduzido */}
               <View style={styles.divider} />
 
               <Button
@@ -134,26 +143,30 @@ export function ArvoreEditModal({
                 onPress={() => setStep("confirmDelete")}
               />
             </>
-          )}{step === "confirmDelete" && (
+          )}
+
+          {step === "confirmDelete" && (
             <>
               <View style={styles.confirmIconWrapper}>
-                <Ionicons name="warning-outline" size={40} color="#D32F2F" />
+                <View style={styles.dangerCircle}>
+                  <Ionicons name="warning" size={30} color={Palette.error} />
+                </View>
               </View>
 
               <Text style={styles.confirmTitle}>Excluir árvore?</Text>
               <Text style={styles.confirmText}>
                 Tem certeza que deseja excluir{" "}
                 <Text style={styles.confirmBold}>&quot;{arvoreName}&quot;</Text>?{"\n"}
-                Todas as análises desta árvore também serão removidas. Essa ação não pode ser desfeita.
+                Todas as análises e histórico foliar vinculados a ela serão perdidos.
               </Text>
 
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {error ? <Text style={styles.errorTextCentered}>{error}</Text> : null}
 
               <Button
-                title={deleting ? "Excluindo..." : "Sim, excluir"}
+                title={deleting ? "Excluindo..." : "Sim, excluir árvore"}
                 variant="danger"
                 size="full"
-                icon="trash-outline"
+                icon="trash"
                 onPress={handleDelete}
                 disabled={deleting}
               />
@@ -161,10 +174,13 @@ export function ArvoreEditModal({
               <View style={styles.cancelSpacing} />
 
               <Button
-                title="Cancelar"
-                variant="secondary"
+                title="Voltar e cancelar"
+                variant="outline"
                 size="full"
-                onPress={() => { setStep("edit"); setError(""); }}
+                onPress={() => {
+                  setStep("edit");
+                  setError("");
+                }}
               />
             </>
           )}
@@ -176,91 +192,111 @@ export function ArvoreEditModal({
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   sheetWrapper: {
     flex: 1,
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 40,
-    shadowColor: "#000",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 28,
+    shadowColor: Palette.black,
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
     elevation: 10,
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: Palette.borderDisabled,
     borderRadius: 2,
     alignSelf: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 12,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#1A2C3E",
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#58B741",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Palette.surfaceGray,
     alignItems: "center",
     justifyContent: "center",
   },
+  inputGroup: {
+    marginBottom: 10,
+  },
   label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#555",
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
     marginBottom: 4,
   },
   errorText: {
-    fontSize: 12,
-    color: "#FF5C5C",
+    fontSize: FontSizes.xs,
+    color: Palette.error,
     marginTop: -10,
-    marginBottom: 8,
     marginLeft: 4,
   },
+  /* Espaçamento compacto entre os botões */
   divider: {
     height: 1,
-    backgroundColor: "#c3c3c3",
-    marginVertical: 12,
+    backgroundColor: Palette.surfaceGray,
+    marginVertical: 8,
   },
-  cancelSpacing: { height: 8 },
+  cancelSpacing: {
+    height: 8,
+  },
   confirmIconWrapper: {
     alignItems: "center",
-    marginBottom: 12,
-  },
-  confirmTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A2C3E",
-    textAlign: "center",
     marginBottom: 10,
   },
-  confirmText: {
-    fontSize: 14,
-    color: "#666",
+  dangerCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: `${Palette.error}15`,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  confirmTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  confirmText: {
+    fontSize: FontSizes.sm,
+    color: Palette.textSecondary,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 16,
   },
   confirmBold: {
-    fontWeight: "700",
-    color: "#1A2C3E",
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  errorTextCentered: {
+    fontSize: FontSizes.xs,
+    color: Palette.error,
+    textAlign: "center",
+    marginBottom: 12,
   },
 });
