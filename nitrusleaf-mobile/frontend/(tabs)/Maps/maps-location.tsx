@@ -1,25 +1,36 @@
-import Footer from "@/components/footer";
 import React, { useState, useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  StatusBar,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
+
+import { Background } from "@/components/ui/background";
+import TabBar from "@/components/ui/tab-bar";
 import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
-import { Ionicons } from "@expo/vector-icons";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 export default function LocationMapScreen() {
   const router = useRouter();
-  const { user } = useAuth();
-  const fullName = user?.name || "Usuário";
-
   const { selectedProperty, properties, selectProperty } = useProperty();
+
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [selectedTalhao, setSelectedTalhao] = useState<any>(null);
   const [pes, setPes] = useState<any[]>([]);
   const [filteredPes, setFilteredPes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filtros
   const [filterTratado, setFilterTratado] = useState(true);
   const [filterNaoTratado, setFilterNaoTratado] = useState(true);
   const [filterSemInfo, setFilterSemInfo] = useState(true);
@@ -35,13 +46,21 @@ export default function LocationMapScreen() {
 
   useEffect(() => {
     if (selectedTalhao) {
-      loadPes();
+      void loadPes();
     }
   }, [selectedTalhao]);
 
   useEffect(() => {
     applyFilters();
-  }, [pes, filterTratado, filterNaoTratado, filterSemInfo, filterDeficienciaCobre, filterDeficienciaManganes, filterOutros]);
+  }, [
+    pes,
+    filterTratado,
+    filterNaoTratado,
+    filterSemInfo,
+    filterDeficienciaCobre,
+    filterDeficienciaManganes,
+    filterOutros,
+  ]);
 
   const loadTalhoes = async () => {
     if (!selectedProperty) return;
@@ -53,7 +72,7 @@ export default function LocationMapScreen() {
         setSelectedTalhao(propertyTalhoes[0]);
       }
     } catch (error) {
-      console.error('Erro ao carregar talhões:', error);
+      console.error("Erro ao carregar talhões:", error);
     }
   };
 
@@ -65,25 +84,24 @@ export default function LocationMapScreen() {
       const talhaoPes = await getPesByTalhao(selectedTalhao.id.toString());
       setPes(talhaoPes);
     } catch (error) {
-      console.error('Erro ao carregar pés:', error);
+      console.error("Erro ao carregar pés:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const applyFilters = () => {
-    const filtered = pes.filter(pe => {
-      const situacaoMatch = (
-        (filterTratado && pe.situacao === 'Tratado') ||
-        (filterNaoTratado && pe.situacao === 'Não-Tratado') ||
-        (filterSemInfo && pe.situacao === 'Sem-informações')
-      );
-      const deficienciaMatch = (
+    const filtered = pes.filter((pe) => {
+      const situacaoMatch =
+        (filterTratado && pe.situacao === "Tratado") ||
+        (filterNaoTratado && pe.situacao === "Não-Tratado") ||
+        (filterSemInfo && pe.situacao === "Sem-informações");
+
+      const deficienciaMatch =
         (filterDeficienciaCobre && pe.deficienciaCobre) ||
         (filterDeficienciaManganes && pe.deficienciaManganes) ||
         (filterOutros && pe.outros) ||
-        (!pe.deficienciaCobre && !pe.deficienciaManganes && !pe.outros) // Pés sem deficiências
-      );
+        (!pe.deficienciaCobre && !pe.deficienciaManganes && !pe.outros);
 
       return situacaoMatch && deficienciaMatch && pe.latitude && pe.longitude;
     });
@@ -92,360 +110,442 @@ export default function LocationMapScreen() {
   };
 
   const getMarkerColor = (pe: any) => {
-    if (pe.situacao === 'Sem-informações') return '#6B7280';
-    if (pe.situacao === 'Não-Tratado') return '#EF4444';
-    if (pe.situacao === 'Tratado') return '#8B5CF6';
-    if (pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) return '#F59E0B';
-    return '#10B981';
+    if (pe.situacao === "Sem-informações") return "#6B7280";
+    if (pe.situacao === "Não-Tratado") return Palette.error;
+    if (pe.situacao === "Tratado") return "#8B5CF6";
+    if (pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) return Palette.orangePrimary;
+    return Palette.primary;
   };
 
-  const getMarkerIcon = (pe: any) => {
-    if (pe.situacao === 'Sem-informações') return 'help-circle';
-    if (pe.situacao === 'Não-Tratado') return 'warning';
-    if (pe.situacao === 'Tratado') return 'checkmark-circle';
-    return 'leaf';
+  const getMarkerIcon = (pe: any): keyof typeof Ionicons.glyphMap => {
+    if (pe.situacao === "Sem-informações") return "help-circle";
+    if (pe.situacao === "Não-Tratado") return "warning";
+    if (pe.situacao === "Tratado") return "checkmark-circle";
+    return "leaf";
+  };
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/Maps/maps" as any);
+    }
   };
 
   return (
-    <View style={styles.container}><View style={styles.header}>
-        <View style={styles.profileContainer}>
-           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
-          <Text style={styles.greeting}>Olá, {fullName.split(" ")[0]}!</Text>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.menuIcon}>≡</Text>
-        </TouchableOpacity>
-      </View><View style={styles.breadcrumbContainer}>
-        <Text style={styles.breadcrumb}>Mapas</Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.replace("/(tabs)/Maps/maps")}
-        >
-          <Text style={styles.backArrow}>←</Text>
-          <Text style={styles.backText}>Voltar</Text>
-        </TouchableOpacity>
-      </View><Text style={styles.title}>Localização de Pés</Text>
-      <Text style={styles.subtitle}>Visualize todos os pés no mapa</Text>
-      <View style={styles.divider}></View><View style={styles.selectorContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.propertySelector}>
-          {properties.map((property) => (
-            <TouchableOpacity
-              key={property.id}
-              style={[
-                styles.selectorChip,
-                selectedProperty?.id === property.id && styles.selectorChipSelected
-              ]}
-              onPress={() => void selectProperty(property.id)}
-            >
-              <Text style={[
-                styles.selectorChipText,
-                selectedProperty?.id === property.id && styles.selectorChipTextSelected
-              ]}>
-                {property.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+    <Background>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.talhaoSelector}>
-          {talhoes.map((talhao) => (
-            <TouchableOpacity
-              key={talhao.id}
-              style={[
-                styles.selectorChip,
-                selectedTalhao?.id === talhao.id && styles.selectorChipSelected
-              ]}
-              onPress={() => setSelectedTalhao(talhao)}
-            >
-              <Text style={[
-                styles.selectorChipText,
-                selectedTalhao?.id === talhao.id && styles.selectorChipTextSelected
-              ]}>
-                {talhao.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View><ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersContainer}>
-        <TouchableOpacity
-          style={[styles.filterChip, filterTratado && styles.filterChipActive]}
-          onPress={() => setFilterTratado(!filterTratado)}
-        >
-          <Ionicons name="checkmark-circle" size={16} color={filterTratado ? "#FFFFFF" : "#8B5CF6"} />
-          <Text style={[styles.filterChipText, filterTratado && styles.filterChipTextActive]}>Tratado</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, filterNaoTratado && styles.filterChipActive]}
-          onPress={() => setFilterNaoTratado(!filterNaoTratado)}
-        >
-          <Ionicons name="warning" size={16} color={filterNaoTratado ? "#FFFFFF" : "#EF4444"} />
-          <Text style={[styles.filterChipText, filterNaoTratado && styles.filterChipTextActive]}>Não tratado</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, filterSemInfo && styles.filterChipActive]}
-          onPress={() => setFilterSemInfo(!filterSemInfo)}
-        >
-          <Ionicons name="help-circle" size={16} color={filterSemInfo ? "#FFFFFF" : "#6B7280"} />
-          <Text style={[styles.filterChipText, filterSemInfo && styles.filterChipTextActive]}>Sem info</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, filterDeficienciaCobre && styles.filterChipActive]}
-          onPress={() => setFilterDeficienciaCobre(!filterDeficienciaCobre)}
-        >
-          <Ionicons name="water" size={16} color={filterDeficienciaCobre ? "#FFFFFF" : "#F59E0B"} />
-          <Text style={[styles.filterChipText, filterDeficienciaCobre && styles.filterChipTextActive]}>Cobre</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, filterDeficienciaManganes && styles.filterChipActive]}
-          onPress={() => setFilterDeficienciaManganes(!filterDeficienciaManganes)}
-        >
-          <Ionicons name="nuclear" size={16} color={filterDeficienciaManganes ? "#FFFFFF" : "#F59E0B"} />
-          <Text style={[styles.filterChipText, filterDeficienciaManganes && styles.filterChipTextActive]}>Manganês</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.filterChip, filterOutros && styles.filterChipActive]}
-          onPress={() => setFilterOutros(!filterOutros)}
-        >
-          <Ionicons name="help-circle" size={16} color={filterOutros ? "#FFFFFF" : "#F59E0B"} />
-          <Text style={[styles.filterChipText, filterOutros && styles.filterChipTextActive]}>Outros</Text>
-        </TouchableOpacity>
-      </ScrollView><View style={styles.mapContainer}>
-        {selectedProperty && (
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: selectedProperty.latitude || -24.68964,
-              longitude: selectedProperty.longitude || -47.85112,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            mapType="satellite"
-            provider={PROVIDER_GOOGLE}
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={handleBack}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            {filteredPes.map((pe) => (
-              <Marker
-                key={pe.id}
-                coordinate={{
-                  latitude: pe.latitude,
-                  longitude: pe.longitude,
-                }}
-                title={`Pé ${pe.nome}`}
-                description={`Situação: ${pe.situacao}${pe.deficienciaCobre ? ' - Def. Cobre' : ''}${pe.deficienciaManganes ? ' - Def. Manganês' : ''}${pe.outros ? ' - Outros' : ''}`}
-                pinColor={getMarkerColor(pe)}
+            <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Localização de Pés</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Subtítulo informativo */}
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitle}>Visualize todos os pés cadastrados no mapa</Text>
+        </View>
+
+        {/* Seletores: Propriedade e Talhão */}
+        <View style={styles.selectorsWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsScroll}
+          >
+            {properties.map((property) => (
+              <TouchableOpacity
+                key={property.id}
+                style={[
+                  styles.selectorChip,
+                  selectedProperty?.id === property.id && styles.selectorChipSelected,
+                ]}
+                onPress={() => void selectProperty(property.id)}
+                activeOpacity={0.7}
               >
-                <View style={[styles.customMarker, { backgroundColor: getMarkerColor(pe) }]}>
-                  <Ionicons name={getMarkerIcon(pe)} size={16} color="#FFFFFF" />
-                </View>
-              </Marker>
-            ))}<Marker
-              coordinate={{
+                <Text
+                  style={[
+                    styles.selectorChipText,
+                    selectedProperty?.id === property.id && styles.selectorChipTextSelected,
+                  ]}
+                >
+                  {property.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {talhoes.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsScroll}
+            >
+              {talhoes.map((talhao) => (
+                <TouchableOpacity
+                  key={talhao.id}
+                  style={[
+                    styles.selectorChip,
+                    styles.selectorChipTalhao,
+                    selectedTalhao?.id === talhao.id && styles.selectorChipTalhaoSelected,
+                  ]}
+                  onPress={() => setSelectedTalhao(talhao)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.selectorChipText,
+                      selectedTalhao?.id === talhao.id && styles.selectorChipTextSelected,
+                    ]}
+                  >
+                    {talhao.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* Filtros em Chips */}
+        <View style={styles.filtersWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsScroll}
+          >
+            <TouchableOpacity
+              style={[styles.filterChip, filterTratado && styles.filterChipActive]}
+              onPress={() => setFilterTratado(!filterTratado)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="checkmark-circle"
+                size={15}
+                color={filterTratado ? Palette.white : "#8B5CF6"}
+              />
+              <Text
+                style={[styles.filterChipText, filterTratado && styles.filterChipTextActive]}
+              >
+                Tratado
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterChip, filterNaoTratado && styles.filterChipActive]}
+              onPress={() => setFilterNaoTratado(!filterNaoTratado)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="warning"
+                size={15}
+                color={filterNaoTratado ? Palette.white : Palette.error}
+              />
+              <Text
+                style={[styles.filterChipText, filterNaoTratado && styles.filterChipTextActive]}
+              >
+                Não tratado
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterChip, filterSemInfo && styles.filterChipActive]}
+              onPress={() => setFilterSemInfo(!filterSemInfo)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="help-circle"
+                size={15}
+                color={filterSemInfo ? Palette.white : Palette.textSecondary}
+              />
+              <Text
+                style={[styles.filterChipText, filterSemInfo && styles.filterChipTextActive]}
+              >
+                Sem info
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterChip, filterDeficienciaCobre && styles.filterChipActive]}
+              onPress={() => setFilterDeficienciaCobre(!filterDeficienciaCobre)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="water"
+                size={15}
+                color={filterDeficienciaCobre ? Palette.white : Palette.orangePrimary}
+              />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  filterDeficienciaCobre && styles.filterChipTextActive,
+                ]}
+              >
+                Cobre
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                filterDeficienciaManganes && styles.filterChipActive,
+              ]}
+              onPress={() => setFilterDeficienciaManganes(!filterDeficienciaManganes)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="nuclear"
+                size={15}
+                color={filterDeficienciaManganes ? Palette.white : Palette.deficiencyManganese}
+              />
+              <Text
+                style={[
+                  styles.filterChipText,
+                  filterDeficienciaManganes && styles.filterChipTextActive,
+                ]}
+              >
+                Manganês
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filterChip, filterOutros && styles.filterChipActive]}
+              onPress={() => setFilterOutros(!filterOutros)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="help-circle"
+                size={15}
+                color={filterOutros ? Palette.white : Palette.textSecondary}
+              />
+              <Text
+                style={[styles.filterChipText, filterOutros && styles.filterChipTextActive]}
+              >
+                Outros
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* Mapa */}
+        <View style={styles.mapContainer}>
+          {selectedProperty && (
+            <MapView
+              style={styles.map}
+              initialRegion={{
                 latitude: selectedProperty.latitude || -24.68964,
-                longitude: selectedProperty.longitude || -47.85112
+                longitude: selectedProperty.longitude || -47.85112,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
               }}
-              title={selectedProperty.name}
-              description="Centro da propriedade"
-            />
-          </MapView>
-        )}
+              mapType="satellite"
+              provider={PROVIDER_GOOGLE}
+            >
+              {filteredPes.map((pe) => (
+                <Marker
+                  key={pe.id}
+                  coordinate={{
+                    latitude: pe.latitude,
+                    longitude: pe.longitude,
+                  }}
+                  title={`Pé ${pe.nome}`}
+                  description={`Situação: ${pe.situacao}`}
+                >
+                  <View style={[styles.customMarker, { backgroundColor: getMarkerColor(pe) }]}>
+                    <Ionicons name={getMarkerIcon(pe)} size={14} color={Palette.white} />
+                  </View>
+                </Marker>
+              ))}
 
-        {loading && (
-          <View style={styles.loadingOverlay}>
-            <Text style={styles.loadingText}>Carregando pés...</Text>
-          </View>
-        )}
-      </View><View style={styles.infoContainer}>
-        <Text style={styles.infoText}>
-          {filteredPes.length} pés encontrados
-        </Text>
-      </View>
+              <Marker
+                coordinate={{
+                  latitude: selectedProperty.latitude || -24.68964,
+                  longitude: selectedProperty.longitude || -47.85112,
+                }}
+                title={selectedProperty.name}
+                description="Centro da propriedade"
+              />
+            </MapView>
+          )}
 
-      <View style={styles.footer}></View>
-      <Footer />
-    </View>
+          {loading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={Palette.primary} />
+              <Text style={styles.loadingText}>Carregando árvores...</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Barra de Rodapé com Contagem */}
+        <View style={styles.infoBar}>
+          <Text style={styles.infoText}>
+            {filteredPes.length} {filteredPes.length === 1 ? "árvore encontrada" : "árvores encontradas"}
+          </Text>
+        </View>
+
+        <TabBar />
+      </SafeAreaView>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#F4E9DA",
+    backgroundColor: Palette.white,
   },
   header: {
-    paddingTop: 40,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Palette.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.surfaceGray,
+  },
+  backBtn: {
+    padding: 6,
+    justifyContent: "center",
     alignItems: "center",
   },
-  profileContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  headerTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+  headerSpacer: {
+    width: 36,
   },
-  greeting: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  menuIcon: {
-    fontSize: 24,
-    color: "#333",
-  },
-  breadcrumbContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-  },
-  breadcrumb: {
-    fontSize: 14,
-    color: "#666",
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backArrow: {
-    fontSize: 18,
-    color: "#6BC24A",
-    marginRight: 4,
-  },
-  backText: {
-    fontSize: 14,
-    color: "#6BC24A",
-    fontWeight: "500",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    textAlign: "center",
-    marginBottom: 4,
+  subtitleContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 6,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 16,
+    fontSize: 12,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E7EB",
-    marginHorizontal: 20,
-    marginBottom: 16,
+  selectorsWrapper: {
+    gap: 6,
+    paddingBottom: 6,
   },
-  selectorContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  propertySelector: {
-    marginBottom: 8,
-  },
-  talhaoSelector: {
-    marginBottom: 8,
+  chipsScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
   },
   selectorChip: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    backgroundColor: Palette.white,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    minWidth: 80,
-    alignItems: 'center',
+    borderColor: Palette.borderDisabled,
+    alignItems: "center",
+    justifyContent: "center",
   },
   selectorChipSelected: {
-    backgroundColor: "#6BC24A",
-    borderColor: "#6BC24A",
+    backgroundColor: Palette.primary,
+    borderColor: Palette.primary,
+  },
+  selectorChipTalhao: {
+    backgroundColor: Palette.surfaceGray,
+    borderColor: Palette.surfaceGray,
+  },
+  selectorChipTalhaoSelected: {
+    backgroundColor: Palette.primaryPressed,
+    borderColor: Palette.primaryPressed,
   },
   selectorChipText: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: '500',
+    fontSize: 12,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
   selectorChipTextSelected: {
-    color: "#FFFFFF",
-    fontWeight: '600',
+    color: Palette.white,
+    fontWeight: FontWeights.bold,
   },
-  filtersContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+  filtersWrapper: {
+    paddingBottom: 10,
   },
   filterChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    backgroundColor: Palette.white,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginRight: 8,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: Palette.borderDisabled,
+    gap: 6,
   },
   filterChipActive: {
-    backgroundColor: "#6BC24A",
-    borderColor: "#6BC24A",
+    backgroundColor: Palette.primary,
+    borderColor: Palette.primary,
   },
   filterChipText: {
     fontSize: 12,
-    color: "#666",
-    marginLeft: 4,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
   filterChipTextActive: {
-    color: "#FFFFFF",
+    color: Palette.white,
+    fontWeight: FontWeights.bold,
   },
   mapContainer: {
     flex: 1,
-    marginHorizontal: 20,
-    borderRadius: 12,
+    marginHorizontal: 16,
+    borderRadius: 16,
     overflow: "hidden",
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    marginBottom: 8,
   },
   map: {
     flex: 1,
   },
   customMarker: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: Palette.white,
+    elevation: 3,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
     justifyContent: "center",
     alignItems: "center",
+    gap: 8,
   },
   loadingText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: Palette.white,
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
   },
-  infoContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+  infoBar: {
+    alignItems: "center",
+    paddingVertical: 6,
   },
   infoText: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-  },
-  footer: {
-    height: 80,
+    fontSize: 12,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
 });

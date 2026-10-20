@@ -1,59 +1,132 @@
-import Footer from "@/components/footer";
-import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { View, StyleSheet, Text, StatusBar, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
+import { Background } from "@/components/ui/background";
+import { Button } from "@/components/ui/button";
+import TabBar from "@/components/ui/tab-bar";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 export default function LocationMapScreenWeb() {
   const router = useRouter();
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/Maps/maps" as any);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Localização de pés</Text>
-        <Text style={styles.message}>
-          O mapa interativo está disponível no app Android ou iOS. Use o Expo Go ou
-          um build nativo para visualizar a localização das árvores.
-        </Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
-      </View>
-      <Footer />
-    </View>
+    <Background>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+
+        {/* Cabeçalho Padronizado */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={handleBack}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Localização de Pés</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Conteúdo Central de Fallback */}
+        <View style={styles.content}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="navigate-outline" size={48} color={Palette.primary} />
+          </View>
+
+          <Text style={styles.title}>Visualização Indisponível na Web</Text>
+          <Text style={styles.message}>
+            O mapa interativo de localização de pés depende de recursos nativos de hardware e não está disponível na versão web. Acesse pelo aplicativo móvel ou emulador para navegar pelas árvores.
+          </Text>
+
+          <View style={styles.buttonWrapper}>
+            <Button
+              title="Voltar"
+              variant="primary"
+              size="full"
+              onPress={handleBack}
+            />
+          </View>
+        </View>
+
+        {/* Barra de Navegação Inferior */}
+        <TabBar />
+      </SafeAreaView>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#FAF1E5",
+    backgroundColor: Palette.white,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Palette.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.surfaceGray,
+  },
+  backBtn: {
+    padding: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  headerSpacer: {
+    width: 36,
   },
   content: {
     flex: 1,
     justifyContent: "center",
-    paddingHorizontal: 24,
-    gap: 16,
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: Palette.surfaceGray,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Palette.borderDisabled,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#2D2D2D",
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: "center",
+    marginBottom: 10,
   },
   message: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#5C5C5C",
+    fontSize: FontSizes.base,
+    lineHeight: 22,
+    color: Palette.textSecondary,
+    textAlign: "center",
+    marginBottom: 28,
   },
-  backButton: {
-    alignSelf: "flex-start",
-    marginTop: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: "#F4A024",
-  },
-  backButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
+  buttonWrapper: {
+    width: "100%",
+    maxWidth: 240,
   },
 });

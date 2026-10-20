@@ -1,18 +1,28 @@
-import Footer from "@/components/footer";
 import React, { useState, useEffect } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  StatusBar,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/contexts/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
+
+import { Background } from "@/components/ui/background";
+import TabBar from "@/components/ui/tab-bar";
 import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 export default function HeatMapScreen() {
   const router = useRouter();
-  const { user } = useAuth();
   const { selectedProperty, properties, selectProperty } = useProperty();
-  const fullName = user?.name || "Usuário";
 
   const [heatData, setHeatData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +38,7 @@ export default function HeatMapScreen() {
 
     try {
       setLoading(true);
-const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
+      const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
 
       const heatPoints: any[] = [];
 
@@ -36,7 +46,7 @@ const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
         const pes = await getPesByTalhao(talhao.id.toString());
         const coordinateGroups: { [key: string]: any[] } = {};
 
-        pes.forEach(pe => {
+        pes.forEach((pe) => {
           if (pe.latitude && pe.longitude) {
             const lat = Math.round(pe.latitude * 1000) / 1000;
             const lng = Math.round(pe.longitude * 1000) / 1000;
@@ -48,18 +58,19 @@ const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
             coordinateGroups[key].push(pe);
           }
         });
-        Object.entries(coordinateGroups).forEach(([coord, pesGroup]) => {
-          const [lat, lng] = coord.split(',').map(Number);
 
-          const deficiencyCount = pesGroup.filter(pe =>
-            pe.deficienciaCobre || pe.deficienciaManganes || pe.outros
+        Object.entries(coordinateGroups).forEach(([coord, pesGroup]) => {
+          const [lat, lng] = coord.split(",").map(Number);
+
+          const deficiencyCount = pesGroup.filter(
+            (pe) => pe.deficienciaCobre || pe.deficienciaManganes || pe.outros
           ).length;
 
           if (deficiencyCount > 0) {
             heatPoints.push({
               latitude: lat,
               longitude: lng,
-              radius: Math.min(deficiencyCount * 50, 200), // Raio baseado na quantidade
+              radius: Math.min(deficiencyCount * 50, 200),
               deficiencyCount,
               totalPes: pesGroup.length,
             });
@@ -69,285 +80,314 @@ const talhoes = await getTalhoesByProperty(selectedProperty.id.toString());
 
       setHeatData(heatPoints);
     } catch (error) {
-      console.error('Erro ao carregar dados do mapa de calor:', error);
+      console.error("Erro ao carregar dados do mapa de calor:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const getHeatColor = (deficiencyCount: number) => {
-    if (deficiencyCount >= 5) return 'rgba(220, 38, 38, 0.6)'; // Vermelho intenso
-    if (deficiencyCount >= 3) return 'rgba(234, 88, 12, 0.6)'; // Laranja
-    if (deficiencyCount >= 1) return 'rgba(245, 158, 11, 0.6)'; // Amarelo
-    return 'rgba(34, 197, 94, 0.6)'; // Verde
+    if (deficiencyCount >= 5) return "rgba(220, 38, 38, 0.6)"; // Vermelho intenso
+    if (deficiencyCount >= 3) return "rgba(234, 88, 12, 0.6)"; // Laranja
+    if (deficiencyCount >= 1) return "rgba(245, 158, 11, 0.6)"; // Amarelo
+    return "rgba(34, 197, 94, 0.6)"; // Verde
+  };
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/Maps/maps" as any);
+    }
   };
 
   return (
-    <View style={styles.container}><View style={styles.header}>
-        <View style={styles.profileContainer}>
-           <Image source={require('@/assets/images/icons/people_profile.png')}  style={styles.avatar}/>
-          <Text style={styles.greeting}>Olá, {fullName.split(" ")[0]}!</Text>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.menuIcon}>≡</Text>
-        </TouchableOpacity>
-      </View><View style={styles.breadcrumbContainer}>
-        <Text style={styles.breadcrumb}>Mapas</Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.replace("/(tabs)/Maps/maps")}
-        >
-          <Text style={styles.backArrow}>←</Text>
-          <Text style={styles.backText}>Voltar</Text>
-        </TouchableOpacity>
-      </View><Text style={styles.title}>Mapa de Calor</Text>
-      <Text style={styles.subtitle}>Zonas com maior concentração de deficiências</Text>
-      <View style={styles.divider}></View><ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.propertySelector}>
-        {properties.map((property) => (
+    <Background>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+
+        {/* Cabeçalho Padronizado */}
+        <View style={styles.header}>
           <TouchableOpacity
-            key={property.id}
-            style={[
-              styles.propertyChip,
-              selectedProperty?.id === property.id && styles.propertyChipSelected
-            ]}
-            onPress={() => void selectProperty(property.id)}
+            style={styles.backBtn}
+            onPress={handleBack}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={[
-              styles.propertyChipText,
-              selectedProperty?.id === property.id && styles.propertyChipTextSelected
-            ]}>
-              {property.name}
-            </Text>
+            <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-        ))}
-      </ScrollView><View style={styles.mapContainer}>
-        {selectedProperty && (
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: selectedProperty.latitude || -24.68964,
-              longitude: selectedProperty.longitude || -47.85112,
-              latitudeDelta: 0.1,
-              longitudeDelta: 0.1,
-            }}
-            mapType="satellite"
-            provider={PROVIDER_GOOGLE}
-          >
-            {heatData.map((point, index) => (
-              <Circle
-                key={index}
-                center={{
-                  latitude: point.latitude,
-                  longitude: point.longitude,
-                }}
-                radius={point.radius}
-                fillColor={getHeatColor(point.deficiencyCount)}
-                strokeColor={getHeatColor(point.deficiencyCount)}
-                strokeWidth={2}
-              />
-            ))}<Marker
-              coordinate={{
-                latitude: selectedProperty.latitude || -24.68964,
-                longitude: selectedProperty.longitude || -47.85112
-              }}
-              title={selectedProperty.name}
-              description="Centro da propriedade"
-            />
-          </MapView>
-        )}
+          <Text style={styles.headerTitle}>Mapa de Calor</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-        {loading && (
-          <View style={styles.loadingOverlay}>
-            <Text style={styles.loadingText}>Carregando mapa de calor...</Text>
-          </View>
-        )}
-      </View><View style={styles.legend}>
-        <Text style={styles.legendTitle}>Legenda</Text>
-        <View style={styles.legendItems}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: 'rgba(34, 197, 94, 0.6)' }]} />
-            <Text style={styles.legendText}>Poucas deficiências</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: 'rgba(245, 158, 11, 0.6)' }]} />
-            <Text style={styles.legendText}>Algumas deficiências</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: 'rgba(234, 88, 12, 0.6)' }]} />
-            <Text style={styles.legendText}>Muitas deficiências</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: 'rgba(220, 38, 38, 0.6)' }]} />
-            <Text style={styles.legendText}>Muitas deficiências</Text>
+        {/* Subtítulo informativo */}
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitle}>
+            Zonas com maior concentração de deficiências
+          </Text>
+        </View>
+
+        {/* Seletor de Propriedades */}
+        <View style={styles.selectorWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.propertySelector}
+          >
+            {properties.map((property) => (
+              <TouchableOpacity
+                key={property.id}
+                style={[
+                  styles.propertyChip,
+                  selectedProperty?.id === property.id && styles.propertyChipSelected,
+                ]}
+                onPress={() => void selectProperty(property.id)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.propertyChipText,
+                    selectedProperty?.id === property.id &&
+                      styles.propertyChipTextSelected,
+                  ]}
+                >
+                  {property.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Área do Mapa */}
+        <View style={styles.mapContainer}>
+          {selectedProperty && (
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: selectedProperty.latitude || -24.68964,
+                longitude: selectedProperty.longitude || -47.85112,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
+              }}
+              mapType="satellite"
+              provider={PROVIDER_GOOGLE}
+            >
+              {heatData.map((point, index) => (
+                <Circle
+                  key={index}
+                  center={{
+                    latitude: point.latitude,
+                    longitude: point.longitude,
+                  }}
+                  radius={point.radius}
+                  fillColor={getHeatColor(point.deficiencyCount)}
+                  strokeColor={getHeatColor(point.deficiencyCount)}
+                  strokeWidth={2}
+                />
+              ))}
+
+              <Marker
+                coordinate={{
+                  latitude: selectedProperty.latitude || -24.68964,
+                  longitude: selectedProperty.longitude || -47.85112,
+                }}
+                title={selectedProperty.name}
+                description="Centro da propriedade"
+              />
+            </MapView>
+          )}
+
+          {loading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color={Palette.primary} />
+              <Text style={styles.loadingText}>Carregando mapa de calor...</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Card de Legenda */}
+        <View style={styles.legendCard}>
+          <Text style={styles.legendTitle}>Legenda de Incidência</Text>
+          <View style={styles.legendGrid}>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendColor,
+                  { backgroundColor: "rgba(34, 197, 94, 0.7)" },
+                ]}
+              />
+              <Text style={styles.legendText}>Poucas deficiências</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendColor,
+                  { backgroundColor: "rgba(245, 158, 11, 0.7)" },
+                ]}
+              />
+              <Text style={styles.legendText}>Algumas deficiências</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendColor,
+                  { backgroundColor: "rgba(234, 88, 12, 0.7)" },
+                ]}
+              />
+              <Text style={styles.legendText}>Alta incidência</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendColor,
+                  { backgroundColor: "rgba(220, 38, 38, 0.7)" },
+                ]}
+              />
+              <Text style={styles.legendText}>Deficiência severa</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.footer}></View>
-      <Footer />
-    </View>
+        {/* Barra de Navegação Inferior */}
+        <TabBar />
+      </SafeAreaView>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#F4E9DA",
+    backgroundColor: Palette.white,
   },
   header: {
-    paddingTop: 40,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Palette.white,
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.surfaceGray,
+  },
+  backBtn: {
+    padding: 6,
+    justifyContent: "center",
     alignItems: "center",
   },
-  profileContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  headerTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+  headerSpacer: {
+    width: 36,
   },
-  greeting: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  menuIcon: {
-    fontSize: 24,
-    color: "#333",
-  },
-  breadcrumbContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-  },
-  breadcrumb: {
-    fontSize: 14,
-    color: "#666",
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backArrow: {
-    fontSize: 18,
-    color: "#6BC24A",
-    marginRight: 4,
-  },
-  backText: {
-    fontSize: 14,
-    color: "#6BC24A",
-    fontWeight: "500",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    textAlign: "center",
-    marginBottom: 4,
+  subtitleContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 6,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 16,
+    fontSize: 12,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E7EB",
-    marginHorizontal: 20,
-    marginBottom: 16,
+  selectorWrapper: {
+    paddingBottom: 8,
   },
   propertySelector: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   propertyChip: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    backgroundColor: Palette.white,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    minWidth: 80,
-    alignItems: 'center',
+    borderColor: Palette.borderDisabled,
+    alignItems: "center",
+    justifyContent: "center",
   },
   propertyChipSelected: {
-    backgroundColor: "#6BC24A",
-    borderColor: "#6BC24A",
+    backgroundColor: Palette.primary,
+    borderColor: Palette.primary,
   },
   propertyChipText: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: '500',
+    fontSize: 12,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
   propertyChipTextSelected: {
-    color: "#FFFFFF",
-    fontWeight: '600',
+    color: Palette.white,
+    fontWeight: FontWeights.bold,
   },
   mapContainer: {
     flex: 1,
-    marginHorizontal: 20,
-    borderRadius: 12,
+    marginHorizontal: 16,
+    borderRadius: 16,
     overflow: "hidden",
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    marginBottom: 10,
   },
   map: {
     flex: 1,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
     justifyContent: "center",
     alignItems: "center",
+    gap: 8,
   },
   loadingText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: Palette.white,
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
   },
-  legend: {
-    backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+  legendCard: {
+    backgroundColor: Palette.white,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    elevation: 2,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
   },
   legendTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A1A1A",
-    marginBottom: 12,
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 8,
   },
-  legendItems: {
+  legendGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    rowGap: 8,
+    columnGap: 12,
   },
   legendItem: {
     flexDirection: "row",
     alignItems: "center",
+    minWidth: "45%",
     flex: 1,
-    minWidth: 120,
   },
   legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 8,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
   },
   legendText: {
     fontSize: 12,
-    color: "#666",
-  },
-  footer: {
-    height: 80,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
 });

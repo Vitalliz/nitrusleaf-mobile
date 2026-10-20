@@ -10,17 +10,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+
 import { Background } from '@/components/ui/background';
 import { Header } from '@/components/ui/user-header';
-import BottomNavbar from '@/components/ui/tab-bar';
+import TabBar from '@/components/ui/tab-bar';
 import { useProfileHeader } from '@/hooks/useProfileHeader';
+import { Palette, FontSizes, FontWeights } from '@/constants/theme';
 
 type MapOption = {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   description: string;
-  color: string;
-  bg: string;
+  iconColor: string;
   route: string;
 };
 
@@ -28,36 +29,41 @@ const MAP_OPTIONS: MapOption[] = [
   {
     icon: 'leaf-outline',
     label: 'Infravermelho (NDVI)',
-    description: 'Visualize a saúde da vegetação',
-    color: '#4CAF50',
-    bg: '#E8F5E9',
+    description: 'Visualize a saúde e vigor da vegetação',
+    iconColor: Palette.primary,
     route: '/(tabs)/Maps/maps-heat',
   },
   {
-    icon: 'planet-outline',
+    icon: 'earth-outline',
     label: 'Satélite',
-    description: 'Imagem de satélite da propriedade',
-    color: '#2196F3',
-    bg: '#E3F2FD',
+    description: 'Imagem orbital de alta resolução da fazenda',
+    iconColor: Palette.primary,
     route: '/(tabs)/Maps/maps-location',
   },
   {
     icon: 'flame-outline',
     label: 'Mapa de Calor',
-    description: 'Regiões com maior deficiência',
-    color: '#FF5722',
-    bg: '#FBE9E7',
+    description: 'Regiões com maior incidência de deficiência',
+    iconColor: Palette.orangePrimary,
     route: '/(tabs)/Maps/maps-heat',
   },
   {
     icon: 'location-outline',
     label: 'Localização de Pés',
-    description: 'Mapeamento individual de árvores',
-    color: '#FF9800',
-    bg: '#FFF3E0',
+    description: 'Mapeamento individual e status das árvores',
+    iconColor: Palette.primary,
     route: '/(tabs)/Maps/maps-location',
   },
 ];
+
+function getFormattedDate(): string {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const month = monthNames[now.getMonth()];
+  const year = now.getFullYear();
+  return `${day} ${month}, ${year}`;
+}
 
 export default function MapsScreen() {
   const router = useRouter();
@@ -65,16 +71,16 @@ export default function MapsScreen() {
     userName,
     userSubtitle,
     userAvatar,
-    loading,
     showPropertyPicker,
     canSwitchProperty,
   } = useProfileHeader();
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}  edges={[ 'left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
 
+        {/* Cabeçalho do Usuário */}
         <Header
           userName={userName}
           userSubtitle={userSubtitle}
@@ -88,65 +94,89 @@ export default function MapsScreen() {
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
-        ><View style={styles.titleRow}>
-            <Text style={styles.title}>Mapa da Fazenda</Text>
+        >
+          {/* Título e Data */}
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Mapas da Fazenda</Text>
             <View style={styles.dateRow}>
-              <Ionicons name="calendar-outline" size={14} color="#888" />
-              <Text style={styles.dateText}>
-                {new Date().toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </Text>
+              <Ionicons name="calendar-outline" size={15} color={Palette.textSecondary} />
+              <Text style={styles.dateText}>{getFormattedDate()}</Text>
             </View>
-          </View><View style={styles.mapPreview}>
-            <Ionicons name="map" size={48} color="#6BC24A" />
-            <Text style={styles.mapPlaceholderText}>Sítio Santa Aurora</Text>
-            <Text style={styles.mapPlaceholderSub}>-24.751441, -47.81431</Text>
-          </View><Text style={styles.sectionLabel}>Tipo de Visualização</Text>
-          <View style={styles.optionsGrid}>
+          </View>
+
+          {/* Cartão de Resumo da Propriedade */}
+          <View style={styles.mapPreviewCard}>
+            <View style={styles.mapIconCircle}>
+              <Ionicons name="map" size={36} color={Palette.primary} />
+            </View>
+            <Text style={styles.mapPropertyText} numberOfLines={1}>
+              {userSubtitle || 'Propriedade Selecionada'}
+            </Text>
+            <Text style={styles.mapCoordinatesText}>
+              Toque em uma visualização abaixo para explorar os dados
+            </Text>
+          </View>
+
+          {/* Título da Seção */}
+          <Text style={styles.sectionLabel}>Tipo de Visualização</Text>
+
+          {/* Lista de Opções */}
+          <View style={styles.optionsList}>
             {MAP_OPTIONS.map((opt) => (
               <TouchableOpacity
                 key={opt.label}
                 style={styles.optionCard}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
                 onPress={() => router.push(opt.route as any)}
               >
-                <View style={[styles.optionIcon, { backgroundColor: opt.bg }]}>
-                  <Ionicons name={opt.icon} size={26} color={opt.color} />
+                <View style={styles.optionIconBox}>
+                  <Ionicons name={opt.icon} size={22} color={opt.iconColor} />
                 </View>
-                <Text style={styles.optionLabel}>{opt.label}</Text>
-                <Text style={styles.optionDesc}>{opt.description}</Text>
-                <Ionicons name="chevron-forward" size={16} color="#CCC" style={styles.optionArrow} />
+
+                <View style={styles.optionContent}>
+                  <Text style={styles.optionLabel}>{opt.label}</Text>
+                  <Text style={styles.optionDesc}>{opt.description}</Text>
+                </View>
+
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={Palette.textPrimary}
+                />
               </TouchableOpacity>
             ))}
           </View>
         </ScrollView>
 
-        <BottomNavbar />
+        {/* Barra de Navegação Inferior Padronizada */}
+        <TabBar />
       </SafeAreaView>
     </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: Palette.white,
+  },
   container: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
     gap: 16,
   },
+
+  /* Título e Data */
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1A1A1A',
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
   dateRow: {
     flexDirection: 'row',
@@ -155,77 +185,97 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 12,
-    color: '#888',
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
-  mapPreview: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 32,
+
+  /* Cartão de Visualização */
+  mapPreviewCard: {
+    backgroundColor: Palette.white,
+    borderRadius: 18,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    gap: 8,
     borderWidth: 1,
-    borderColor: '#EEE',
-    shadowColor: '#000',
+    borderColor: Palette.surfaceGray,
+    elevation: 2,
+    shadowColor: Palette.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 3,
   },
-  mapPlaceholderText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A2C3E',
-    marginTop: 8,
+  mapIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: Palette.surfaceGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
-  mapPlaceholderSub: {
-    fontSize: 13,
-    color: '#888',
+  mapPropertyText: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: 'center',
+    marginBottom: 4,
   },
+  mapCoordinatesText: {
+    fontSize: 12,
+    color: Palette.textSecondary,
+    textAlign: 'center',
+    maxWidth: 240,
+    lineHeight: 16,
+  },
+
+  /* Seção */
   sectionLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1A2C3E',
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     marginTop: 4,
   },
-  optionsGrid: {
+
+  /* Lista de Opções */
+  optionsList: {
     gap: 12,
   },
   optionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Palette.white,
     borderRadius: 14,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
+    borderColor: Palette.surfaceGray,
+    elevation: 1,
+    shadowColor: Palette.black,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 4,
-    elevation: 2,
   },
-  optionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+  optionIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: Palette.surfaceGray,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  optionContent: {
+    flex: 1,
+    gap: 2,
+  },
   optionLabel: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#1A2C3E',
-    flex: 1,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
   optionDesc: {
     fontSize: 12,
-    color: '#888',
-    position: 'absolute',
-    left: 76,
-    bottom: 14,
-  },
-  optionArrow: {
-    marginLeft: 'auto',
+    color: Palette.textSecondary,
+    lineHeight: 16,
   },
 });
