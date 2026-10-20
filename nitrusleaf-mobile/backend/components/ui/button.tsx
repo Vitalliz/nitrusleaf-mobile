@@ -1,7 +1,8 @@
 import React from "react";
-import { Image , TouchableOpacity, StyleSheet, View } from 'react-native';
+import { Image, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Label } from "@/components/ui/label";
 import { Ionicons } from "@expo/vector-icons";
+import { Palette } from "@/constants/theme";
 
 type Variant = "primary" | "secondary" | "accent" | "text" | "outline" | "google" | "googleTwo" | "navigation" | "solid-green" | "danger";
 type Size = "328" | "151" | "142" | "143" | "241" | "56" | "111" | "206" | "full" | "auto";
@@ -69,7 +70,7 @@ export const Button = ({
           }
           style={{
             ...styles.text,
-            ...(variant === "danger" && { color: "#FF5C5C" }),
+            ...(variant === "danger" && { color: Palette.error }),
             ...(disabled && styles.disabledText),
           }}
         />
@@ -80,17 +81,17 @@ export const Button = ({
 
 const buttonStyles = StyleSheet.create({
   primary: {
-    backgroundColor: "#6BC24A",
+    backgroundColor: Palette.primary,
     borderWidth: 0,
     elevation: 3,
   },
   secondary: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderWidth: 1,
-    borderColor: "#6BC24A",
+    borderColor: Palette.primary,
   },
   accent: {
-    backgroundColor: "#FFA62B",
+    backgroundColor: Palette.orangePrimary,
     borderWidth: 0,
   },
   text: {
@@ -101,22 +102,22 @@ const buttonStyles = StyleSheet.create({
   outline: {
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#6BC24A",
+    borderColor: Palette.primary,
   },
   google: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderWidth: 1,
-    borderColor: "#D1D1D1",
+    borderColor: Palette.borderDisabled,
     elevation: 2,
   },
   googleTwo: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderWidth: 0.9,
-    borderColor: "#d1d1d1",
+    borderColor: Palette.borderDisabled,
     elevation: 2,
   },
   navigation: {
-    backgroundColor: "#6BC24A",
+    backgroundColor: Palette.primary,
     borderWidth: 0,
     alignSelf: "flex-start",
     paddingHorizontal: 16,
@@ -125,44 +126,43 @@ const buttonStyles = StyleSheet.create({
     elevation: 2,
   },
   "solid-green": {
-    backgroundColor: "#6BC24A",
+    backgroundColor: Palette.primary,
     borderWidth: 0,
     borderRadius: 20,
     elevation: 2,
   },
   danger: {
-    backgroundColor: "#ffffff",
+    backgroundColor: Palette.white,
     borderWidth: 1,
-    color: "#FF5C5C",
-    borderColor: "#FF5C5C",
+    borderColor: Palette.error,
     elevation: 3,
   },
 });
 
 const textStyles = StyleSheet.create({
-  primary: { color: "#FFFFFF", fontWeight: "600" },
-  secondary: { color: "#6BC24A", fontWeight: "600" },
-  accent: { color: "#FFFFFF", fontWeight: "600" },
-  text: { color: "#6BC24A", fontWeight: "400" },
-  outline: { color: "#6BC24A", fontWeight: "600" },
-  google: { color: "#333333", fontWeight: "500" },
-  googleTwo: { color: "#333333", fontWeight: "500" },
-  navigation: { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
-  "solid-green": { color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
-  danger: { color: "#FF5C5C", fontWeight: "600" },
+  primary: { color: Palette.white, fontWeight: "600" },
+  secondary: { color: Palette.primary, fontWeight: "600" },
+  accent: { color: Palette.white, fontWeight: "600" },
+  text: { color: Palette.primary, fontWeight: "400" },
+  outline: { color: Palette.primary, fontWeight: "600" },
+  google: { color: Palette.textPrimary, fontWeight: "500" },
+  googleTwo: { color: Palette.textPrimary, fontWeight: "500" },
+  navigation: { color: Palette.white, fontWeight: "600", fontSize: 14 },
+  "solid-green": { color: Palette.white, fontWeight: "600", fontSize: 14 },
+  danger: { color: Palette.error, fontWeight: "600" },
 });
 
 const sizeStyles = StyleSheet.create({
-  "328": { width: 328, height: 50, borderRadius: 25 },
-  "151": { width: 151, height: 45, borderRadius: 22 },
-  "142": { width: 142, height: 45, borderRadius: 22 },
-  "143": { width: 143, height: 45, borderRadius: 22 },
-  "241": { width: 241, height: 50, borderRadius: 25 },
-  "56":  { width: 56,  height: 56, borderRadius: 28 },
-  "111": { width: 111, height: 36, borderRadius: 18, paddingVertical: 8 },
-  "206": { width: 206, height: 45, borderRadius: 22 },
-  "full": { width: "100%", height: 44, borderRadius: 25 },
-  "auto": { paddingHorizontal: 16, height: 36, minWidth: 80, borderRadius: 18, paddingVertical: 8 },
+  "328": { width: 328, maxWidth: "100%", height: 44, borderRadius: 22 },
+  "151": { width: 151, height: 40, borderRadius: 20 },
+  "142": { width: 142, height: 40, borderRadius: 20 },
+  "143": { width: 143, height: 40, borderRadius: 20 },
+  "241": { width: 241, maxWidth: "100%", height: 44, borderRadius: 22 },
+  "56":  { width: 48,  height: 48, borderRadius: 24 },
+  "111": { width: 111, height: 32, borderRadius: 16, paddingVertical: 6 },
+  "206": { width: 206, height: 40, borderRadius: 20 },
+  "full": { width: "100%", height: 44, borderRadius: 22 },
+  "auto": { paddingHorizontal: 14, height: 32, minWidth: 72, borderRadius: 16, paddingVertical: 6 },
 });
 
 const styles = StyleSheet.create({
@@ -191,15 +191,15 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   icon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   disabled: {
-    backgroundColor: "#CCCCCC",
-    borderColor: "#CCCCCC",
+    backgroundColor: Palette.borderDisabled,
+    borderColor: Palette.borderDisabled,
     opacity: 0.6,
   },
   disabledText: {
-    color: "#666666",
+    color: Palette.textSecondary,
   },
 });
 
@@ -217,6 +217,10 @@ export const GoogleButton2 = ({ onPress }: { onPress?: () => void }) => (
 
 export const LoginButton = ({ onPress, disabled = false, title = "Entrar" }: { onPress?: () => void; disabled?: boolean; title?: string }) => (
   <Button title={title} variant="primary" size="full" onPress={onPress} disabled={disabled} />
+);
+
+export const AddTalhaoButton = ({ onPress }: { onPress?: () => void }) => (
+  <Button title="Cadastrar Talhão" variant="primary" size="full" icon="add" onPress={onPress} />
 );
 
 export const NextButton = ({ onPress }: { onPress?: () => void }) => (

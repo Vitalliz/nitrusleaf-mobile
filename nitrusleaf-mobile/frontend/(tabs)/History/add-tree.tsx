@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
@@ -18,11 +17,13 @@ import { getTalhaoById } from "@/repositories/talhaoRepository";
 import { SITUACOES_PE, type SituacaoPe } from "@/types/pe";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CustomAlert, AlertType } from "@/components/ui/alert";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 
 const situacaoColors: Record<SituacaoPe, { bg: string; border: string; text: string }> = {
-  "Tratado":         { bg: "#E8F5E0", border: "#6BC24A", text: "#2D5016" },
-  "Não-Tratado":     { bg: "#FFEBEE", border: "#E57373", text: "#B71C1C" },
-  "Sem-informações": { bg: "#F5F5F5", border: "#BDBDBD", text: "#616161" },
+  "Tratado":         { bg: "#E8F5E0", border: Palette.primary, text: "#2D5016" },
+  "Não-Tratado":     { bg: "#FFEBEE", border: "#E57373", text: Palette.error },
+  "Sem-informações": { bg: Palette.surfaceGray, border: Palette.borderDisabled, text: Palette.textSecondary },
 };
 
 export default function AddFootScreen() {
@@ -38,6 +39,47 @@ export default function AddFootScreen() {
   const [talhaoLabel, setTalhaoLabel] = useState(talhaoName ?? "");
   const [loading, setLoading] = useState(false);
 
+  // Estado unificado do CustomAlert (Sucesso, Aviso e Erro)
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    buttonText: string;
+    onCloseAction?: () => void;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    type: "error",
+    buttonText: "Entendido",
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    type: AlertType = "error",
+    buttonText: string = "Entendido",
+    onCloseAction?: () => void
+  ) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      type,
+      buttonText,
+      onCloseAction,
+    });
+  };
+
+  const handleCloseAlert = () => {
+    const callback = alertConfig.onCloseAction;
+    setAlertConfig((prev) => ({ ...prev, visible: false, onCloseAction: undefined }));
+    if (callback) {
+      callback();
+    }
+  };
+
   useEffect(() => {
     if (!talhaoId || talhaoName) return;
     void getTalhaoById(talhaoId).then((t) => {
@@ -47,11 +89,11 @@ export default function AddFootScreen() {
 
   const handleSave = async () => {
     if (!talhaoId) {
-      Alert.alert("Erro", "Talhão não informado. Volte e tente novamente.");
+      showAlert("Atenção", "Talhão não informado. Volte e tente novamente.", "warning");
       return;
     }
     if (!nome.trim()) {
-      Alert.alert("Erro", "Nome da Árvore é obrigatório.");
+      showAlert("Atenção", "O nome da árvore é obrigatório.", "warning");
       return;
     }
 
@@ -63,27 +105,31 @@ export default function AddFootScreen() {
         situacao,
         observacoes: observacoes.trim() || undefined,
       });
+
       try {
         await syncTalhaoStatsFromPes(talhaoId);
       } catch (syncErr) {
         console.warn("Sync talhão (opcional):", syncErr);
       }
 
-      Alert.alert("Sucesso", "Árvore cadastrada com sucesso!", [
-        {
-          text: "OK",
-          onPress: () =>
-            router.replace({
-              pathname: "/(tabs)/History/field-detail-screen",
-              params: { talhaoId },
-            }),
-        },
-      ]);
+      // Alerta de sucesso com redirecionamento ao clicar no botão
+      showAlert(
+        "Sucesso!",
+        "Árvore cadastrada com sucesso.",
+        "success",
+        "Continuar",
+        () => {
+          router.replace({
+            pathname: "/(tabs)/History/field-detail-screen",
+            params: { talhaoId },
+          });
+        }
+      );
     } catch (error) {
       console.error("Erro ao salvar árvore:", error);
       const msg =
         error instanceof Error ? error.message : "Não foi possível salvar a árvore.";
-      Alert.alert("Erro", msg);
+      showAlert("Falha no cadastro", msg, "error");
     } finally {
       setLoading(false);
     }
@@ -96,8 +142,9 @@ export default function AddFootScreen() {
           <TouchableOpacity
             style={styles.backBtn}
             onPress={() => safeBack(router, ROUTES.history)}
+            hitSlop={15}
           >
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Cadastrar árvore</Text>
           <View style={{ width: 24 }} />
@@ -129,8 +176,9 @@ export default function AddFootScreen() {
               params: { talhaoId },
             })
           }
+          hitSlop={15}
         >
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Cadastrar árvore</Text>
         <View style={{ width: 24 }} />
@@ -138,65 +186,73 @@ export default function AddFootScreen() {
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.formContainer}>
+        <Text style={styles.sectionTitle}>Nova árvore</Text>
 
-          <Text style={styles.sectionTitle}>Nova árvore</Text><View style={styles.formGroup}>
-            <Text style={styles.label}>Talhão</Text>
-            <View style={styles.propertyBadge}>
-              <Ionicons name="leaf-outline" size={14} color="#6BC24A" />
-              <Text style={styles.propertyText}>{talhaoLabel || "—"}</Text>
-            </View>
-          </View><View style={styles.formGroup}>
-            <Text style={styles.label}>Nome da árvore *</Text>
-            <Input
-              value={nome}
-              onChangeText={setNome}
-              placeholder="Ex: Árvore 12"
-              size="full"
-            />
-          </View><View style={styles.formGroup}>
-            <Text style={styles.label}>Situação</Text>
-            <View style={styles.situacaoRow}>
-              {SITUACOES_PE.map((opt) => {
-                const active = situacao === opt;
-                const colors = situacaoColors[opt];
-                return (
-                  <TouchableOpacity
-                    key={opt}
-                    style={[
-                      styles.situacaoChip,
-                      active && {
-                        backgroundColor: colors.bg,
-                        borderColor: colors.border,
-                      },
-                    ]}
-                    onPress={() => setSituacao(opt)}
-                  >
-                    <Text
-                      style={[
-                        styles.situacaoChipText,
-                        active && { color: colors.text, fontWeight: "600" },
-                      ]}
-                    >
-                      {opt}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View><View style={styles.formGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <Input
-              value={observacoes}
-              onChangeText={setObservacoes}
-              placeholder="Opcional"
-              size="size-364"
-            />
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Talhão</Text>
+          <View style={styles.propertyBadge}>
+            <Ionicons name="leaf-outline" size={14} color={Palette.primary} />
+            <Text style={styles.propertyText}>{talhaoLabel || "—"}</Text>
           </View>
+        </View>
 
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Nome da árvore *</Text>
+          <Input
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Ex: Árvore 12"
+            size="full"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Situação</Text>
+          <View style={styles.situacaoRow}>
+            {SITUACOES_PE.map((opt) => {
+              const active = situacao === opt;
+              const colors = situacaoColors[opt];
+              return (
+                <TouchableOpacity
+                  key={opt}
+                  style={[
+                    styles.situacaoChip,
+                    active && {
+                      backgroundColor: colors.bg,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => setSituacao(opt)}
+                >
+                  <Text
+                    style={[
+                      styles.situacaoChipText,
+                      active && { color: colors.text, fontWeight: FontWeights.semiBold },
+                    ]}
+                  >
+                    {opt}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Observações</Text>
+          <Input
+            value={observacoes}
+            onChangeText={setObservacoes}
+            placeholder="Opcional"
+            size="full"
+          />
+        </View>
+
+        <View style={styles.buttonContainer}>
           <Button
             title={loading ? "Salvando..." : "Salvar árvore"}
             variant="primary"
@@ -204,11 +260,18 @@ export default function AddFootScreen() {
             onPress={() => void handleSave()}
             disabled={loading}
           />
-
         </View>
-
-        <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Componente Modal CustomAlert integrado para Sucesso, Avisos e Erros */}
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttonText={alertConfig.buttonText}
+        onClose={handleCloseAlert}
+      />
 
       <BottomNavbar />
     </Background>
@@ -223,105 +286,92 @@ const styles = StyleSheet.create({
     paddingTop: 35,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
+    borderBottomColor: Palette.surfaceGray,
   },
-
   backBtn: {
     padding: 4,
   },
-
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
-
   content: {
     flex: 1,
-    padding: 20,
   },
-
-  formContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    marginBottom: 20,
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 80,
   },
-
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A2C3E",
-    marginBottom: 12,
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 14,
     marginTop: 4,
   },
-
   formGroup: {
-    marginBottom: 5,
+    width: "100%",
+    marginBottom: 14,
   },
-
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 2,
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
+    marginBottom: 6,
   },
-
   propertyBadge: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
     gap: 6,
-    marginVertical: 12,
-    backgroundColor: "#F0FDF4",
+    marginVertical: 4,
+    backgroundColor: `${Palette.primary}15`,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#D1F2D0",
+    borderColor: `${Palette.primary}35`,
   },
-
   propertyText: {
-    fontSize: 14,
-    color: "#6BC24A",
-    fontWeight: "600",
+    fontSize: FontSizes.base,
+    color: Palette.primary,
+    fontWeight: FontWeights.semiBold,
   },
-
   situacaoRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 4,
   },
-
   situacaoChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#D4D4D4",
-    backgroundColor: "#FFFFFF",
+    borderColor: Palette.borderDisabled,
+    backgroundColor: Palette.white,
   },
-
   situacaoChipText: {
-    fontSize: 13,
-    color: "#374151",
+    fontSize: FontSizes.sm,
+    color: Palette.textPrimary,
   },
-
+  buttonContainer: {
+    width: "100%",
+    marginTop: 20,
+  },
   errorBox: {
     flex: 1,
     padding: 24,
     justifyContent: "center",
   },
-
   errorText: {
-    fontSize: 15,
-    color: "#374151",
+    fontSize: FontSizes.base,
+    color: Palette.textPrimary,
     textAlign: "center",
     marginBottom: 24,
   },

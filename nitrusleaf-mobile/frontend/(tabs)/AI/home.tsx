@@ -7,11 +7,16 @@ import {
   Text,
   View,
   ActivityIndicator,
-  TouchableOpacity,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 
+// Componentes da UI
+import { Button } from "@/components/ui/button";
+import { Background } from "@/components/ui/background";
+import BottomNavbar from "@/components/ui/tab-bar";
+import { Header } from "@/components/ui/user-header";
 import { CustomCard } from "@/components/cards/card";
 import {
   EvolutionBarChart,
@@ -25,10 +30,9 @@ import {
 import { CoverageCard } from "@/components/charts/coverage";
 import { DonutChart } from "@/components/charts/donutchart";
 import { NutritionalStatusCard } from "@/components/charts/nutricionalstatus";
-import { Background } from "@/components/ui/background";
-import BottomNavbar from "@/components/ui/tab-bar";
-import { Header } from "@/components/ui/user-header";
+
 import { DEFAULT_AVATAR } from "@/constants/profile";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
@@ -60,6 +64,15 @@ function getMonthLabel(dateStr: string): string {
   return monthNames[d.getMonth()];
 }
 
+function getFormattedCurrentDate(): string {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const month = monthNames[now.getMonth()];
+  const year = now.getFullYear();
+  return `${day} ${month}, ${year}`;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -76,7 +89,6 @@ export default function HomeScreen() {
   const [allTrees, setAllTrees] = useState<Pe[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carrega dados do usuário ao focar na tela
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -87,7 +99,7 @@ export default function HomeScreen() {
           const details = await getUsuarioDetails(user.id);
           if (isActive) setDbUser(details);
         } catch (err) {
-          console.error("Erro ao carregar usuário na home:", err);
+          console.error("Erro ao carregar utilizador na home:", err);
         }
       }
 
@@ -99,7 +111,6 @@ export default function HomeScreen() {
     }, [user?.id])
   );
 
-  // Carrega dados da propriedade ao focar na tela ou trocar de propriedade
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -146,10 +157,10 @@ export default function HomeScreen() {
     }, [selectedProperty?.id])
   );
 
-  const hasTalhoes = talhoes.length > 0;
   const totalTrees = allTrees.length;
   const analyzedTrees = allTrees.filter(isPeAnalyzed).length;
   const notAnalyzedTrees = totalTrees - analyzedTrees;
+  const hasAnalyses = analyzedTrees > 0;
 
   const deficiencyStats = useMemo(
     () => computePropertyDeficiencyStats(allTrees),
@@ -246,10 +257,69 @@ export default function HomeScreen() {
     router.push("/(tabs)/History/history");
   }, [router]);
 
+  // Configuração dinâmica do Empty State conforme o progresso do usuário
+  const emptyStateConfig = useMemo(() => {
+    // Etapa 1: Não há talhões cadastrados
+    if (talhoes.length === 0) {
+      return {
+        title: "Nenhum talhão cadastrado",
+        subtitle: "Cadastre seu primeiro talhão para começar a organizar sua propriedade.",
+        buttonTitle: "Cadastrar Talhão",
+        icon: "add" as const,
+        action: () => {
+          router.push({
+            pathname: "/(tabs)/History/add-talhao",
+            params: {
+              propertyId: selectedProperty?.id,
+              propertyName: selectedProperty?.name,
+            },
+          });
+        },
+      };
+    }
+
+    // Etapa 2: Há talhão, mas nenhuma árvore cadastrada
+    if (allTrees.length === 0) {
+      return {
+        title: "Nenhuma árvore cadastrada",
+        subtitle: "Cadastre as árvores do seu talhão para poder iniciar as análises foliares.",
+        buttonTitle: "Cadastrar Árvore",
+        icon: "add" as const,
+        action: () => {
+          router.push({
+            pathname: "/(tabs)/History/add-tree",
+            params: {
+              talhaoId: talhoes[0]?.id,
+              talhaoName: talhoes[0]?.name,
+              propertyId: selectedProperty?.id,
+            },
+          });
+        },
+      };
+    }
+
+    // Etapa 3: Há árvores, mas nenhuma análise realizada ainda
+    return {
+      title: "Nenhuma Análise realizada ainda",
+      subtitle: "Realize a primeira análise para visualizar os indicadores da sua propriedade.",
+      buttonTitle: "Fazer Análise",
+      icon: "scan-outline" as const,
+      action: () => {
+        router.push({
+          pathname: "/(tabs)/History/tree-detail-screen",
+          params: {
+            treeId: allTrees[0]?.id,
+            talhaoId: allTrees[0]?.talhaoId,
+          },
+        });
+      },
+    };
+  }, [talhoes, allTrees, selectedProperty, router]);
+
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         <Header
           userName={
@@ -271,80 +341,94 @@ export default function HomeScreen() {
 
         {loading || propertyContextLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6BC24A" />
+            <ActivityIndicator size="large" color={Palette.primary} />
           </View>
         ) : (
           <ScrollView
-            contentContainerStyle={styles.container}
+            contentContainerStyle={[
+              styles.scrollContent,
+              !hasAnalyses && styles.scrollContentEmpty,
+            ]}
             showsVerticalScrollIndicator={false}
             style={styles.scrollView}
           >
-            {!hasTalhoes && (
-              <View style={styles.emptyBanner}>
-                <Ionicons name="leaf-outline" size={28} color="#6BC24A" />
-                <Text style={styles.emptyBannerTitle}>Nenhum talhão cadastrado</Text>
-                <Text style={styles.emptyBannerText}>
-                  Cadastre seu primeiro talhão para começar a registrar análises. Os gráficos abaixo aparecem vazios até você ter dados.
-                </Text>
-                <TouchableOpacity
-                  style={styles.emptyBannerButton}
-                  onPress={() => router.push("/(tabs)/History/history")}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.emptyBannerButtonText}>Cadastrar talhão</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
+            {/* Barra de título e data */}
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Análises Gerais</Text>
               <View style={styles.dateRow}>
-                <Ionicons name="calendar-outline" size={14} color="#888" />
-                <Text style={styles.dateText}>
-                  {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </Text>
+                <Ionicons name="calendar-outline" size={15} color="#888" />
+                <Text style={styles.dateText}>{getFormattedCurrentDate()}</Text>
               </View>
             </View>
 
-            <NutritionalStatusCard
-              manganesPercentage={nutritionalData.manganes}
-              cobrePercentage={nutritionalData.cobre}
-              onPress={handleNutritionalPress}
-            />
+            {/* Empty State Dinâmico */}
+            {!hasAnalyses ? (
+              <View style={styles.emptyStateContainer}>
+                <Image
+                  source={require("@/assets/images/empty-state-geral.png")}
+                  style={styles.emptyStateImage}
+                  resizeMode="contain"
+                />
 
-            <CoverageCard
-              analyzed={coverageData.analyzed}
-              total={coverageData.total}
-              notAnalyzed={coverageData.notAnalyzed}
-            />
-
-            <CustomCard variant="white-large">
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>
-                  Ocorrências totais de deficiências em %
+                <Text style={styles.emptyStateTitle}>
+                  {emptyStateConfig.title}
                 </Text>
-                <DonutChart
-                  data={donutData}
-                  size={100}
-                  innerRadius={35}
-                  centerText={`${coverageData.analyzed}/${coverageData.total}`}
-                  showLabels={true}
-                  onDetailPress={handleVerDetalhes}
+
+                <Text style={styles.emptyStateSubtitle}>
+                  {emptyStateConfig.subtitle}
+                </Text>
+
+                <Button
+                  title={emptyStateConfig.buttonTitle}
+                  variant="primary"
+                  size="full"
+                  icon={emptyStateConfig.icon}
+                  onPress={emptyStateConfig.action}
                 />
               </View>
-            </CustomCard>
+            ) : (
+              <View style={styles.chartsContainer}>
+                <NutritionalStatusCard
+                  manganesPercentage={nutritionalData.manganes}
+                  cobrePercentage={nutritionalData.cobre}
+                  onPress={handleNutritionalPress}
+                />
 
-            <GroupedColumnChart
-              data={groupedColumnData}
-              height={180}
-            />
+                <CoverageCard
+                  analyzed={coverageData.analyzed}
+                  total={coverageData.total}
+                  notAnalyzed={coverageData.notAnalyzed}
+                />
 
-            <EvolutionBarChart
-              data={evolutionData[selectedPeriod]}
-              onPeriodChange={handlePeriodChange}
-              onDetailPress={handleDetailPress}
-              height={200}
-            />
+                <CustomCard variant="white-large">
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>
+                      Ocorrências totais de deficiências em %
+                    </Text>
+                    <DonutChart
+                      data={donutData}
+                      size={100}
+                      innerRadius={35}
+                      centerText={`${coverageData.analyzed}/${coverageData.total}`}
+                      showLabels={true}
+                      onDetailPress={handleVerDetalhes}
+                    />
+                  </View>
+                </CustomCard>
+
+                <GroupedColumnChart
+                  data={groupedColumnData}
+                  height={180}
+                />
+
+                <EvolutionBarChart
+                  data={evolutionData[selectedPeriod]}
+                  onPeriodChange={handlePeriodChange}
+                  onDetailPress={handleDetailPress}
+                  height={200}
+                />
+              </View>
+            )}
           </ScrollView>
         )}
 
@@ -355,59 +439,89 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  safeArea: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
-  container: {
-    padding: 16,
-    paddingBottom: 40,
-    paddingHorizontal: 25,
-    gap: 8,
+  scrollContent: {
+    paddingBottom: 20,
   },
-  dateRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  cardContent: { padding: 16, width: "100%" },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: '#1A2C3E', marginBottom: 12 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1A1A1A' },
-  dateText: { fontSize: 12, color: '#888' },
+  scrollContentEmpty: {
+    flexGrow: 1,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: "#F8F9FA",
+  },
+  sectionTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dateText: {
+    fontSize: FontSizes.sm,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    backgroundColor: Palette.white,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 28,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#EEF0F2",
+  },
+  emptyStateImage: {
+    width: 220,
+    height: 140,
+    marginBottom: 20,
+  },
+  emptyStateTitle: {
+    fontSize: FontSizes.md + 1,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  emptyStateSubtitle: {
+    fontSize: FontSizes.base,
+    color: Palette.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+    maxWidth: 290,
+    marginBottom: 32,
+  },
+  chartsContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 12,
+  },
+  cardContent: {
+    padding: 16,
+    width: "100%",
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1A2C3E",
+    marginBottom: 12,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  emptyBanner: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#E8D7BD",
-    alignItems: "center",
-    gap: 8,
-  },
-  emptyBannerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A2C3E",
-    textAlign: "center",
-  },
-  emptyBannerText: {
-    fontSize: 13,
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 18,
-  },
-  emptyBannerButton: {
-    marginTop: 4,
-    backgroundColor: "#6BC24A",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  emptyBannerButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 14,
   },
 });

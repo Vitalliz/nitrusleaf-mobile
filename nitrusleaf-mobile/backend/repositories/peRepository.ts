@@ -30,7 +30,6 @@ type DbPeRow = Record<string, unknown> & {
   id_talhao: number;
   nome: string;
   situacao: string;
-  deficiencia_cobre: boolean;
   deficiencia_manganes: boolean;
   outros: boolean;
   observacoes: string | null;
@@ -45,7 +44,7 @@ function mapPe(row: DbPeRow): Pe {
     talhaoId: String(row.id_talhao),
     nome: row.nome,
     situacao: row.situacao as SituacaoPe,
-    deficienciaCobre: Boolean(row.deficiencia_cobre),
+    deficienciaCobre: false,
     deficienciaManganes: Boolean(row.deficiencia_manganes),
     outros: Boolean(row.outros),
     observacoes: row.observacoes ?? undefined,
@@ -71,7 +70,6 @@ export async function createPe(params: CreatePeRequest): Promise<Pe> {
       id_talhao: Number(params.talhaoId),
       nome: params.nome.trim(),
       situacao: params.situacao ?? DEFAULT_SITUACAO,
-      deficiencia_cobre: params.deficienciaCobre ?? false,
       deficiencia_manganes: params.deficienciaManganes ?? false,
       outros: params.outros ?? false,
       observacoes: params.observacoes ?? null,
@@ -119,9 +117,6 @@ export async function updatePe(id: string, params: UpdatePeRequest): Promise<Pe>
 
   if (params.nome !== undefined) patch.nome = params.nome;
   if (params.situacao !== undefined) patch.situacao = params.situacao;
-  if (params.deficienciaCobre !== undefined) {
-    patch.deficiencia_cobre = params.deficienciaCobre;
-  }
   if (params.deficienciaManganes !== undefined) {
     patch.deficiencia_manganes = params.deficienciaManganes;
   }

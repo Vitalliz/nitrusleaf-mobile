@@ -11,24 +11,45 @@ import {
   View,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { CustomCard } from "@/components/cards/card";
-import StatCard from "@/components/cards/stat-card";
-import TalhaoCard, { TalhaoData } from "@/components/cards/talhao-card";
+import { TalhaoData } from "@/components/cards/talhao-card";
 import { Background } from "@/components/ui/background";
-import { Button } from "@/components/ui/button";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { computeTalhaoPeStats } from "@/utils/peStats";
-import { Input } from "@/components/ui/input";
+
+function formatDisplayDate(dateStr?: string | Date): string {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(d.getTime())) return "Sem data";
+  const day = String(d.getDate()).padStart(2, "0");
+  const monthNames = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${month}, ${year}`;
+}
 
 export default function HistoryScreen() {
   const router = useRouter();
@@ -88,19 +109,12 @@ export default function HistoryScreen() {
             dbTalhoes.map(async (t) => {
               const pes = await getPesByTalhao(t.id);
               const stats = computeTalhaoPeStats(pes);
-              const dateStr = t.createdAt
-                ? new Date(t.createdAt).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })
-                : "Sem data";
               return {
                 id: t.id,
                 name: t.name,
                 analyzed: stats.analyzed,
                 total: stats.total,
-                date: dateStr,
+                date: formatDisplayDate(t.createdAt),
                 deficientTrees: stats.deficient,
               };
             })
@@ -124,7 +138,7 @@ export default function HistoryScreen() {
 
   const filteredTalhoes = useMemo(() => {
     let filtered = talhoes.filter((talhao) =>
-      talhao.name.toLowerCase().includes(searchText.toLowerCase()),
+      talhao.name.toLowerCase().includes(searchText.toLowerCase())
     );
     if (sortOrder === "asc") {
       filtered = filtered.sort((a, b) => a.name.localeCompare(b.name));
@@ -154,7 +168,7 @@ export default function HistoryScreen() {
         params: { talhaoId },
       });
     },
-    [router],
+    [router]
   );
 
   const handleAddTalhao = useCallback(() => {
@@ -167,7 +181,10 @@ export default function HistoryScreen() {
         },
       });
     } else {
-      Alert.alert("Aviso", "Cadastre uma propriedade primeiro nas configurações.");
+      Alert.alert(
+        "Aviso",
+        "Cadastre uma propriedade primeiro nas configurações."
+      );
     }
   }, [selectedProperty, router]);
 
@@ -177,9 +194,30 @@ export default function HistoryScreen() {
 
   const renderTalhaoItem = useCallback(
     ({ item }: { item: TalhaoData }) => (
-      <TalhaoCard talhao={item} onPress={() => handleTalhaoPress(item.id)} />
+      <TouchableOpacity
+        style={styles.talhaoCard}
+        activeOpacity={0.7}
+        onPress={() => handleTalhaoPress(item.id)}
+      >
+        <View style={styles.talhaoInfo}>
+          <Text style={styles.talhaoName}>{item.name}</Text>
+          <Text style={styles.talhaoStats}>
+            <Text style={styles.talhaoStatsBold}>
+              {item.analyzed}/{item.total}
+            </Text>{" "}
+            árvores analisadas
+          </Text>
+          <View style={styles.talhaoDateRow}>
+            <Text style={styles.talhaoDateLabel}>Criado em: </Text>
+            <Ionicons name="calendar-outline" size={12} color="#888" />
+            <Text style={styles.talhaoDateValue}> {item.date}</Text>
+          </View>
+        </View>
+
+        <Ionicons name="chevron-forward" size={18} color="#374151" />
+      </TouchableOpacity>
     ),
-    [handleTalhaoPress],
+    [handleTalhaoPress]
   );
 
   const keyExtractor = useCallback((item: TalhaoData) => item.id, []);
@@ -197,22 +235,21 @@ export default function HistoryScreen() {
       <Text style={styles.emptyText}>
         Cadastre seu primeiro talhão para começar a analisar suas árvores!
       </Text>
-      <View style={styles.emptyButtonContainer}>
-        <Button
-          title="Cadastrar Talhão"
-          variant="primary"
-          size="full"
-          icon="add-circle-outline"
-          onPress={handleAddTalhao}
-        />
-      </View>
+      <TouchableOpacity
+        style={styles.cadastrarButton}
+        activeOpacity={0.85}
+        onPress={handleAddTalhao}
+      >
+        <Ionicons name="add" size={20} color={Palette.white} />
+        <Text style={styles.cadastrarButtonText}>Cadastrar Talhão</Text>
+      </TouchableOpacity>
     </View>
   );
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         <Header
           userName={
@@ -234,103 +271,129 @@ export default function HistoryScreen() {
 
         {loading || propertyContextLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6BC24A" />
+            <ActivityIndicator size="large" color={Palette.primary} />
           </View>
         ) : talhoes.length === 0 ? (
           renderEmptyFullScreen()
         ) : (
           <FlatList
-            data={[]}
-            renderItem={() => null}
-            keyExtractor={() => "dummy"}
+            data={filteredTalhoes}
+            renderItem={renderTalhaoItem}
+            keyExtractor={keyExtractor}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
             ListHeaderComponent={
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>Histórico de Análises</Text>
-                <View style={styles.dateRow}>
-                  <Ionicons name="calendar-outline" size={14} color="#888" />
-                  <Text style={styles.date}>
-                    {new Date().toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </Text>
-                </View>
-              </View>
-            }
-            ListFooterComponent={
               <>
-                <View style={styles.dadosGeraisCard}>
-                  <Text style={styles.cardTitle}>Dados Gerais</Text>
-                  <View style={styles.statsRow}>
-                    <StatCard
-                      icon="search-outline"
-                      iconColor="#2196F3"
-                      backgroundColor="#E3F2FD"
-                      label="Árvores Analisadas"
-                      value={`${totalAnalyzed}/${totalTrees}`}
-                    />
-                    <StatCard
-                      icon="leaf-outline"
-                      iconColor="#4CAF50"
-                      backgroundColor="#E8F5E9"
-                      label="Árvores com deficiência detectada"
-                      value={String(totalDeficient)}
-                    />
+                {/* Título da Seção com Data */}
+                <View style={styles.titleContainer}>
+                  <Text style={styles.sectionHeaderTitle}>
+                    Histórico de Análises
+                  </Text>
+                  <View style={styles.dateRow}>
+                    <Ionicons name="calendar-outline" size={14} color="#888" />
+                    <Text style={styles.dateText}>{formatDisplayDate()}</Text>
                   </View>
                 </View>
 
-                <CustomCard variant="white-large-feet">
-                  <View style={styles.cardInnerContent}>
-                    <Text style={styles.cardTitle}>Talhões</Text>
-                    <Input
-                      placeholder="Buscar"
-                      value={searchText}
-                      onChangeText={setSearchText}
-                      rightIcon="search-outline"
-                      size="full"
-                    />
+                {/* Card Dados Gerais */}
+                <View style={styles.dadosGeraisCard}>
+                  <Text style={styles.dadosGeraisTitle}>Dados Gerais</Text>
 
-                    <Button
-                      title="Cadastrar Talhão"
-                      variant="primary"
-                      size="full"
-                      icon="add-circle-outline"
-                      onPress={handleAddTalhao}
-                    />
-
-                    <View style={styles.listHeader}>
-                      <Text style={styles.listCount}>
-                        {filteredTalhoes.length} Talhões cadastrados
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.sortButton}
-                        onPress={handleSortToggle}
-                      >
-                        <Text style={styles.sortText}>Ordenar</Text>
+                  <View style={styles.statsRow}>
+                    {/* Stat: Árvores Analisadas */}
+                    <View style={styles.statBox}>
+                      <View style={styles.statHeaderRow}>
                         <Ionicons
-                          name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
-                          size={14}
-                          color="#666"
+                          name="search-outline"
+                          size={22}
+                          color="#2563EB"
                         />
-                      </TouchableOpacity>
+                        <Text style={styles.statLabel}>Árvores Analisadas</Text>
+                      </View>
+                      <Text style={styles.statNumberGroup}>
+                        <Text style={styles.statNumberBig}>
+                          {totalAnalyzed}
+                        </Text>
+                        <Text style={styles.statNumberTotal}>
+                          /{totalTrees}
+                        </Text>
+                      </Text>
                     </View>
 
-                    <FlatList
-                      data={filteredTalhoes}
-                      renderItem={renderTalhaoItem}
-                      keyExtractor={keyExtractor}
-                      scrollEnabled={false}
-                      initialNumToRender={5}
-                      maxToRenderPerBatch={3}
-                      windowSize={5}
+                    {/* Stat: Deficiência Detectada */}
+                    <View style={styles.statBox}>
+                      <View style={styles.statHeaderRow}>
+                        <Ionicons
+                          name="leaf-outline"
+                          size={22}
+                          color="#22C55E"
+                        />
+                        <Text style={styles.statLabel}>
+                          Árvores com deficiência detectada
+                        </Text>
+                      </View>
+                      <Text style={styles.statNumberBig}>
+                        {totalDeficient}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Seção Talhões */}
+                <View style={styles.talhoesSection}>
+                  <Text style={styles.talhoesTitle}>Talhões</Text>
+
+                  {/* Input de Busca */}
+                  <View style={styles.searchContainer}>
+                    <TextInput
+                      placeholder="Buscar talhão"
+                      placeholderTextColor={Palette.textSecondary}
+                      value={searchText}
+                      onChangeText={setSearchText}
+                      style={styles.searchInput}
+                    />
+                    <Ionicons
+                      name="search-outline"
+                      size={20}
+                      color="#888"
+                      style={styles.searchIcon}
                     />
                   </View>
-                </CustomCard>
+
+                  {/* Botão Cadastrar Talhão Pill */}
+                  <TouchableOpacity
+                    style={styles.cadastrarButton}
+                    activeOpacity={0.85}
+                    onPress={handleAddTalhao}
+                  >
+                    <Ionicons name="add" size={20} color={Palette.white} />
+                    <Text style={styles.cadastrarButtonText}>
+                      Cadastrar Talhão
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Linha Contagem e Botão Ordenar */}
+                  <View style={styles.listSubHeader}>
+                    <Text style={styles.listCount}>
+                      {filteredTalhoes.length} Talhões cadastrados
+                    </Text>
+
+                    <TouchableOpacity
+                      style={styles.sortButton}
+                      activeOpacity={0.7}
+                      onPress={handleSortToggle}
+                    >
+                      <Ionicons
+                        name="reorder-three-outline"
+                        size={18}
+                        color="#374151"
+                      />
+                      <Text style={styles.sortText}>Ordenar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </>
             }
-            contentContainerStyle={styles.container}
-            showsVerticalScrollIndicator={false}
           />
         )}
 
@@ -349,101 +412,222 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  container: {
-    padding: 16,
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 40,
-    paddingHorizontal: 25,
-    gap: 16,
   },
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 4,
+    marginBottom: 16,
+    paddingTop: 4,
   },
-  title: {
+  sectionHeaderTitle: {
     fontSize: 17,
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
   },
   dateRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  date: {
-    fontSize: 14,
-    color: "#888",
+  dateText: {
+    fontSize: FontSizes.sm,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
   },
 
-  /* CARD DADOS GERAIS */
+  /* Card Dados Gerais */
   dadosGeraisCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     borderRadius: 16,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
     padding: 16,
-    marginBottom: 16,
-    borderTopWidth: 4,
-    borderTopColor: "#F5A623",
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#EEF0F2",
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  cardTitle: {
+  dadosGeraisTitle: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    marginBottom: 16,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 14,
   },
   statsRow: {
     flexDirection: "row",
     gap: 12,
     width: "100%",
-    alignItems: "stretch",
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    padding: 12,
+    justifyContent: "space-between",
+    minHeight: 105,
+  },
+  statHeaderRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  statLabel: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: FontWeights.semiBold,
+    color: "#374151",
+    lineHeight: 14,
+  },
+  statNumberGroup: {
+    textAlign: "center",
+    marginTop: 8,
+  },
+  statNumberBig: {
+    fontSize: 22,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: "center",
+    marginTop: 8,
+  },
+  statNumberTotal: {
+    fontSize: 14,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textSecondary,
   },
 
-  /* CARD TALHÕES */
-  cardInnerContent: {
+  /* Seção Talhões */
+  talhoesSection: {
     width: "100%",
-    padding: 16,
-    paddingHorizontal: 25,
+  },
+  talhoesTitle: {
+    fontSize: 16,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 12,
+  },
+  searchContainer: {
+    position: "relative",
+    width: "100%",
+    height: 46,
+    backgroundColor: Palette.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: "#1A2C3E",
+    paddingLeft: 14,
+    paddingRight: 40,
+    fontSize: FontSizes.base,
+    color: Palette.textPrimary,
   },
-  listHeader: {
+  searchIcon: {
+    position: "absolute",
+    right: 14,
+  },
+  cadastrarButton: {
+    width: "100%",
+    height: 48,
+    backgroundColor: Palette.primary,
+    borderRadius: 24,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 16,
+  },
+  cadastrarButtonText: {
+    color: Palette.white,
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.semiBold,
+  },
+  listSubHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 16,
-    paddingBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
+    marginBottom: 12,
   },
   listCount: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A1A1A",
+    fontSize: 13,
+    fontWeight: FontWeights.medium,
+    color: Palette.textSecondary,
   },
   sortButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 6,
   },
   sortText: {
     fontSize: 12,
-    color: "#666",
+    fontWeight: FontWeights.semiBold,
+    color: "#374151",
   },
 
-  /* EMPTY STATE TELA CHEIA */
+  /* Cards Individuais de Talhão */
+  talhaoCard: {
+    backgroundColor: Palette.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  talhaoInfo: {
+    flex: 1,
+  },
+  talhaoName: {
+    fontSize: 15,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 4,
+  },
+  talhaoStats: {
+    fontSize: 13,
+    color: "#374151",
+    marginBottom: 6,
+  },
+  talhaoStatsBold: {
+    fontWeight: FontWeights.bold,
+  },
+  talhaoDateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  talhaoDateLabel: {
+    fontSize: 11,
+    color: Palette.textSecondary,
+  },
+  talhaoDateValue: {
+    fontSize: 11,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
+
+  /* Empty State Tela Cheia */
   emptyFullScreen: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 25,
     gap: 8,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Palette.white,
     marginVertical: 30,
   },
   emptyImage: {
@@ -453,19 +637,15 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#1A1A1A",
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     textAlign: "center",
   },
   emptyText: {
     fontSize: 14,
-    color: "#888",
+    color: Palette.textSecondary,
     textAlign: "center",
     lineHeight: 20,
-    marginBottom: 8,
-  },
-  emptyButtonContainer: {
-    width: "100%",
-    marginTop: 16,
+    marginBottom: 12,
   },
 });

@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -12,39 +11,71 @@ import {
   View,
   ActivityIndicator,
   Image,
+  TextInput,
+  FlatList,
 } from "react-native";
 
-import { CustomCard } from "@/components/cards/card";
 import { Background } from "@/components/ui/background";
-import { Button } from "@/components/ui/button";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
 import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { useProperty } from "@/contexts/PropertyContext";
-import { getTalhaoById, updateTalhao, deleteTalhao } from "@/repositories/talhaoRepository";
+import {
+  getTalhaoById,
+  updateTalhao,
+  deleteTalhao,
+} from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
-import { Input } from "@/components/ui/input";
 import { TalhaoEditModal } from "@/components/modals/talhao-edit-modal";
-import ArvoreCard from "@/components/cards/arvore-card";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+
+function formatDisplayDate(dateStr?: string | Date): string {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(d.getTime())) return "Sem data";
+  const day = String(d.getDate()).padStart(2, "0");
+  const monthNames = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${month}, ${year}`;
+}
 
 export default function TalhaoDetailScreen() {
   const router = useRouter();
   const { talhaoId } = useLocalSearchParams<{ talhaoId?: string }>();
   const { user } = useAuth();
-  const { selectedProperty } = useProperty();
+  const {
+    selectedProperty,
+    showPropertyPicker,
+    canSwitchProperty,
+    loading: propertyContextLoading,
+  } = useProperty();
 
   const [searchText, setSearchText] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const [dbUser, setDbUser] = useState<any>(null);
   const [talhao, setTalhao] = useState<any>(null);
   const [arvores, setArvores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Lista de filtros estritamente sem menção a cobre
   const [selectedFilter, setSelectedFilter] = useState("Todos");
-  const filters = ["Todos", "Manganês", "Cobre", "Adversos"];
+  const filters = ["Todos", "Manganês", "Adversos"];
 
   const [editModalVisible, setEditModalVisible] = useState(false);
 
@@ -65,24 +96,15 @@ export default function TalhaoDetailScreen() {
           const dbTrees = await getPesByTalhao(talhaoId);
           const mapped = dbTrees.map((tree) => {
             const defs = [];
-            if (tree.deficienciaCobre) defs.push("Cobre");
             if (tree.deficienciaManganes) defs.push("Manganês");
-            if (tree.outros) defs.push("Outros");
-
-            const dateStr = tree.createdAt
-              ? new Date(tree.createdAt).toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })
-              : 'Sem data';
+            if (tree.outros) defs.push("Adversos");
 
             return {
               id: tree.id,
               name: tree.nome,
-              deficiency: defs.length > 0 ? defs.join(", ") : null,
+              deficiency: defs.length > 0 ? defs[0] : null,
               status: tree.situacao || "Sem-informações",
-              date: dateStr,
+              date: formatDisplayDate(tree.createdAt),
             };
           });
           if (isActive) setArvores(mapped);
@@ -101,19 +123,23 @@ export default function TalhaoDetailScreen() {
     }, [user?.id, talhaoId])
   );
 
-  const filteredArvores = arvores.filter((arvore) => {
-    const matchesSearch = arvore.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesFilter =
-      selectedFilter === "Todos" ||
-      (arvore.deficiency && arvore.deficiency.includes(selectedFilter));
-    return matchesSearch && matchesFilter;
-  });
+  const filteredArvores = useMemo(() => {
+    let result = arvores.filter((arvore) => {
+      const matchesSearch = arvore.name
+        .toLowerCase()
+        .includes(searchText.toLowerCase());
+      const matchesFilter =
+        selectedFilter === "Todos" ||
+        (arvore.deficiency && arvore.deficiency === selectedFilter);
+      return matchesSearch && matchesFilter;
+    });
 
-  const sortedArvores = [...filteredArvores].sort((a, b) => {
-    const numA = parseInt(a.id);
-    const numB = parseInt(b.id);
-    return sortOrder === "asc" ? numA - numB : numB - numA;
-  });
+    return result.sort((a, b) => {
+      return sortOrder === "asc"
+        ? a.name.localeCompare(b.name, undefined, { numeric: true })
+        : b.name.localeCompare(a.name, undefined, { numeric: true });
+    });
+  }, [arvores, searchText, selectedFilter, sortOrder]);
 
   const handleBackPress = useCallback(() => {
     safeBack(router, ROUTES.history);
@@ -126,7 +152,7 @@ export default function TalhaoDetailScreen() {
         params: { treeId: arvoreId },
       });
     },
-    [router],
+    [router]
   );
 
   const handleAddArvore = useCallback(() => {
@@ -142,11 +168,14 @@ export default function TalhaoDetailScreen() {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   }, []);
 
-  const handleSaveTalhao = useCallback(async (newName: string) => {
-    if (!talhaoId) return;
-    await updateTalhao(talhaoId, { name: newName });
-    setTalhao((prev: any) => ({ ...prev, name: newName }));
-  }, [talhaoId]);
+  const handleSaveTalhao = useCallback(
+    async (newName: string) => {
+      if (!talhaoId) return;
+      await updateTalhao(talhaoId, { name: newName });
+      setTalhao((prev: any) => ({ ...prev, name: newName }));
+    },
+    [talhaoId]
+  );
 
   const handleDeleteTalhao = useCallback(async () => {
     if (!talhaoId) return;
@@ -154,162 +183,245 @@ export default function TalhaoDetailScreen() {
     safeBack(router, ROUTES.history);
   }, [talhaoId, router]);
 
-  const renderEmptyFullScreen = () => (
-    <View style={styles.emptyFullScreen}>
-      <View style={styles.titleRow}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Ionicons name="arrow-back" size={24} color="#ffffff" />
-        </TouchableOpacity>
-        <View style={styles.titleCenter}>
-          <Text style={styles.title} numberOfLines={1}>
-            {talhao?.name || "Talhão"}
-          </Text>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => setEditModalVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="create-outline" size={20} color="#58B741" />
-          </TouchableOpacity>
+  const renderStatusBadge = (status: string) => {
+    if (status === "Tratado") {
+      return (
+        <View style={[styles.badge, styles.badgeTratado]}>
+          <Ionicons name="checkmark" size={12} color={Palette.white} />
+          <Text style={styles.badgeTextWhite}>Tratado</Text>
         </View>
-        <View style={{ width: 40 }} />
-      </View>
+      );
+    }
 
-      <View style={styles.emptyContent}>
-        <Image
-          source={require("@/assets/images/empty-state-arvore.png")}
-          style={styles.emptyImage}
-          resizeMode="contain"
-        />
-        <Text style={styles.emptyTitle}>
-          Você ainda não cadastrou nenhuma árvore.
-        </Text>
-        <Text style={styles.emptyText}>
-          Cadastre sua primeira árvore para começar a analisar!
-        </Text>
-        <View style={styles.emptyButtonContainer}>
-          <Button
-            title="Cadastrar Árvore"
-            variant="primary"
-            size="full"
-            icon="add-circle-outline"
-            onPress={handleAddArvore}
-          />
+    if (status === "Não-Tratado" || status === "Não tratado") {
+      return (
+        <View style={[styles.badge, styles.badgeNaoTratado]}>
+          <Ionicons name="remove-circle-outline" size={12} color={Palette.white} />
+          <Text style={styles.badgeTextWhite}>Não tratado</Text>
         </View>
+      );
+    }
+
+    return (
+      <View style={[styles.badge, styles.badgeSemInfo]}>
+        <Ionicons name="remove-outline" size={12} color={Palette.textSecondary} />
+        <Text style={styles.badgeTextGray}>Não informado</Text>
       </View>
-    </View>
+    );
+  };
+
+  const renderArvoreItem = useCallback(
+    ({ item }: { item: any }) => (
+      <TouchableOpacity
+        style={styles.arvoreCard}
+        activeOpacity={0.7}
+        onPress={() => handleArvorePress(item.id)}
+      >
+        <View style={styles.cardInfo}>
+          <Text style={styles.arvoreName}>{item.name}</Text>
+
+          <View style={styles.badgesRow}>
+            {item.deficiency && (
+              <View
+                style={[
+                  styles.badge,
+                  item.deficiency === "Manganês"
+                    ? styles.badgeManganes
+                    : styles.badgeAdverso,
+                ]}
+              >
+                <Text style={styles.badgeTextWhite}>{item.deficiency}</Text>
+              </View>
+            )}
+
+            {renderStatusBadge(item.status)}
+          </View>
+
+          <View style={styles.dateRow}>
+            <Text style={styles.dateLabel}>Criado em: </Text>
+            <Ionicons name="calendar-outline" size={12} color={Palette.textSecondary} />
+            <Text style={styles.dateValue}> {item.date}</Text>
+          </View>
+        </View>
+
+        <Ionicons name="chevron-forward" size={18} color={Palette.textPrimary} />
+      </TouchableOpacity>
+    ),
+    [handleArvorePress]
   );
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
 
         <Header
-          userName={loading ? "Carregando..." : (dbUser?.fullName || user?.name || "Usuário")}
-          userSubtitle={loading ? "Carregando..." : (selectedProperty?.name || "Sem propriedade")}
+          userName={
+            loading || propertyContextLoading
+              ? "Carregando..."
+              : dbUser?.fullName || user?.name || "Usuário"
+          }
+          userSubtitle={
+            loading || propertyContextLoading
+              ? "Carregando..."
+              : selectedProperty?.name || "Sem propriedade"
+          }
           userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
           subtitleIcon="location-outline"
-          onMenuPress={() => console.log("Menu pressed")}
+          onPropertyPress={showPropertyPicker}
+          showPropertyChevron={canSwitchProperty}
           onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6BC24A" />
-          </View>
-        ) : arvores.length === 0 ? (
-          <View style={styles.emptyWrapper}>
-            {renderEmptyFullScreen()}
+            <ActivityIndicator size="large" color={Palette.primary} />
           </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.container}>
-            <CustomCard
-              variant="white"
-              bottomContent={
-                <View style={styles.cardContent}>
-                  <View style={styles.titleRow}>
-                    <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-                      <Ionicons name="arrow-back" size={24} color="#ffffff" />
-                    </TouchableOpacity>
-                    <View style={styles.titleCenter}>
-                      <Text style={styles.title} numberOfLines={1}>
-                        {talhao?.name || "Talhão"}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => setEditModalVisible(true)}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="create-outline" size={20} color="#58B741" />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={{ width: 40 }} />
-                  </View>
+          <FlatList
+            data={filteredArvores}
+            renderItem={renderArvoreItem}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            ListHeaderComponent={
+              <>
+                {/* Cabeçalho do Talhão */}
+                <View style={styles.titleRow}>
+                  <TouchableOpacity
+                    style={styles.backButtonCircle}
+                    onPress={handleBackPress}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-back" size={20} color={Palette.white} />
+                  </TouchableOpacity>
 
-                  <View style={styles.searchContainer}>
-                    <Input
-                      placeholder="Buscar árvore"
-                      value={searchText}
-                      onChangeText={setSearchText}
-                      rightIcon="search-outline"
-                      size="full"
+                  <Text style={styles.talhaoTitle} numberOfLines={1}>
+                    {talhao?.name || "Talhão"}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => setEditModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="pencil-outline"
+                      size={18}
+                      color={Palette.textSecondary}
                     />
-                    <Button
-                      title="Cadastrar Árvore"
-                      variant="primary"
-                      size="full"
-                      icon="add-circle-outline"
-                      onPress={handleAddArvore}
-                    />
-                  </View>
-
-                  <View style={styles.filtersContainer}>
-                    <Text style={styles.filtersTitle}>Filtros:</Text>
-                    <View style={styles.filtersRow}>
-                      {filters.map((filter) => {
-                        const active = selectedFilter === filter;
-                        return (
-                          <TouchableOpacity
-                            key={filter}
-                            style={[styles.filterChip, active && styles.filterChipActive]}
-                            onPress={() => setSelectedFilter(filter)}
-                            activeOpacity={0.7}
-                          >
-                            <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                              {filter}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  <View style={styles.listHeader}>
-                    <Text style={styles.listCount}>
-                      {sortedArvores.length} Árvores cadastradas
-                    </Text>
-                    <TouchableOpacity style={styles.sortButton} onPress={handleSortToggle}>
-                      <Text style={styles.sortText}>Ordenar</Text>
-                      <Ionicons
-                        name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
-                        size={14}
-                        color="#666"
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {sortedArvores.map((arvore) => (
-                    <ArvoreCard
-                      key={arvore.id}
-                      arvore={arvore}
-                      onPress={() => handleArvorePress(arvore.id)}
-                    />
-                  ))}
+                  </TouchableOpacity>
                 </View>
-              }
-            />
-          </ScrollView>
+
+                {/* Input de Busca */}
+                <View style={styles.searchContainer}>
+                  <TextInput
+                    placeholder="Buscar árvore"
+                    placeholderTextColor={Palette.textSecondary}
+                    value={searchText}
+                    onChangeText={setSearchText}
+                    style={styles.searchInput}
+                  />
+                  <Ionicons
+                    name="search-outline"
+                    size={20}
+                    color={Palette.textSecondary}
+                    style={styles.searchIcon}
+                  />
+                </View>
+
+                {/* Botão Cadastrar Árvore Pill */}
+                <TouchableOpacity
+                  style={styles.cadastrarButton}
+                  activeOpacity={0.85}
+                  onPress={handleAddArvore}
+                >
+                  <Ionicons name="add" size={20} color={Palette.white} />
+                  <Text style={styles.cadastrarButtonText}>Cadastrar Árvore</Text>
+                </TouchableOpacity>
+
+                {/* Seção Filtros com divisor suave */}
+                <View style={styles.filtersSection}>
+                  <Text style={styles.filtersTitle}>Filtros:</Text>
+                  <View style={styles.filtersDivider} />
+                  <View style={styles.filtersRow}>
+                    {filters.map((filter) => {
+                      const active = selectedFilter === filter;
+                      return (
+                        <TouchableOpacity
+                          key={filter}
+                          style={[
+                            styles.filterChip,
+                            active
+                              ? styles.filterChipActive
+                              : styles.filterChipInactive,
+                          ]}
+                          onPress={() => setSelectedFilter(filter)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.filterChipText,
+                              active && styles.filterChipTextActive,
+                            ]}
+                          >
+                            {filter}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Subcabeçalho da Lista e Botão Ordenar */}
+                <View style={styles.listSubHeader}>
+                  <Text style={styles.listCount}>
+                    {filteredArvores.length} Árvores cadastradas
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.sortButton}
+                    activeOpacity={0.7}
+                    onPress={handleSortToggle}
+                  >
+                    <Ionicons
+                      name="reorder-three-outline"
+                      size={18}
+                      color={Palette.textPrimary}
+                    />
+                    <Text style={styles.sortText}>Ordenar</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            }
+            ListEmptyComponent={() => {
+              const isFiltered = selectedFilter !== "Todos" || searchText.trim().length > 0;
+
+              const emptyTitle = !isFiltered
+                ? "Você ainda não cadastrou nenhuma árvore."
+                : selectedFilter === "Manganês"
+                ? "Nenhuma árvore com deficiência de Manganês"
+                : selectedFilter === "Adversos"
+                ? "Nenhuma árvore com adversos encontrada"
+                : "Nenhuma árvore encontrada";
+
+              const emptySubtitle = !isFiltered
+                ? "Cadastre sua primeira árvore para começar a analisar!"
+                : `Não há árvores com ${selectedFilter.toLowerCase()} registradas neste talhão.`;
+
+              return (
+                <View style={styles.emptyContainer}>
+                  <Image
+                    source={require("@/assets/images/empty-state-arvore.png")}
+                    style={styles.emptyImage}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.emptyTitle}>{emptyTitle}</Text>
+                  <Text style={styles.emptyText}>{emptySubtitle}</Text>
+                </View>
+              );
+            }}
+          />
         )}
 
         <BottomNavbar />
@@ -327,153 +439,252 @@ export default function TalhaoDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-
-  container: {
-    padding: 16,
-    paddingBottom: 40,
-    marginHorizontal: 8,
-  },
-
-  cardContent: { padding: 12 },
-
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    marginBottom: 20,
-  },
-
-  titleCenter: {
+  safeArea: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
   },
-
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A2C3E",
-    flexShrink: 1,
-  },
-
-  editButton: { padding: 4 },
-
-  backButton: {
-    padding: 8,
-    backgroundColor: "#58B741",
-    borderRadius: 500,
-  },
-
-  searchContainer: { marginBottom: 20 },
-
-  listHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
-  },
-
-  listCount: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A2C3E",
-  },
-
-  sortButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-
-  sortText: { fontSize: 12, color: "#666" },
-
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 40,
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
   },
 
-  filtersContainer: { marginBottom: 20 },
+  /* Cabeçalho do Talhão */
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 16,
+  },
+  backButtonCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Palette.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  talhaoTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  editButton: {
+    padding: 4,
+  },
 
-  filtersTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1A1A1A",
+  /* Campo de Busca */
+  searchContainer: {
+    position: "relative",
+    width: "100%",
+    height: 46,
+    backgroundColor: Palette.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Palette.borderDisabled,
+    justifyContent: "center",
     marginBottom: 12,
   },
+  searchInput: {
+    flex: 1,
+    paddingLeft: 14,
+    paddingRight: 40,
+    fontSize: FontSizes.base,
+    color: Palette.textPrimary,
+  },
+  searchIcon: {
+    position: "absolute",
+    right: 14,
+  },
 
+  /* Botão Cadastrar Árvore */
+  cadastrarButton: {
+    width: "100%",
+    height: 48,
+    backgroundColor: Palette.primary,
+    borderRadius: 24,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 16,
+  },
+  cadastrarButtonText: {
+    color: Palette.white,
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.semiBold,
+  },
+
+  /* Filtros */
+  filtersSection: {
+    marginBottom: 16,
+  },
+  filtersTitle: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
+    marginBottom: 6,
+  },
+  filtersDivider: {
+    height: 1,
+    backgroundColor: Palette.surfaceGray,
+    marginBottom: 10,
+  },
   filtersRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-  },
-
-  filterChip: {
-    backgroundColor: "#F1F1F1",
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 999,
-  },
-
-  filterChipActive: { backgroundColor: "#F3D9B1" },
-
-  filterChipText: {
-    fontSize: 14,
-    color: "#444",
-    fontWeight: "500",
-  },
-
-  filterChipTextActive: {
-    color: "#1A1A1A",
-    fontWeight: "700",
-  },
-
-  emptyWrapper: { flex: 1 },
-
-  emptyFullScreen: {
-    flex: 1,
-    paddingHorizontal: 25,
-    backgroundColor: "#FFFFFF",
-    marginVertical: 30,
-  },
-
-  emptyContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
     gap: 8,
   },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 16,
+  },
+  filterChipActive: {
+    backgroundColor: Palette.borderDisabled,
+  },
+  filterChipInactive: {
+    backgroundColor: Palette.surfaceGray,
+  },
+  filterChipText: {
+    fontSize: FontSizes.sm,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
+  filterChipTextActive: {
+    color: Palette.textPrimary,
+    fontWeight: FontWeights.bold,
+  },
 
-  emptyImage: {
-    width: 240,
-    height: 200,
+  /* Linha Contagem e Botão Ordenar */
+  listSubHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
-
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    textAlign: "center",
+  listCount: {
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.medium,
+    color: Palette.textSecondary,
+  },
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Palette.surfaceGray,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    gap: 6,
+  },
+  sortText: {
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semiBold,
+    color: Palette.textPrimary,
   },
 
-  emptyText: {
-    fontSize: 14,
-    color: "#888",
-    textAlign: "center",
-    lineHeight: 20,
+  /* Card Individual de Árvore */
+  arvoreCard: {
+    backgroundColor: Palette.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  arvoreName: {
+    fontSize: FontSizes.base + 1,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
     marginBottom: 8,
   },
+  badgesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  badgeManganes: {
+    backgroundColor: Palette.deficiencyManganese,
+  },
+  badgeAdverso: {
+    backgroundColor: Palette.textSecondary,
+  },
+  badgeTratado: {
+    backgroundColor: Palette.primary,
+  },
+  badgeNaoTratado: {
+    backgroundColor: Palette.error,
+  },
+  badgeSemInfo: {
+    backgroundColor: Palette.surfaceGray,
+  },
+  badgeTextWhite: {
+    color: Palette.white,
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semiBold,
+  },
+  badgeTextGray: {
+    color: Palette.textSecondary,
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.medium,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dateLabel: {
+    fontSize: FontSizes.xs - 1,
+    color: Palette.textSecondary,
+  },
+  dateValue: {
+    fontSize: FontSizes.xs - 1,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
 
-  emptyButtonContainer: {
-    width: "100%",
-    marginTop: 16,
+  /* Empty State */
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    gap: 8,
+  },
+  emptyImage: {
+    width: 220,
+    height: 160,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: "center",
+  },
+  emptyText: {
+    fontSize: FontSizes.base,
+    color: Palette.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+    paddingHorizontal: 20,
   },
 });
