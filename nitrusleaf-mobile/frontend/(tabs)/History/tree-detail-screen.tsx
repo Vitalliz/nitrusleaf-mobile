@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Background } from "@/components/ui/background";
 import BottomNavbar from "@/components/ui/tab-bar";

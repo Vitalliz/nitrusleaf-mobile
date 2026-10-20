@@ -9,12 +9,15 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
-import { ROUTES, openAddProperty } from '@/utils/navigation';
+import { ROUTES, openAddProperty, safeBack } from '@/utils/navigation';
 import { Background } from '@/components/ui/background';
 import TabBar from '@/components/ui/tab-bar';
 import { CustomAlert, AlertType } from '@/components/ui/alert';
@@ -29,36 +32,27 @@ import {
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
 
 type MenuItem = {
+  id: string;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle?: string;
   route?: string;
+  action?: 'switch_property' | 'add_property';
 };
-
-const MENU_ITEMS: MenuItem[] = [
-  {
-    icon: 'settings-outline',
-    label: 'Configurações',
-    route: '/(tabs)/Settings/settings-all',
-  },
-  {
-    icon: 'cube-outline',
-    label: 'Nova Propriedade',
-    subtitle: 'Cadastrar nova propriedade',
-    route: ROUTES.addProperty,
-  },
-];
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
 
-  const { selectedProperty } = useProperty();
+  const { selectedProperty, properties = [], selectProperty } = useProperty();
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [totalAnalyses, setTotalAnalyses] = useState<number>(0);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [propertyModalVisible, setPropertyModalVisible] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -160,21 +154,72 @@ export default function ProfileScreen() {
     );
   };
 
+  const menuItems: MenuItem[] = [
+    {
+      id: 'switch',
+      icon: 'business-outline',
+      label: 'Trocar Propriedade',
+      subtitle: selectedProperty?.name || 'Selecionar fazenda ativa',
+      action: 'switch_property',
+    },
+    {
+      id: 'settings',
+      icon: 'settings-outline',
+      label: 'Configurações',
+      subtitle: 'Alertas e preferências da conta',
+      route: '/(tabs)/Settings/settings-all',
+    },
+    {
+      id: 'new_prop',
+      icon: 'cube-outline',
+      label: 'Nova Propriedade',
+      subtitle: 'Cadastrar nova propriedade',
+      action: 'add_property',
+    },
+  ];
+
   const handleMenuPress = (item: MenuItem) => {
-    if (!item.route) return;
-    if (item.route === ROUTES.addProperty) {
+    if (item.action === 'switch_property') {
+      setPropertyModalVisible(true);
+      return;
+    }
+    if (item.action === 'add_property') {
       openAddProperty(router);
       return;
     }
-    router.push(item.route as any);
+    if (item.route) {
+      router.push(item.route as any);
+    }
   };
 
+  // Retorno com verificação em cascata: Pilha local -> Histórico de abas -> Rota padrão Home
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
-    } else {
-      router.replace('/(tabs)/Home/home' as any);
+      return;
     }
+
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    safeBack(router, ROUTES.home);
+  };
+
+  const handleSelectProperty = async (item: any) => {
+    try {
+      await selectProperty(item.id);
+    } catch (error) {
+      console.error('Erro ao trocar de propriedade:', error);
+    } finally {
+      setPropertyModalVisible(false);
+    }
+  };
+
+  const handleAddProperty = () => {
+    setPropertyModalVisible(false);
+    openAddProperty(router);
   };
 
   return (
@@ -186,13 +231,14 @@ export default function ProfileScreen() {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* Cabeçalho Superior */}
+          {/* Cabeçalho */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={handleBack}
                 activeOpacity={0.7}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name="chevron-back" size={22} color={Palette.textPrimary} />
               </TouchableOpacity>
@@ -203,7 +249,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Card Perfil */}
+          {/* Cartão de Perfil com zIndex e elevation para não bloquear toques */}
           <View style={styles.profileCard}>
             <TouchableOpacity
               style={styles.avatarWrapper}
@@ -237,15 +283,20 @@ export default function ProfileScreen() {
               {loading ? '' : dbUser?.email || user?.email || ''}
             </Text>
 
-            {/* Badge de Propriedade */}
-            <View style={styles.propertyBadge}>
-              <Ionicons name="business" size={14} color={Palette.primaryPressed} />
-              <Text style={styles.propertyText}>
-                {loading ? '...' : selectedProperty?.name || 'Sem propriedade'}
+            {/* Botão Interativo de Propriedade Ativa */}
+            <TouchableOpacity
+              style={styles.propertyBadgeButton}
+              activeOpacity={0.7}
+              onPress={() => setPropertyModalVisible(true)}
+            >
+              <Ionicons name="business" size={15} color={Palette.primary} />
+              <Text style={styles.propertyButtonText} numberOfLines={1}>
+                {loading ? 'Carregando...' : selectedProperty?.name || 'Selecionar Propriedade'}
               </Text>
-            </View>
+              <Ionicons name="swap-horizontal" size={16} color={Palette.primary} />
+            </TouchableOpacity>
 
-            {/* Card de Análises */}
+            {/* Cartão de Análises */}
             <View style={styles.analysesCard}>
               <Text style={styles.analysesLabel}>Total de Análises Feitas</Text>
               <View style={styles.analysesBadge}>
@@ -255,17 +306,17 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Configurações</Text>
+            <Text style={styles.sectionTitle}>Menu</Text>
           </View>
 
-          {/* Menu de Configurações */}
+          {/* Lista de Opções */}
           <View style={styles.menuCard}>
-            {MENU_ITEMS.map((item, index) => (
+            {menuItems.map((item, index) => (
               <TouchableOpacity
-                key={item.label}
+                key={item.id}
                 style={[
                   styles.menuItem,
-                  index < MENU_ITEMS.length - 1 && styles.menuItemBorder,
+                  index < menuItems.length - 1 && styles.menuItemBorder,
                 ]}
                 activeOpacity={0.7}
                 onPress={() => handleMenuPress(item)}
@@ -295,7 +346,6 @@ export default function ProfileScreen() {
             <Text style={styles.editButtonText}>Editar Perfil</Text>
           </TouchableOpacity>
 
-          {/* Botão Sair com CustomAlert */}
           <TouchableOpacity
             style={styles.logoutButton}
             activeOpacity={0.8}
@@ -307,6 +357,149 @@ export default function ProfileScreen() {
         </ScrollView>
 
         <TabBar />
+
+        {/* Modal Bottom Sheet de Troca de Propriedade */}
+        <Modal
+          visible={propertyModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPropertyModalVisible(false)}
+        >
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setPropertyModalVisible(false)}
+          >
+            <Pressable
+              style={[
+                styles.sheetContainer,
+                { paddingBottom: Math.max(insets.bottom + 16, 24) },
+              ]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={styles.dragHandle} />
+
+              <View style={styles.sheetHeader}>
+                <View style={styles.sheetTitleContainer}>
+                  <Text style={styles.sheetTitle}>Trocar Propriedade</Text>
+                  <Text style={styles.sheetSubtitle}>
+                    Selecione a fazenda ativa no aplicativo
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setPropertyModalVisible(false)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close" size={20} color={Palette.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.divider} />
+
+              <ScrollView
+                style={styles.propertyList}
+                showsVerticalScrollIndicator={false}
+              >
+                {properties.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Ionicons
+                      name="business-outline"
+                      size={36}
+                      color={Palette.borderDisabled}
+                    />
+                    <Text style={styles.emptyText}>
+                      Nenhuma propriedade cadastrada até o momento.
+                    </Text>
+                  </View>
+                ) : (
+                  properties.map((item) => {
+                    const isSelected =
+                      selectedProperty?.id?.toString() === item?.id?.toString();
+
+                    const locationText = [
+                      item.cidade,
+                      item.bairro || item.regiao,
+                    ]
+                      .filter(Boolean)
+                      .join(' • ');
+
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[
+                          styles.propertyCard,
+                          isSelected && styles.propertyCardSelected,
+                        ]}
+                        activeOpacity={0.75}
+                        onPress={() => handleSelectProperty(item)}
+                      >
+                        <View
+                          style={[
+                            styles.propertyIconBox,
+                            isSelected && styles.propertyIconBoxSelected,
+                          ]}
+                        >
+                          <Ionicons
+                            name="business"
+                            size={20}
+                            color={
+                              isSelected ? Palette.primary : Palette.textSecondary
+                            }
+                          />
+                        </View>
+
+                        <View style={styles.propertyContent}>
+                          <Text
+                            style={[
+                              styles.propertyName,
+                              isSelected && styles.propertyNameSelected,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {item.name}
+                          </Text>
+                          <Text style={styles.propertyLocation} numberOfLines={1}>
+                            {locationText || 'Propriedade rural'}
+                          </Text>
+                        </View>
+
+                        <Ionicons
+                          name={
+                            isSelected
+                              ? 'checkmark-circle'
+                              : 'ellipse-outline'
+                          }
+                          size={22}
+                          color={
+                            isSelected
+                              ? Palette.primary
+                              : Palette.borderDisabled
+                          }
+                        />
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
+              </ScrollView>
+
+              <TouchableOpacity
+                style={styles.addPropertyButton}
+                activeOpacity={0.8}
+                onPress={handleAddProperty}
+              >
+                <Ionicons
+                  name="add-circle-outline"
+                  size={20}
+                  color={Palette.primary}
+                />
+                <Text style={styles.addPropertyButtonText}>
+                  Cadastrar Nova Propriedade
+                </Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
 
         <CustomAlert
           visible={alertConfig.visible}
@@ -349,6 +542,11 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.white,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   headerTitle: {
     fontSize: 18,
@@ -366,6 +564,8 @@ const styles = StyleSheet.create({
     paddingTop: 70,
     paddingBottom: 25,
     paddingHorizontal: 20,
+    zIndex: 10,
+    elevation: 4,
   },
 
   /* AVATAR */
@@ -411,20 +611,31 @@ const styles = StyleSheet.create({
     color: Palette.textSecondary,
     marginTop: 2,
   },
-  propertyBadge: {
+
+  /* BOTÃO DA PROPRIEDADE ATIVA */
+  propertyBadgeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 10,
-    backgroundColor: Palette.surfaceGray,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
+    gap: 8,
+    marginTop: 12,
+    backgroundColor: Palette.white,
+    borderWidth: 1.5,
+    borderColor: Palette.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 3,
+    zIndex: 20,
   },
-  propertyText: {
+  propertyButtonText: {
     fontSize: 13,
-    color: Palette.primaryPressed,
-    fontWeight: '600',
+    color: Palette.primary,
+    fontWeight: '700',
+    maxWidth: 180,
   },
 
   /* CARD ANÁLISES */
@@ -435,7 +646,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: Palette.white,
     borderRadius: 14,
-    marginTop: 16,
+    marginTop: 18,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderWidth: 1,
@@ -554,5 +765,138 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Palette.error,
+  },
+
+  /* MODAL */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  sheetContainer: {
+    backgroundColor: Palette.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    maxHeight: '80%',
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Palette.borderDisabled,
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sheetTitleContainer: {
+    flex: 1,
+  },
+  sheetTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+  },
+  sheetSubtitle: {
+    fontSize: 12,
+    color: Palette.textSecondary,
+    marginTop: 2,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Palette.surfaceGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Palette.surfaceGray,
+    marginVertical: 14,
+  },
+  propertyList: {
+    maxHeight: 300,
+  },
+  propertyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: Palette.borderDisabled,
+    backgroundColor: Palette.white,
+    marginBottom: 10,
+    gap: 12,
+  },
+  propertyCardSelected: {
+    borderColor: Palette.primary,
+    backgroundColor: `${Palette.primary}0D`,
+  },
+  propertyIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: Palette.surfaceGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  propertyIconBoxSelected: {
+    backgroundColor: `${Palette.primary}1A`,
+  },
+  propertyContent: {
+    flex: 1,
+  },
+  propertyName: {
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    marginBottom: 2,
+  },
+  propertyNameSelected: {
+    color: Palette.primary,
+  },
+  propertyLocation: {
+    fontSize: 12,
+    color: Palette.textSecondary,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 12,
+    color: Palette.textSecondary,
+    textAlign: 'center',
+  },
+  addPropertyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: Palette.primary,
+    backgroundColor: Palette.white,
+    marginTop: 10,
+  },
+  addPropertyButtonText: {
+    fontSize: FontSizes.base,
+    fontWeight: FontWeights.bold,
+    color: Palette.primary,
   },
 });

@@ -1,4 +1,6 @@
-import type { Href, Router } from "expo-router";
+import type { Href } from "expo-router";
+
+type Router = typeof import("expo-router").router;
 
 export const ROUTES = {
   home: "/(tabs)/AI/home",
