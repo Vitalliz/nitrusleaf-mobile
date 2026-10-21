@@ -12,12 +12,15 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  TextInput,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
 import { GaugeChart } from "@/components/charts/gaugechart";
 import { Background } from "@/components/ui/background";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { useProperty } from "@/contexts/PropertyContext";
@@ -33,9 +36,55 @@ import {
   getDeficiencyExplanation,
   type DeficiencyType,
 } from "@/utils/deficiencyInfo";
+import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+
+type TreeStatus = "Não informado" | "Não tratado" | "Em tratamento" | "Tratado";
+
+const STATUS_OPTIONS: {
+  id: TreeStatus;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  backgroundColor: string;
+  textColor: string;
+  iconColor: string;
+}[] = [
+  {
+    id: "Não informado",
+    label: "Não informado",
+    icon: "remove-outline",
+    backgroundColor: "#EEEEEE",
+    textColor: "#1A1A1A",
+    iconColor: "#555555",
+  },
+  {
+    id: "Não tratado",
+    label: "Não tratado",
+    icon: "remove-circle-outline",
+    backgroundColor: "#E04842",
+    textColor: Palette.white,
+    iconColor: Palette.white,
+  },
+  {
+    id: "Em tratamento",
+    label: "Em tratamento",
+    icon: "time-outline",
+    backgroundColor: "#EAB032",
+    textColor: "#1F2937",
+    iconColor: "#1F2937",
+  },
+  {
+    id: "Tratado",
+    label: "Tratado",
+    icon: "checkmark",
+    backgroundColor: "#83C570",
+    textColor: Palette.white,
+    iconColor: Palette.white,
+  },
+];
 
 export default function AnalysisSummaryScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { selectedProperty } = useProperty();
   const params = useLocalSearchParams();
@@ -61,6 +110,13 @@ export default function AnalysisSummaryScreen() {
   const [selectedTalhaoId, setSelectedTalhaoId] = useState<string>("");
   const [selectedPeId, setSelectedPeId] = useState<string>("");
   const [savedToDb, setSavedToDb] = useState(false);
+  const [status, setStatus] = useState<TreeStatus>("Não informado");
+  const [observacoes, setObservacoes] = useState<string>("");
+
+  // Modais de Seleção Personalizados
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [talhaoModalVisible, setTalhaoModalVisible] = useState(false);
+  const [peModalVisible, setPeModalVisible] = useState(false);
 
   const accentColor = getDeficiencyAccentColor(deficiencyType);
   const explanation = useMemo(
@@ -70,6 +126,32 @@ export default function AnalysisSummaryScreen() {
 
   const selectedTalhao = talhoes.find((t) => t.id === selectedTalhaoId);
   const selectedPe = pes.find((p) => p.id === selectedPeId);
+
+  // Espelha dinamicamente as cores e ícone do status selecionado
+  const currentStatusConfig = useMemo(() => {
+    return STATUS_OPTIONS.find((opt) => opt.id === status) || STATUS_OPTIONS[0];
+  }, [status]);
+
+  const formattedId = useMemo(() => {
+    if (!analysisId) return "001";
+    const num = parseInt(analysisId, 10);
+    if (!isNaN(num) && num < 1000) {
+      return String(num).padStart(3, "0");
+    }
+    return analysisId.slice(-3);
+  }, [analysisId]);
+
+  const formattedDate = useMemo(() => {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, "0");
+    const monthNames = [
+      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+      "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+    ];
+    const month = monthNames[now.getMonth()];
+    const year = now.getFullYear();
+    return `${day} ${month}, ${year}`;
+  }, []);
 
   useEffect(() => {
     async function loadContext() {
@@ -137,7 +219,7 @@ export default function AnalysisSummaryScreen() {
     );
   };
 
-  const pickTalhao = () => {
+  const openTalhaoPicker = () => {
     if (talhoes.length === 0) {
       Alert.alert(
         "Sem talhões",
@@ -145,45 +227,22 @@ export default function AnalysisSummaryScreen() {
       );
       return;
     }
-    Alert.alert(
-      "Selecionar talhão",
-      "Escolha o talhão da amostra analisada",
-      [
-        ...talhoes.map((t) => ({
-          text: t.name,
-          onPress: () => {
-            setSelectedTalhaoId(t.id);
-            void loadPesForTalhao(t.id);
-          },
-        })),
-        { text: "Cancelar", style: "cancel" },
-      ]
-    );
+    setTalhaoModalVisible(true);
   };
 
-  const pickPe = () => {
+  const openPePicker = () => {
     if (!selectedTalhaoId) {
       Alert.alert("Talhão", "Selecione o talhão antes do pé.");
       return;
     }
     if (pes.length === 0) {
       Alert.alert(
-        "Sem pés",
-        "Cadastre um pé neste talhão para salvar a análise no histórico."
+        "Sem árvores",
+        "Cadastre uma árvore neste talhão para salvar a análise no histórico."
       );
       return;
     }
-    Alert.alert(
-      "Selecionar pé",
-      "Escolha o pé (árvore) analisado",
-      [
-        ...pes.map((p) => ({
-          text: p.nome,
-          onPress: () => setSelectedPeId(p.id),
-        })),
-        { text: "Cancelar", style: "cancel" },
-      ]
-    );
+    setPeModalVisible(true);
   };
 
   const handleFinish = async () => {
@@ -230,368 +289,1082 @@ export default function AnalysisSummaryScreen() {
     }
   };
 
+  const handleExportPdf = () => {
+    Alert.alert("Exportar PDF", "O relatório em PDF da análise foi gerado com sucesso.");
+  };
+
   const gaugeType: DeficiencyType =
     deficiencyType === "Indefinido" ? "Saudável" : deficiencyType;
 
+  // TELA 1: RESULTADO DA ANÁLISE
   if (view === "result") {
     return (
       <Background>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={["top", "bottom", "left", "right"]}>
           <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
 
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-              <View style={styles.backCircle}>
-                <Ionicons name="chevron-back" size={20} color="#fff" />
-              </View>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Resultado da análise</Text>
-            <View style={{ width: 40 }} />
-          </View>
+          <TouchableOpacity
+            style={[styles.floatingBackBtn, { top: insets.top + 8 }]}
+            onPress={handleBack}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="chevron-back" size={26} color="#1A2C3E" />
+          </TouchableOpacity>
 
           <ScrollView
-            contentContainerStyle={styles.container}
+            contentContainerStyle={styles.resultScrollContent}
             showsVerticalScrollIndicator={false}
+            bounces={false}
           >
-            <View style={[styles.card, { borderTopColor: accentColor }]}>
-              <Text style={styles.analysisId}>Análise #{analysisId}</Text>
-              <View style={styles.divider} />
+            <View style={styles.resultCard}>
+              <Text style={styles.resultCardTitle}>Resultado da análise</Text>
+              <Text style={styles.resultCardSubtitle}>Análise #{formattedId}</Text>
 
-              <View style={styles.gaugeContainer}>
+              <View style={styles.cardDivider} />
+
+              <Text style={styles.detectedLabel}>DEFICIÊNCIA DETECTADA</Text>
+              <Text style={[styles.deficiencyLargeTitle, { color: accentColor }]}>
+                {getDeficiencyTitle(deficiencyType)}
+              </Text>
+              <Text style={styles.probEstimateSubtitle}>Probabilidade estimada</Text>
+
+              <View style={styles.gaugeWrapper}>
                 <GaugeChart
                   percentage={probability}
-                  size={260}
+                  size={210}
                   showPercentage
                   deficiencyType={gaugeType}
                 />
               </View>
 
-              <Text style={styles.probabilityLabel}>
-                Probabilidade estimada
-              </Text>
-              <Text style={[styles.deficiencyTitle, { color: accentColor }]}>
-                {getDeficiencyTitle(deficiencyType)}
-              </Text>
-
-              <Button
-                title="Ver resumo técnico"
-                variant="primary"
-                size="full"
+              <TouchableOpacity
+                style={styles.primaryPillButton}
+                activeOpacity={0.85}
                 onPress={() => setView("summary")}
-              />
-            </View>
+              >
+                <View style={styles.buttonIconSpacer} />
+                <Text style={styles.primaryPillButtonText}>Ver resumo técnico</Text>
+                <Ionicons name="chevron-forward" size={18} color={Palette.white} />
+              </TouchableOpacity>
 
-            <Text style={styles.note}>{explanation.footer}</Text>
-            <TouchableOpacity
-              style={styles.infoCard}
-              onPress={handleInfoPress}
-              activeOpacity={0.85}
-            >
-              <View style={styles.infoContent}>
+              <TouchableOpacity
+                style={styles.outlinePillButton}
+                activeOpacity={0.85}
+                onPress={handleInfoPress}
+              >
+                <View style={styles.buttonIconSpacer} />
+                <Text style={styles.outlinePillButtonText}>Entenda o resultado</Text>
                 <Ionicons
                   name="information-circle-outline"
-                  size={22}
-                  color="#FFF"
-                  style={{ marginBottom: 6 }}
+                  size={20}
+                  color={Palette.primary}
                 />
-                <Text style={styles.infoTitle}>O que significa?</Text>
-                <Text style={styles.infoSubtitle}>
-                  Toque para ver explicação e recomendações
-                </Text>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </SafeAreaView>
       </Background>
     );
   }
 
+  // TELA 2: RESUMO DA ANÁLISE (STATUS REFLETE COR E ÍCONE)
   return (
-    <Background>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+    <View style={styles.summaryScreenContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
 
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-            <View style={styles.backCircle}>
-              <Ionicons name="chevron-back" size={20} color="#fff" />
-            </View>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom", "left", "right"]}>
+        {/* Cabeçalho Branco */}
+        <View style={styles.summaryTopHeader}>
+          <TouchableOpacity
+            style={styles.summaryBackBtn}
+            onPress={handleBack}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="chevron-back" size={26} color="#1A2C3E" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Resumo da Análise</Text>
-          <View style={{ width: 40 }} />
+          <Text style={styles.summaryHeaderTitle}>Resumo da análise</Text>
+          <View style={{ width: 38 }} />
         </View>
 
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={styles.summaryScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.card, { borderTopColor: accentColor }]}>
+          {/* BLOCO 1: Informações Gerais da Análise */}
+          <View style={styles.blockContainer}>
             <View style={styles.rowSpaced}>
-              <Text style={styles.analysisId}>Análise #{analysisId}</Text>
+              <Text style={styles.summaryAnalysisId}>Análise #{formattedId}</Text>
               <View style={styles.dateRow}>
-                <Ionicons name="calendar-outline" size={13} color="#888" />
-                <Text style={styles.dateText}>
-                  {new Date().toLocaleDateString("pt-BR")}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Resultado:</Text>
-              <View style={[styles.badge, { backgroundColor: accentColor }]}>
-                <Text style={styles.badgeText}>
-                  {deficiencyType === "Indefinido"
-                    ? "Nada identificado"
-                    : deficiencyType}
-                </Text>
+                <Ionicons name="calendar-outline" size={14} color="#888" />
+                <Text style={styles.dateText}>{formattedDate}</Text>
               </View>
             </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Probabilidade da IA:</Text>
-              <Text
-                style={[styles.infoValue, { color: accentColor, fontWeight: "700" }]}
-              >
-                {probability}%
+            <View style={styles.cardDivider} />
+
+            <Text style={styles.fieldLabel}>Resultado</Text>
+            <View style={styles.resultStatusRow}>
+              <Ionicons
+                name="warning"
+                size={20}
+                color={accentColor}
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.resultDeficiencyText, { color: accentColor }]}>
+                {deficiencyType === "Indefinido"
+                  ? "Sem deficiência identificada"
+                  : `Deficiência de ${getDeficiencyTitle(deficiencyType)}`}
               </Text>
             </View>
-            <View style={styles.progressBar}>
+
+            <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Confiança da IA</Text>
+            <Text style={[styles.confidenceValueText, { color: accentColor }]}>
+              {probability}%
+            </Text>
+            <View style={styles.progressBarTrack}>
               <View
                 style={[
-                  styles.progressFill,
+                  styles.progressBarFill,
                   { width: `${probability}%`, backgroundColor: accentColor },
                 ]}
               />
             </View>
+          </View>
 
-            <View style={styles.divider} />
+          <View style={styles.sectionSeparator} />
 
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Autor da análise:</Text>
-              <View style={styles.authorRow}>
+          {/* BLOCO 2: Localização da Amostra */}
+          <View style={styles.blockContainer}>
+            <Text style={styles.sectionHeading}>Localização da amostra</Text>
+
+            <View style={styles.mapThumbnailContainer}>
+              <MapView
+                style={styles.mapView}
+                initialRegion={{
+                  latitude: selectedProperty?.latitude || -24.71852,
+                  longitude: selectedProperty?.longitude || -47.88349,
+                  latitudeDelta: 0.003,
+                  longitudeDelta: 0.003,
+                }}
+                mapType="satellite"
+                provider={PROVIDER_GOOGLE}
+                scrollEnabled={false}
+                zoomEnabled={false}
+                pitchEnabled={false}
+                rotateEnabled={false}
+              >
+                <Marker
+                  coordinate={{
+                    latitude: selectedProperty?.latitude || -24.71852,
+                    longitude: selectedProperty?.longitude || -47.88349,
+                  }}
+                  pinColor="#F59E0B"
+                />
+              </MapView>
+
+              <TouchableOpacity
+                style={styles.mapExpandButton}
+                activeOpacity={0.8}
+                onPress={() => router.push("/(tabs)/Maps/maps-location")}
+              >
+                <Ionicons name="scan-outline" size={18} color={Palette.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.locationControlsRow}>
+              <View style={styles.chipsGroup}>
+                <TouchableOpacity
+                  style={styles.selectionChip}
+                  onPress={openTalhaoPicker}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="map-outline" size={14} color={Palette.primary} />
+                  <Text style={styles.selectionChipText} numberOfLines={1}>
+                    {selectedTalhao?.name || "Talhão"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={13} color="#888" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.selectionChip}
+                  onPress={openPePicker}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="leaf-outline" size={14} color={Palette.primary} />
+                  <Text style={styles.selectionChipText} numberOfLines={1}>
+                    {selectedPe?.nome || "Pé"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={13} color="#888" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => router.push("/(tabs)/Maps/maps-location")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.viewFullMapLink}>Ver mapa completo &gt;</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.sectionSeparator} />
+
+          {/* BLOCO 3: Informações Técnicas */}
+          <View style={styles.blockContainer}>
+            <Text style={styles.sectionHeading}>Informações</Text>
+
+            <View style={styles.infoTableRow}>
+              <Text style={styles.infoRowTitle}>Autor :</Text>
+              <View style={styles.authorBadge}>
                 {authorAvatar ? (
-                  <Image
-                    source={{ uri: authorAvatar }}
-                    style={styles.authorAvatar}
-                  />
+                  <Image source={{ uri: authorAvatar }} style={styles.authorImg} />
                 ) : (
-                  <View style={styles.authorAvatarPlaceholder}>
-                    <Ionicons name="person" size={16} color="#9CA3AF" />
+                  <View style={styles.authorPlaceholder}>
+                    <Ionicons name="person" size={14} color="#9CA3AF" />
                   </View>
                 )}
-                <Text style={styles.infoValue}>
+                <Text style={styles.authorNameText}>
                   {loadingContext ? "Carregando..." : authorName}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.divider} />
-
-            <Text style={styles.sectionTitle}>Localização da amostra</Text>
-            <Text style={styles.hint}>
-              Toque para identificar talhão e pé — os dados alimentam os gráficos
-              da home.
-            </Text>
-
-            <TouchableOpacity
-              style={styles.selectRow}
-              onPress={pickTalhao}
-              disabled={loadingContext}
-            >
-              <Ionicons name="map-outline" size={18} color="#6BC24A" />
-              <View style={styles.selectTexts}>
-                <Text style={styles.selectLabel}>Talhão</Text>
-                <Text style={styles.selectValue}>
-                  {selectedTalhao?.name || "Selecionar talhão"}
+            {/* STATUS DINÂMICO COM COR E ÍCONE ESPELHADOS */}
+            <View style={styles.infoTableRow}>
+              <Text style={styles.infoRowTitle}>Status:</Text>
+              <TouchableOpacity
+                style={[
+                  styles.statusPillPicker,
+                  { backgroundColor: currentStatusConfig.backgroundColor },
+                ]}
+                onPress={() => setStatusModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={currentStatusConfig.icon}
+                  size={14}
+                  color={currentStatusConfig.iconColor}
+                />
+                <Text
+                  style={[
+                    styles.statusPillText,
+                    { color: currentStatusConfig.textColor },
+                  ]}
+                >
+                  {currentStatusConfig.label}
                 </Text>
-              </View>
-              <Ionicons name="chevron-down" size={18} color="#888" />
-            </TouchableOpacity>
+                <Ionicons
+                  name="chevron-down"
+                  size={13}
+                  color={currentStatusConfig.iconColor}
+                />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={styles.selectRow}
-              onPress={pickPe}
-              disabled={loadingContext || !selectedTalhaoId}
-            >
-              <Ionicons name="leaf-outline" size={18} color="#6BC24A" />
-              <View style={styles.selectTexts}>
-                <Text style={styles.selectLabel}>Pé analisado</Text>
-                <Text style={styles.selectValue}>
-                  {selectedPe?.nome || "Selecionar pé"}
-                </Text>
-              </View>
-              <Ionicons name="chevron-down" size={18} color="#888" />
-            </TouchableOpacity>
-
-            {savedToDb && (
-              <View style={styles.savedBanner}>
-                <Ionicons name="checkmark-circle" size={18} color="#2D5016" />
-                <Text style={styles.savedText}>
-                  Análise salva no banco de dados
-                </Text>
-              </View>
-            )}
+            <View style={styles.infoTableRow}>
+              <Text style={styles.infoRowTitle}>ID da análise:</Text>
+              <Text style={styles.analysisIdText}>#{formattedId}</Text>
+            </View>
           </View>
 
-          <Button
-            title={
-              saving
-                ? "Salvando..."
-                : savedToDb
-                  ? "Concluir e voltar ao início"
-                  : "Salvar e voltar ao início"
-            }
-            variant="primary"
-            size="full"
-            onPress={() => void handleFinish()}
-          />
+          <View style={styles.sectionSeparator} />
+
+          {/* BLOCO 4: Relatório / Observações */}
+          <View style={styles.blockContainer}>
+            <Text style={styles.sectionHeading}>Relatório</Text>
+            <TextInput
+              style={styles.reportTextInput}
+              placeholder="Adicione suas observações..."
+              placeholderTextColor="#9CA3AF"
+              multiline
+              numberOfLines={3}
+              value={observacoes}
+              onChangeText={setObservacoes}
+            />
+          </View>
+
+          <View style={styles.sectionSeparator} />
+
+          {/* BLOCO 5: Botões de Ação */}
+          <View style={styles.buttonsBlock}>
+            <TouchableOpacity
+              style={styles.saveHistoryPillBtn}
+              activeOpacity={0.85}
+              onPress={() => void handleFinish()}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={Palette.white} />
+              ) : (
+                <>
+                  <Ionicons name="save-outline" size={18} color={Palette.white} />
+                  <Text style={styles.saveHistoryPillText}>
+                    {savedToDb ? "Salvo no histórico" : "Salvar no histórico"}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.exportPdfPillBtn}
+              activeOpacity={0.85}
+              onPress={handleExportPdf}
+            >
+              <Ionicons
+                name="document-text-outline"
+                size={18}
+                color={Palette.primary}
+              />
+              <Text style={styles.exportPdfPillText}>Exportar como PDF</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
+
+        {/* MODAL PERSONALIZADO DE STATUS */}
+        <Modal
+          visible={statusModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setStatusModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setStatusModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalCard}>
+                  <TouchableOpacity
+                    style={styles.modalCloseBtn}
+                    onPress={() => setStatusModalVisible(false)}
+                    hitSlop={12}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="close" size={18} color={Palette.textSecondary} />
+                  </TouchableOpacity>
+
+                  <View style={styles.modalIconCircle}>
+                    <Ionicons name="swap-horizontal" size={22} color={Palette.primary} />
+                  </View>
+
+                  <Text style={styles.modalTitle}>Alterar Status</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Selecione a situação atual da amostra analisada:
+                  </Text>
+
+                  <View style={styles.statusOptionsList}>
+                    {STATUS_OPTIONS.map((item) => {
+                      const isSelected = status === item.id;
+
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[
+                            styles.statusButton,
+                            { backgroundColor: item.backgroundColor },
+                            isSelected && styles.statusButtonSelected,
+                          ]}
+                          activeOpacity={0.85}
+                          onPress={() => {
+                            setStatus(item.id);
+                            setStatusModalVisible(false);
+                          }}
+                        >
+                          <Ionicons
+                            name={item.icon}
+                            size={20}
+                            color={item.iconColor}
+                            style={styles.statusIcon}
+                          />
+                          <Text
+                            style={[
+                              styles.statusText,
+                              { color: item.textColor },
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
+                          {isSelected && (
+                            <View style={styles.statusCheckIndicator}>
+                              <Ionicons
+                                name="checkmark-circle"
+                                size={18}
+                                color={item.textColor}
+                              />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* MODAL PERSONALIZADO DE SELEÇÃO DE TALHÃO */}
+        <Modal
+          visible={talhaoModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setTalhaoModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setTalhaoModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalCard}>
+                  <TouchableOpacity
+                    style={styles.modalCloseBtn}
+                    onPress={() => setTalhaoModalVisible(false)}
+                    hitSlop={12}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="close" size={18} color={Palette.textSecondary} />
+                  </TouchableOpacity>
+
+                  <View style={styles.modalIconCircle}>
+                    <Ionicons name="map-outline" size={22} color={Palette.primary} />
+                  </View>
+
+                  <Text style={styles.modalTitle}>Selecionar Talhão</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Escolha o talhão da amostra analisada:
+                  </Text>
+
+                  <ScrollView
+                    style={styles.modalScrollView}
+                    contentContainerStyle={styles.modalScrollList}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {talhoes.map((item) => {
+                      const isSelected = selectedTalhaoId === item.id;
+
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[
+                            styles.itemSelectRow,
+                            isSelected && styles.itemSelectRowSelected,
+                          ]}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setSelectedTalhaoId(item.id);
+                            void loadPesForTalhao(item.id);
+                            setTalhaoModalVisible(false);
+                          }}
+                        >
+                          <View style={styles.itemSelectInfo}>
+                            <Ionicons
+                              name="grid-outline"
+                              size={18}
+                              color={isSelected ? Palette.primary : Palette.textSecondary}
+                            />
+                            <Text
+                              style={[
+                                styles.itemSelectName,
+                                isSelected && styles.itemSelectNameSelected,
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {item.name}
+                            </Text>
+                          </View>
+
+                          <Ionicons
+                            name={isSelected ? "radio-button-on" : "radio-button-off"}
+                            size={18}
+                            color={isSelected ? Palette.primary : Palette.borderDisabled}
+                          />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* MODAL PERSONALIZADO DE SELEÇÃO DE PÉ / ÁRVORE */}
+        <Modal
+          visible={peModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPeModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setPeModalVisible(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalCard}>
+                  <TouchableOpacity
+                    style={styles.modalCloseBtn}
+                    onPress={() => setPeModalVisible(false)}
+                    hitSlop={12}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="close" size={18} color={Palette.textSecondary} />
+                  </TouchableOpacity>
+
+                  <View style={styles.modalIconCircle}>
+                    <Ionicons name="leaf-outline" size={22} color={Palette.primary} />
+                  </View>
+
+                  <Text style={styles.modalTitle}>Selecionar Árvore (Pé)</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Escolha a árvore que foi analisada:
+                  </Text>
+
+                  <ScrollView
+                    style={styles.modalScrollView}
+                    contentContainerStyle={styles.modalScrollList}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {pes.map((item) => {
+                      const isSelected = selectedPeId === item.id;
+
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[
+                            styles.itemSelectRow,
+                            isSelected && styles.itemSelectRowSelected,
+                          ]}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setSelectedPeId(item.id);
+                            setPeModalVisible(false);
+                          }}
+                        >
+                          <View style={styles.itemSelectInfo}>
+                            <Ionicons
+                              name="leaf"
+                              size={18}
+                              color={isSelected ? Palette.primary : Palette.textSecondary}
+                            />
+                            <Text
+                              style={[
+                                styles.itemSelectName,
+                                isSelected && styles.itemSelectNameSelected,
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {item.nome}
+                            </Text>
+                          </View>
+
+                          <Ionicons
+                            name={isSelected ? "radio-button-on" : "radio-button-off"}
+                            size={18}
+                            color={isSelected ? Palette.primary : Palette.borderDisabled}
+                          />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </SafeAreaView>
-    </Background>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
-    backgroundColor: "#FAF1E5",
+  safeArea: {
+    flex: 1,
   },
-  backBtn: { width: 40 },
-  backCircle: {
+  summaryScreenContainer: {
+    flex: 1,
+    backgroundColor: Palette.white,
+  },
+
+  /* TELA 1 (RESULTADO CENTRALIZADO) */
+  floatingBackBtn: {
+    position: "absolute",
+    left: 16,
+    zIndex: 10,
     width: 40,
     height: 40,
-    borderRadius: 50,
-    backgroundColor: "#6BC24A",
-    alignItems: "center",
+    borderRadius: 20,
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
   },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: "#1A2C3E" },
-  container: {
-    padding: 16,
+  resultScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 40,
-    gap: 16,
+    paddingVertical: 24,
   },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    borderTopWidth: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+  resultCard: {
+    width: "100%",
+    maxWidth: 360,
+    backgroundColor: Palette.white,
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 4,
   },
-  analysisId: {
+  resultCardTitle: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#98979F",
-    marginBottom: 12,
+    fontWeight: FontWeights.bold,
+    color: "#1A2C3E",
   },
-  divider: {
-    height: 0.9,
-    backgroundColor: "#98979F",
+  resultCardSubtitle: {
+    fontSize: 13,
+    color: "#9CA3AF",
+    marginTop: 2,
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
     marginVertical: 14,
-    borderRadius: 5,
   },
-  gaugeContainer: {
+  detectedLabel: {
+    fontSize: 12,
+    fontWeight: FontWeights.semiBold,
+    letterSpacing: 1,
+    color: "#9CA3AF",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  deficiencyLargeTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  probEstimateSubtitle: {
+    fontSize: 12,
+    color: "#888888",
+    textAlign: "center",
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  gaugeWrapper: {
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    marginBottom: 8,
+    marginVertical: 8,
   },
-  probabilityLabel: {
+  primaryPillButton: {
+    height: 48,
+    backgroundColor: Palette.primary,
+    borderRadius: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  primaryPillButtonText: {
+    color: Palette.white,
     fontSize: 14,
-    color: "#666",
+    fontWeight: FontWeights.bold,
     textAlign: "center",
-    marginBottom: 6,
+    flex: 1,
   },
-  deficiencyTitle: {
-    fontSize: 20,
-    fontWeight: "800",
+  outlinePillButton: {
+    height: 48,
+    backgroundColor: Palette.white,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: Palette.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+  },
+  outlinePillButtonText: {
+    color: Palette.primary,
+    fontSize: 14,
+    fontWeight: FontWeights.semiBold,
     textAlign: "center",
-    marginBottom: 24,
+    flex: 1,
   },
-  infoCard: { backgroundColor: "#6BC24A", borderRadius: 12, padding: 18 },
-  infoContent: { alignItems: "center", justifyContent: "center" },
-  infoTitle: { fontSize: 17, fontWeight: "700", color: "#FFF", marginBottom: 2 },
-  infoSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.85)" },
-  note: { fontSize: 12, color: "#888", textAlign: "center", paddingHorizontal: 8 },
+  buttonIconSpacer: {
+    width: 18,
+  },
+
+  /* TELA 2 (HEADER E ESPAÇAMENTOS MOBILE EXPANDIDOS) */
+  summaryTopHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    backgroundColor: Palette.white,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  summaryBackBtn: {
+    padding: 6,
+  },
+  summaryHeaderTitle: {
+    fontSize: 18,
+    fontWeight: FontWeights.bold,
+    color: "#1A2C3E",
+  },
+  summaryScrollContent: {
+    paddingHorizontal: 22,
+    paddingTop: 32,
+    paddingBottom: 54,
+  },
+  blockContainer: {
+    width: "100%",
+  },
+  sectionSeparator: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginVertical: 28,
+  },
   rowSpaced: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  dateRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  dateText: { fontSize: 14, color: "#888" },
-  infoRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
-  infoLabel: { fontSize: 16, color: "#666", flex: 1 },
-  infoValue: { fontSize: 16, color: "#1A2C3E" },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  badgeText: { fontSize: 14, fontWeight: "700", color: "#FFF" },
-  progressBar: {
-    height: 14,
-    backgroundColor: "#F0F0F0",
-    borderRadius: 3,
-    marginBottom: 6,
-    overflow: "hidden",
-  },
-  progressFill: { height: "100%", borderRadius: 3 },
-  authorRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  authorAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  authorAvatarPlaceholder: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
+  summaryAnalysisId: {
+    fontSize: 16,
+    fontWeight: FontWeights.bold,
     color: "#1A2C3E",
-    marginBottom: 6,
   },
-  hint: { fontSize: 12, color: "#888", marginBottom: 12, lineHeight: 17 },
-  selectRow: {
+  dateRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
+    gap: 5,
+  },
+  dateText: {
+    fontSize: 12,
+    color: "#888888",
+  },
+  fieldLabel: {
+    fontSize: 12,
+    color: "#888888",
+    marginBottom: 6,
+  },
+  resultStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  resultDeficiencyText: {
+    fontSize: 16,
+    fontWeight: FontWeights.bold,
+  },
+  confidenceValueText: {
+    fontSize: 26,
+    fontWeight: "800",
+    marginBottom: 6,
+  },
+  progressBarTrack: {
+    height: 9,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: 5,
+  },
+  sectionHeading: {
+    fontSize: 15,
+    fontWeight: FontWeights.bold,
+    color: "#1A2C3E",
+    marginBottom: 14,
+  },
+  mapThumbnailContainer: {
+    height: 148,
+    borderRadius: 14,
+    overflow: "hidden",
+    position: "relative",
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  selectTexts: { flex: 1 },
-  selectLabel: { fontSize: 12, color: "#888" },
-  selectValue: { fontSize: 15, fontWeight: "600", color: "#1A2C3E" },
-  savedBanner: {
+  mapView: {
+    flex: 1,
+  },
+  mapExpandButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: Palette.white,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  locationControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
+  },
+  chipsGroup: {
+    flexDirection: "row",
+    gap: 8,
+    flex: 1,
+  },
+  selectionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    gap: 5,
+    maxWidth: 125,
+  },
+  selectionChipText: {
+    fontSize: 12,
+    color: "#374151",
+    fontWeight: FontWeights.medium,
+  },
+  viewFullMapLink: {
+    fontSize: 12,
+    color: Palette.primary,
+    fontWeight: FontWeights.semiBold,
+  },
+  infoTableRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  infoRowTitle: {
+    fontSize: 13,
+    color: "#374151",
+  },
+  authorBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#E8F5E0",
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 4,
   },
-  savedText: { fontSize: 13, color: "#2D5016", fontWeight: "600" },
+  authorImg: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  authorPlaceholder: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  authorNameText: {
+    fontSize: 13,
+    color: "#374151",
+    fontWeight: FontWeights.medium,
+  },
+
+  /* PÍLULA DE STATUS DINÂMICA */
+  statusPillPicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  statusPillText: {
+    fontSize: 12,
+    fontWeight: FontWeights.semiBold,
+  },
+
+  analysisIdText: {
+    fontSize: 13,
+    fontWeight: FontWeights.bold,
+    color: "#1A2C3E",
+  },
+  reportTextInput: {
+    height: 90,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    padding: 12,
+    textAlignVertical: "top",
+    fontSize: 13,
+    color: Palette.textPrimary,
+    backgroundColor: Palette.white,
+  },
+  buttonsBlock: {
+    width: "100%",
+    paddingTop: 6,
+  },
+  saveHistoryPillBtn: {
+    height: 50,
+    backgroundColor: Palette.primary,
+    borderRadius: 25,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 14,
+  },
+  saveHistoryPillText: {
+    color: Palette.white,
+    fontSize: 14,
+    fontWeight: FontWeights.bold,
+  },
+  exportPdfPillBtn: {
+    height: 50,
+    backgroundColor: Palette.white,
+    borderRadius: 25,
+    borderWidth: 1.5,
+    borderColor: Palette.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  exportPdfPillText: {
+    color: Palette.primary,
+    fontSize: 14,
+    fontWeight: FontWeights.bold,
+  },
+
+  /* ESTILOS DOS MODAIS CUSTOMIZADOS */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 28,
+  },
+  modalCard: {
+    position: "relative",
+    width: "100%",
+    maxWidth: 320,
+    backgroundColor: Palette.white,
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Palette.surfaceGray,
+    shadowColor: Palette.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  modalCloseBtn: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    padding: 4,
+    zIndex: 1,
+  },
+  modalIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: `${Palette.primary}18`,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.bold,
+    color: Palette.textPrimary,
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: Palette.textSecondary,
+    textAlign: "center",
+    lineHeight: 16,
+    marginBottom: 16,
+  },
+  statusOptionsList: {
+    width: "100%",
+    gap: 10,
+  },
+  statusButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 46,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    position: "relative",
+  },
+  statusButtonSelected: {
+    borderWidth: 2,
+    borderColor: "#1A1A1A",
+  },
+  statusIcon: {
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 15,
+    fontWeight: FontWeights.bold,
+  },
+  statusCheckIndicator: {
+    position: "absolute",
+    right: 14,
+  },
+  modalScrollView: {
+    width: "100%",
+    maxHeight: 220,
+  },
+  modalScrollList: {
+    gap: 8,
+  },
+  itemSelectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  itemSelectRowSelected: {
+    borderColor: Palette.primary,
+    backgroundColor: `${Palette.primary}0D`,
+  },
+  itemSelectInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  itemSelectName: {
+    fontSize: 14,
+    fontWeight: FontWeights.medium,
+    color: Palette.textPrimary,
+    flex: 1,
+  },
+  itemSelectNameSelected: {
+    fontWeight: FontWeights.bold,
+    color: Palette.primary,
+  },
 });

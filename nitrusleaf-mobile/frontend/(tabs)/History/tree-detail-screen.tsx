@@ -3,13 +3,13 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ActivityIndicator,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,24 +22,49 @@ import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { useProperty } from "@/contexts/PropertyContext";
 import { getPeById, updatePe, deletePe } from "@/repositories/peRepository";
 import { getRelatoriosByPe } from "@/repositories/relatorioRepository";
-import { syncTalhaoStatsFromPes } from "@/services/syncTalhaoStats";
 import { ArvoreEditModal } from "@/components/modals/arvore-edit-modal";
-import AnalysisCard, { AnalysisData } from "@/components/cards/analysis-card";
 import { mapRelatorioToAnalysisData } from "@/utils/relatorioDisplay";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+
+function formatDisplayDate(dateStr?: string | Date): string {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  if (isNaN(d.getTime())) return "Sem data";
+  const day = String(d.getDate()).padStart(2, "0");
+  const monthNames = [
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
+  ];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${month}, ${year}`;
+}
 
 export default function HistoryTreeScreen() {
   const { treeId } = useLocalSearchParams<{ treeId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { selectedProperty } = useProperty();
+  const {
+    selectedProperty,
+    showPropertyPicker,
+    canSwitchProperty,
+    loading: propertyContextLoading,
+  } = useProperty();
 
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [dbUser, setDbUser] = useState<any>(null);
   const [arvore, setArvore] = useState<any>(null);
-  const [analyses, setAnalyses] = useState<AnalysisData[]>([]);
+  const [analyses, setAnalyses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savingTratado, setSavingTratado] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
   const [alertConfig, setAlertConfig] = useState<{
@@ -68,31 +93,32 @@ export default function HistoryTreeScreen() {
     if (action) action();
   }, [alertConfig.onCloseAction]);
 
-  const reloadTreeData = useCallback(async () => {
-    if (!user?.id || !treeId) return;
-    const details = await getUsuarioDetails(user.id);
-    setDbUser(details);
-
-    const tree = await getPeById(treeId);
-    setArvore(tree);
-
-    const relatorios = await getRelatoriosByPe(treeId);
-    setAnalyses(
-      relatorios.map((r) => mapRelatorioToAnalysisData(r, tree?.situacao))
-    );
-  }, [user?.id, treeId]);
-
   const loadData = useCallback(async () => {
     if (!user?.id || !treeId) return;
     try {
       setLoading(true);
-      await reloadTreeData();
+      const details = await getUsuarioDetails(user.id);
+      setDbUser(details);
+
+      const tree = await getPeById(treeId);
+      setArvore(tree);
+
+      const relatorios = await getRelatoriosByPe(treeId);
+      const mapped = relatorios.map((r: any) => {
+        const itemData = mapRelatorioToAnalysisData(r, tree?.situacao);
+        return {
+          ...itemData,
+          rawDate: r.createdAt || r.data,
+          displayDate: formatDisplayDate(r.createdAt || r.data),
+        };
+      });
+      setAnalyses(mapped);
     } catch (err) {
-      console.error("Erro ao carregar árvore:", err);
+      console.error("Erro ao carregar árvore e análises:", err);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, treeId, reloadTreeData]);
+  }, [user?.id, treeId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -104,7 +130,12 @@ export default function HistoryTreeScreen() {
     return [...analyses].sort((a, b) => {
       const nA = parseInt(a.id, 10);
       const nB = parseInt(b.id, 10);
-      return sortOrder === "asc" ? nA - nB : nB - nA;
+      if (!isNaN(nA) && !isNaN(nB)) {
+        return sortOrder === "asc" ? nA - nB : nB - nA;
+      }
+      return sortOrder === "asc"
+        ? String(a.id).localeCompare(String(b.id))
+        : String(b.id).localeCompare(String(a.id));
     });
   }, [analyses, sortOrder]);
 
@@ -112,8 +143,12 @@ export default function HistoryTreeScreen() {
     safeBack(router, ROUTES.history);
   }, [router]);
 
+  const handleSortToggle = useCallback(() => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  }, []);
+
   const handleViewAnalysis = useCallback(
-    (analysis: AnalysisData) => {
+    (analysis: any) => {
       router.push({
         pathname: ROUTES.analysisSummary,
         params: {
@@ -145,22 +180,100 @@ export default function HistoryTreeScreen() {
     safeBack(router, ROUTES.history);
   }, [treeId, router]);
 
+  const renderStatusBadge = (status?: string) => {
+    const s = status?.toLowerCase() || "";
+
+    if (s.includes("tratamento") || s.includes("andamento")) {
+      return (
+        <View style={[styles.badge, styles.badgeEmTratamento]}>
+          <Ionicons name="time-outline" size={13} color={Palette.white} />
+          <Text style={styles.badgeTextWhite}>Em tratamento</Text>
+        </View>
+      );
+    }
+
+    if (s === "tratado") {
+      return (
+        <View style={[styles.badge, styles.badgeTratado]}>
+          <Ionicons name="checkmark" size={13} color={Palette.white} />
+          <Text style={styles.badgeTextWhite}>Tratado</Text>
+        </View>
+      );
+    }
+
+    if (s.includes("não-tratado") || s.includes("não tratado")) {
+      return (
+        <View style={[styles.badge, styles.badgeNaoTratado]}>
+          <Ionicons name="remove-circle-outline" size={13} color={Palette.white} />
+          <Text style={styles.badgeTextWhite}>Não tratado</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={[styles.badge, styles.badgeSemInfo]}>
+        <Ionicons name="remove-outline" size={13} color={Palette.textSecondary} />
+        <Text style={styles.badgeTextGray}>Não informado</Text>
+      </View>
+    );
+  };
+
+  const renderAnalysisCard = useCallback(
+    ({ item }: { item: any }) => {
+      const numId = parseInt(item.id, 10);
+      const title = !isNaN(numId)
+        ? `Análise #${String(numId).padStart(2, "0")}`
+        : item.title || `Análise #${item.id}`;
+
+      return (
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.7}
+          onPress={() => handleViewAnalysis(item)}
+        >
+          <View style={styles.cardInfo}>
+            <Text style={styles.cardTitle}>{title}</Text>
+
+            <View style={styles.badgesRow}>
+              {renderStatusBadge(item.status || arvore?.situacao)}
+            </View>
+
+            <View style={styles.dateRow}>
+              <Text style={styles.dateLabel}>Criado em: </Text>
+              <Ionicons name="calendar-outline" size={12} color="#888" />
+              <Text style={styles.dateValue}> {item.displayDate}</Text>
+            </View>
+          </View>
+
+          <Ionicons name="chevron-forward" size={18} color="#374151" />
+        </TouchableOpacity>
+      );
+    },
+    [arvore?.situacao, handleViewAnalysis]
+  );
+
   const treeName = arvore?.nome || `Árvore #${String(treeId).padStart(2, "0")}`;
 
   return (
     <Background>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         <Header
           userName={
-            loading ? "Carregando..." : dbUser?.fullName || user?.name || "Usuário"
+            loading || propertyContextLoading
+              ? "Carregando..."
+              : dbUser?.fullName || user?.name || "Usuário"
           }
           userSubtitle={
-            loading ? "Carregando..." : selectedProperty?.name || "Sem propriedade"
+            loading || propertyContextLoading
+              ? "Carregando..."
+              : selectedProperty?.name || "Sem propriedade"
           }
           userAvatar={dbUser?.avatarUrl}
           subtitleIcon="location-outline"
+          onPropertyPress={showPropertyPicker}
+          showPropertyChevron={canSwitchProperty}
           onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />
 
@@ -169,88 +282,74 @@ export default function HistoryTreeScreen() {
             <ActivityIndicator size="large" color={Palette.primary} />
           </View>
         ) : (
-          <ScrollView
+          <FlatList
+            data={sortedAnalyses}
+            renderItem={renderAnalysisCard}
+            keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {/* Header da Árvore */}
-            <View style={styles.titleRow}>
-              <TouchableOpacity
-                style={styles.backButtonCircle}
-                onPress={handleBack}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-back" size={20} color={Palette.white} />
-              </TouchableOpacity>
+            contentContainerStyle={styles.listContent}
+            ListHeaderComponent={
+              <>
+                {/* Linha do Título com Botão Circular Verde */}
+                <View style={styles.titleRow}>
+                  <TouchableOpacity
+                    style={styles.backButtonCircle}
+                    onPress={handleBack}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-back" size={20} color={Palette.white} />
+                  </TouchableOpacity>
 
-              <Text style={styles.title} numberOfLines={1}>
-                {treeName}
-              </Text>
+                  <Text style={styles.treeTitle} numberOfLines={1}>
+                    {treeName}
+                  </Text>
 
-              {/* Ícone de edição original mantido */}
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => setEditModalVisible(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name="create-outline"
-                  size={20}
-                  color={Palette.primary}
-                />
-              </TouchableOpacity>
-            </View>
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => setEditModalVisible(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="create-outline"
+                      size={20}
+                      color={Palette.primary}
+                    />
+                  </TouchableOpacity>
+                </View>
 
-            {/* Cabeçalho da Lista de Análises */}
-            <View style={styles.listHeader}>
-              <Text style={styles.listCount}>
-                {sortedAnalyses.length} Análises realizadas
-              </Text>
-              <TouchableOpacity
-                style={styles.sortButton}
-                activeOpacity={0.7}
-                onPress={() =>
-                  setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
-                }
-              >
-                <Ionicons
-                  name="reorder-three-outline"
-                  size={18}
-                  color={Palette.textPrimary}
-                />
-                <Text style={styles.sortText}>Ordenar</Text>
-              </TouchableOpacity>
-            </View>
+                {/* Subcabeçalho de Contagem e Botão Ordenar */}
+                <View style={styles.listSubHeader}>
+                  <Text style={styles.listCount}>
+                    {sortedAnalyses.length} Análises realizadas
+                  </Text>
 
-            {savingTratado && (
-              <ActivityIndicator
-                size="small"
-                color={Palette.primary}
-                style={styles.savingIndicator}
-              />
-            )}
-
-            {/* Lista de Análises */}
-            {sortedAnalyses.length === 0 ? (
+                  <TouchableOpacity
+                    style={styles.sortButton}
+                    activeOpacity={0.7}
+                    onPress={handleSortToggle}
+                  >
+                    <Ionicons
+                      name="reorder-three-outline"
+                      size={18}
+                      color="#374151"
+                    />
+                    <Text style={styles.sortText}>Ordenar</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            }
+            ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Ionicons name="leaf-outline" size={48} color={Palette.borderDisabled} />
-                <Text style={styles.emptyAnalyses}>
+                <Text style={styles.emptyTitle}>
                   Nenhuma análise salva para esta árvore.
                 </Text>
-                <Text style={styles.emptyAnalysesSub}>
-                  Use a Câmera na aba inferior para fotografar e iniciar um novo relatório.
+                <Text style={styles.emptyText}>
+                  Use a Câmera na aba inferior para fotografar e iniciar uma nova análise.
                 </Text>
               </View>
-            ) : (
-              sortedAnalyses.map((analysis) => (
-                <AnalysisCard
-                  key={analysis.id}
-                  analysis={analysis}
-                  onVerAnalise={() => handleViewAnalysis(analysis)}
-                />
-              ))
-            )}
-          </ScrollView>
+            }
+          />
         )}
 
         <BottomNavbar />
@@ -279,66 +378,142 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 80,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+
+  /* Cabeçalho da Árvore */
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   backButtonCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Palette.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    fontSize: FontSizes.lg,
+  treeTitle: {
+    flex: 1,
+    fontSize: 18,
     fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
-    flex: 1,
+    marginHorizontal: 12,
   },
   editButton: {
     padding: 4,
   },
-  listHeader: {
+
+  /* Subcabeçalho de Contagem e Ordenação */
+  listSubHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   listCount: {
-    fontSize: FontSizes.sm,
+    fontSize: 13,
     fontWeight: FontWeights.medium,
     color: Palette.textSecondary,
   },
   sortButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Palette.surfaceGray,
+    backgroundColor: "#F3F4F6",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
     gap: 6,
   },
   sortText: {
-    fontSize: FontSizes.xs,
+    fontSize: 12,
     fontWeight: FontWeights.semiBold,
+    color: "#374151",
+  },
+
+  /* Cartão Individual de Análise */
+  card: {
+    backgroundColor: Palette.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
+    marginBottom: 6,
   },
-  savingIndicator: {
-    marginBottom: 16,
+  badgesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
   },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  badgeEmTratamento: {
+    backgroundColor: "#E5A93C",
+  },
+  badgeTratado: {
+    backgroundColor: Palette.primary,
+  },
+  badgeNaoTratado: {
+    backgroundColor: Palette.error,
+  },
+  badgeSemInfo: {
+    backgroundColor: "#F3F4F6",
+  },
+  badgeTextWhite: {
+    color: Palette.white,
+    fontSize: 11,
+    fontWeight: FontWeights.semiBold,
+  },
+  badgeTextGray: {
+    color: Palette.textSecondary,
+    fontSize: 11,
+    fontWeight: FontWeights.medium,
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dateLabel: {
+    fontSize: 11,
+    color: Palette.textSecondary,
+  },
+  dateValue: {
+    fontSize: 11,
+    color: Palette.textSecondary,
+    fontWeight: FontWeights.medium,
+  },
+
+  /* Empty State */
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -351,7 +526,7 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     marginTop: 10,
   },
-  emptyAnalyses: {
+  emptyTitle: {
     fontSize: FontSizes.base,
     fontWeight: FontWeights.bold,
     color: Palette.textPrimary,
@@ -359,7 +534,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 4,
   },
-  emptyAnalysesSub: {
+  emptyText: {
     fontSize: FontSizes.sm,
     color: Palette.textSecondary,
     textAlign: "center",
