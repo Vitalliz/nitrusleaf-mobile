@@ -19,7 +19,6 @@ import { Background } from "@/components/ui/background";
 import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
-import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { useProperty } from "@/contexts/PropertyContext";
 import {
@@ -266,7 +265,7 @@ export default function TalhaoDetailScreen() {
               ? "Carregando..."
               : selectedProperty?.name || "Sem propriedade"
           }
-          userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
+          userAvatar={dbUser?.avatarUrl}
           subtitleIcon="location-outline"
           onPropertyPress={showPropertyPicker}
           showPropertyChevron={canSwitchProperty}

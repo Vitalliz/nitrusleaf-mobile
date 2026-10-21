@@ -18,7 +18,6 @@ import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
-import { DEFAULT_AVATAR } from "@/constants/profile";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { useProperty } from "@/contexts/PropertyContext";
 import { getPeById, updatePe, deletePe } from "@/repositories/peRepository";
@@ -160,7 +159,7 @@ export default function HistoryTreeScreen() {
           userSubtitle={
             loading ? "Carregando..." : selectedProperty?.name || "Sem propriedade"
           }
-          userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
+          userAvatar={dbUser?.avatarUrl}
           subtitleIcon="location-outline"
           onAvatarPress={() => router.push("/(tabs)/Settings/profile-new")}
         />

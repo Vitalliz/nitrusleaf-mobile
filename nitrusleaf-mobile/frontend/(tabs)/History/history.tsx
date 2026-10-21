@@ -21,7 +21,6 @@ import BottomNavbar from "@/components/ui/tab-bar";
 import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
-import { DEFAULT_AVATAR } from "@/constants/profile";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
@@ -249,7 +248,7 @@ export default function HistoryScreen() {
               ? "Carregando..."
               : selectedProperty?.name || "Sem propriedade"
           }
-          userAvatar={dbUser?.avatarUrl || DEFAULT_AVATAR}
+          userAvatar={dbUser?.avatarUrl}
           subtitleIcon="location-outline"
           onPropertyPress={showPropertyPicker}
           showPropertyChevron={canSwitchProperty}

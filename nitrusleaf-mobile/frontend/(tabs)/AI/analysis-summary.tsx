@@ -18,7 +18,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GaugeChart } from "@/components/charts/gaugechart";
 import { Background } from "@/components/ui/background";
 import { Button } from "@/components/ui/button";
-import { DEFAULT_AVATAR } from "@/constants/profile";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { useProperty } from "@/contexts/PropertyContext";
@@ -371,10 +370,16 @@ export default function AnalysisSummaryScreen() {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Autor da análise:</Text>
               <View style={styles.authorRow}>
-                <Image
-                  source={{ uri: authorAvatar || DEFAULT_AVATAR }}
-                  style={styles.authorAvatar}
-                />
+                {authorAvatar ? (
+                  <Image
+                    source={{ uri: authorAvatar }}
+                    style={styles.authorAvatar}
+                  />
+                ) : (
+                  <View style={styles.authorAvatarPlaceholder}>
+                    <Ionicons name="person" size={16} color="#9CA3AF" />
+                  </View>
+                )}
                 <Text style={styles.infoValue}>
                   {loadingContext ? "Carregando..." : authorName}
                 </Text>
@@ -547,6 +552,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#E5E7EB",
+  },
+  authorAvatarPlaceholder: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
   sectionTitle: {
     fontSize: 14,

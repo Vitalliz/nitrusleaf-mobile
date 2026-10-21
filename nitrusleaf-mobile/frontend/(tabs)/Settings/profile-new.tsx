@@ -14,8 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 
 import { ROUTES, openAddProperty, safeBack } from '@/utils/navigation';
 import { Background } from '@/components/ui/background';
@@ -37,7 +36,7 @@ type MenuItem = {
   label: string;
   subtitle?: string;
   route?: string;
-  action?: 'switch_property' | 'add_property';
+  action?: 'add_property';
 };
 
 export default function ProfileScreen() {
@@ -144,7 +143,7 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     showAlert(
-      'Tem certeza que deseja sair da sua conta?',
+      'Tem a certeza de que pretende sair da sua conta?',
       'Sair da Conta',
       'warning',
       async () => {
@@ -156,13 +155,6 @@ export default function ProfileScreen() {
 
   const menuItems: MenuItem[] = [
     {
-      id: 'switch',
-      icon: 'business-outline',
-      label: 'Trocar Propriedade',
-      subtitle: selectedProperty?.name || 'Selecionar fazenda ativa',
-      action: 'switch_property',
-    },
-    {
       id: 'settings',
       icon: 'settings-outline',
       label: 'Configurações',
@@ -173,16 +165,12 @@ export default function ProfileScreen() {
       id: 'new_prop',
       icon: 'cube-outline',
       label: 'Nova Propriedade',
-      subtitle: 'Cadastrar nova propriedade',
+      subtitle: 'Registar nova propriedade',
       action: 'add_property',
     },
   ];
 
   const handleMenuPress = (item: MenuItem) => {
-    if (item.action === 'switch_property') {
-      setPropertyModalVisible(true);
-      return;
-    }
     if (item.action === 'add_property') {
       openAddProperty(router);
       return;
@@ -192,18 +180,15 @@ export default function ProfileScreen() {
     }
   };
 
-  // Retorno com verificação em cascata: Pilha local -> Histórico de abas -> Rota padrão Home
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
       return;
     }
-
     if (navigation.canGoBack()) {
       navigation.goBack();
       return;
     }
-
     safeBack(router, ROUTES.home);
   };
 
@@ -249,7 +234,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Cartão de Perfil com zIndex e elevation para não bloquear toques */}
+          {/* Cartão de Perfil */}
           <View style={styles.profileCard}>
             <TouchableOpacity
               style={styles.avatarWrapper}
@@ -277,7 +262,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <Text style={styles.userName}>
-              {loading ? 'Carregando...' : dbUser?.fullName || user?.name || 'Usuário'}
+              {loading ? 'A carregar...' : dbUser?.fullName || user?.name || 'Utilizador'}
             </Text>
             <Text style={styles.userEmail}>
               {loading ? '' : dbUser?.email || user?.email || ''}
@@ -289,16 +274,16 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
               onPress={() => setPropertyModalVisible(true)}
             >
-              <Ionicons name="business" size={15} color={Palette.primary} />
+              <Ionicons name="business" size={14} color={Palette.primaryPressed} />
               <Text style={styles.propertyButtonText} numberOfLines={1}>
-                {loading ? 'Carregando...' : selectedProperty?.name || 'Selecionar Propriedade'}
+                {loading ? 'A carregar...' : selectedProperty?.name || 'Sem Propriedade'}
               </Text>
-              <Ionicons name="swap-horizontal" size={16} color={Palette.primary} />
+              <Ionicons name="chevron-down" size={14} color={Palette.primaryPressed} />
             </TouchableOpacity>
 
             {/* Cartão de Análises */}
             <View style={styles.analysesCard}>
-              <Text style={styles.analysesLabel}>Total de Análises Feitas</Text>
+              <Text style={styles.analysesLabel}>Total de Análises Realizadas</Text>
               <View style={styles.analysesBadge}>
                 <Text style={styles.analysesValue}>{totalAnalyses}</Text>
               </View>
@@ -382,7 +367,7 @@ export default function ProfileScreen() {
                 <View style={styles.sheetTitleContainer}>
                   <Text style={styles.sheetTitle}>Trocar Propriedade</Text>
                   <Text style={styles.sheetSubtitle}>
-                    Selecione a fazenda ativa no aplicativo
+                    Selecione a fazenda ativa na aplicação
                   </Text>
                 </View>
 
@@ -409,7 +394,7 @@ export default function ProfileScreen() {
                       color={Palette.borderDisabled}
                     />
                     <Text style={styles.emptyText}>
-                      Nenhuma propriedade cadastrada até o momento.
+                      Nenhuma propriedade registada até ao momento.
                     </Text>
                   </View>
                 ) : (
@@ -494,7 +479,7 @@ export default function ProfileScreen() {
                   color={Palette.primary}
                 />
                 <Text style={styles.addPropertyButtonText}>
-                  Cadastrar Nova Propriedade
+                  Registar Nova Propriedade
                 </Text>
               </TouchableOpacity>
             </Pressable>
@@ -612,29 +597,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* BOTÃO DA PROPRIEDADE ATIVA */
+  /* BOTÃO DA PROPRIEDADE ATIVA (CLEAN) */
   propertyBadgeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 12,
-    backgroundColor: Palette.white,
-    borderWidth: 1.5,
-    borderColor: Palette.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    shadowColor: Palette.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 3,
+    gap: 6,
+    marginTop: 10,
+    backgroundColor: Palette.surfaceGray,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
     zIndex: 20,
   },
   propertyButtonText: {
     fontSize: 13,
-    color: Palette.primary,
-    fontWeight: '700',
+    color: Palette.primaryPressed,
+    fontWeight: '600',
     maxWidth: 180,
   },
 

@@ -179,6 +179,7 @@ export async function registerLocal(params: {
         telefone: phoneNorm,
         cpf: cpfNorm,
         tipo_pessoa: "fisica",
+        foto_perfil: null,
       })
       .select(USUARIO_COLS)
       .single();

@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
-import { DEFAULT_AVATAR } from "@/constants/profile";
 import {
   getUsuarioDetails,
   type UsuarioDetails,
@@ -61,7 +60,7 @@ export function useProfileHeader() {
     userSubtitle: loading
       ? "Carregando..."
       : selectedProperty?.name || "Sem propriedade",
-    userAvatar: dbUser?.avatarUrl || DEFAULT_AVATAR,
+    userAvatar: dbUser?.avatarUrl,
     showPropertyPicker,
     canSwitchProperty,
   };
