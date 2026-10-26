@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ROUTES, exitAnalysisFlow, safeBack } from "@/utils/navigation";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ScrollView,
   StatusBar,
@@ -110,6 +110,7 @@ export default function AnalysisSummaryScreen() {
   const [selectedTalhaoId, setSelectedTalhaoId] = useState<string>("");
   const [selectedPeId, setSelectedPeId] = useState<string>("");
   const [savedToDb, setSavedToDb] = useState(false);
+  const [savedRelatorioId, setSavedRelatorioId] = useState<string | undefined>();
   const [status, setStatus] = useState<TreeStatus>("Não informado");
   const [observacoes, setObservacoes] = useState<string>("");
 
@@ -117,6 +118,9 @@ export default function AnalysisSummaryScreen() {
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [talhaoModalVisible, setTalhaoModalVisible] = useState(false);
   const [peModalVisible, setPeModalVisible] = useState(false);
+
+  // Mapa ref para animar para a posição do pé selecionado
+  const mapViewRef = useRef<MapView | null>(null);
 
   const accentColor = getDeficiencyAccentColor(deficiencyType);
   const explanation = useMemo(
@@ -133,13 +137,15 @@ export default function AnalysisSummaryScreen() {
   }, [status]);
 
   const formattedId = useMemo(() => {
-    if (!analysisId) return "001";
-    const num = parseInt(analysisId, 10);
-    if (!isNaN(num) && num < 1000) {
+    // Prefer the real DB relatorio ID after saving
+    const idToUse = savedRelatorioId || analysisId;
+    if (!idToUse) return "001";
+    const num = parseInt(idToUse, 10);
+    if (!isNaN(num)) {
       return String(num).padStart(3, "0");
     }
-    return analysisId.slice(-3);
-  }, [analysisId]);
+    return idToUse.slice(-3);
+  }, [analysisId, savedRelatorioId]);
 
   const formattedDate = useMemo(() => {
     const now = new Date();
@@ -267,13 +273,15 @@ export default function AnalysisSummaryScreen() {
 
     setSaving(true);
     try {
-      await persistAnalysisResult({
+      const result = await persistAnalysisResult({
         peId: selectedPeId,
         imageUri,
         deficiencyType,
         probability,
       });
       setSavedToDb(true);
+      // Salva o ID real do banco para exibir no cabeçalho
+      setSavedRelatorioId(result.relatorioId);
       Alert.alert(
         "Salvo",
         "Análise registrada. Os gráficos da home serão atualizados.",
@@ -439,13 +447,24 @@ export default function AnalysisSummaryScreen() {
 
             <View style={styles.mapThumbnailContainer}>
               <MapView
+                ref={mapViewRef}
                 style={styles.mapView}
                 initialRegion={{
-                  latitude: selectedProperty?.latitude || -24.71852,
-                  longitude: selectedProperty?.longitude || -47.88349,
-                  latitudeDelta: 0.003,
-                  longitudeDelta: 0.003,
+                  latitude: selectedPe?.latitude || selectedProperty?.latitude || -24.71852,
+                  longitude: selectedPe?.longitude || selectedProperty?.longitude || -47.88349,
+                  latitudeDelta: selectedPe?.latitude ? 0.001 : 0.003,
+                  longitudeDelta: selectedPe?.longitude ? 0.001 : 0.003,
                 }}
+                region={
+                  selectedPe?.latitude && selectedPe?.longitude
+                    ? {
+                        latitude: selectedPe.latitude,
+                        longitude: selectedPe.longitude,
+                        latitudeDelta: 0.001,
+                        longitudeDelta: 0.001,
+                      }
+                    : undefined
+                }
                 mapType="satellite"
                 provider={PROVIDER_GOOGLE}
                 scrollEnabled={false}
@@ -453,13 +472,24 @@ export default function AnalysisSummaryScreen() {
                 pitchEnabled={false}
                 rotateEnabled={false}
               >
-                <Marker
-                  coordinate={{
-                    latitude: selectedProperty?.latitude || -24.71852,
-                    longitude: selectedProperty?.longitude || -47.88349,
-                  }}
-                  pinColor="#F59E0B"
-                />
+                {selectedPe?.latitude && selectedPe?.longitude ? (
+                  <Marker
+                    coordinate={{
+                      latitude: selectedPe.latitude,
+                      longitude: selectedPe.longitude,
+                    }}
+                    pinColor="#16A34A"
+                    title={selectedPe.nome}
+                  />
+                ) : selectedProperty?.latitude ? (
+                  <Marker
+                    coordinate={{
+                      latitude: selectedProperty.latitude,
+                      longitude: selectedProperty.longitude,
+                    }}
+                    pinColor="#F59E0B"
+                  />
+                ) : null}
               </MapView>
 
               <TouchableOpacity

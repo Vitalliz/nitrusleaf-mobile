@@ -10,7 +10,11 @@ export function isPeAnalyzed(pe: Pe): boolean {
 }
 
 export function isPeDeficient(pe: Pe): boolean {
-  return Boolean(pe.deficienciaManganes || pe.outros);
+  return Boolean(
+    pe.deficienciaManganes ||
+    (pe.situacao === "Não-Tratado" && !pe.outros) ||
+    pe.outros
+  );
 }
 
 export function computeTalhaoPeStats(pes: Pe[]): {
@@ -28,7 +32,9 @@ export type DeficiencyCategory = "manganes" | "adversos";
 
 export function getPeDeficiencyCategory(pe: Pe): DeficiencyCategory | null {
   if (!isPeAnalyzed(pe)) return null;
-  if (pe.deficienciaManganes) return "manganes";
+  if (pe.deficienciaManganes || (pe.situacao === "Não-Tratado" && !pe.outros)) {
+    return "manganes";
+  }
   return "adversos";
 }
 

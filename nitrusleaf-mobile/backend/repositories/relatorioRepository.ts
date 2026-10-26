@@ -72,6 +72,40 @@ export async function getRelatoriosByPe(peId: string): Promise<Relatorio[]> {
   return (data as DbRelatorioRow[]).map(mapRelatorio);
 }
 
+export async function getRelatoriosByPes(peIds: (string | number)[]): Promise<Relatorio[]> {
+  if (peIds.length === 0) return [];
+  const supabase = getSupabase();
+  const numericIds = peIds.map(Number).filter((id) => !isNaN(id) && id > 0);
+  if (numericIds.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("relatorios")
+    .select("id_relatorio, id_pe, id_foto, deficiencia_manganes, outros, observacoes, data_analise, createdat, updatedat")
+    .in("id_pe", numericIds)
+    .order("data_analise", { ascending: true });
+
+  throwIfError(error);
+  return ((data ?? []) as DbRelatorioRow[]).map(mapRelatorio);
+}
+
+export async function getRelatoriosByProperty(propertyId: string): Promise<Relatorio[]> {
+  const supabase = getSupabase();
+  const talhoes = await getTalhoesByProperty(propertyId);
+  if (talhoes.length === 0) return [];
+
+  const talhaoIds = talhoes.map((t) => Number(t.id));
+  const { data: pes, error: peError } = await supabase
+    .from("pes")
+    .select("id_pe")
+    .in("id_talhao", talhaoIds);
+
+  throwIfError(peError);
+  if (!pes?.length) return [];
+
+  const peIds = pes.map((row) => (row as { id_pe: number }).id_pe);
+  return getRelatoriosByPes(peIds);
+}
+
 export async function getRelatorioById(id: string): Promise<Relatorio | null> {
   const supabase = getSupabase();
 

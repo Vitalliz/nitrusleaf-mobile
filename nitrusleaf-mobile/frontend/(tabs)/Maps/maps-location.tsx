@@ -18,7 +18,8 @@ import MapView, {
 } from "react-native-maps";
 import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import TabBar from "@/components/ui/tab-bar";
 import { useProperty } from "@/contexts/PropertyContext";
@@ -33,7 +34,7 @@ import type { Pe } from "@/types/pe";
 
 type FilterKey = "todos" | "manganes" | "tratado" | "naoTratado";
 type ViewMode = "satellite" | "heat";
-type ActiveSheet = "none" | "areaInfo" | "layerFilters" | "layerMode";
+type ActiveSheet = "none" | "areaInfo" | "layerFilters" | "layerMode" | "datePicker";
 
 interface PeWithTalhao extends Pe {
   talhaoId: string;
@@ -42,6 +43,12 @@ interface PeWithTalhao extends Pe {
 interface LatLng {
   latitude: number;
   longitude: number;
+}
+
+interface PolygonTooltip {
+  name: string;
+  type: "talhao" | "property";
+  coordinate: LatLng;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -86,22 +93,11 @@ function calculateHectares(coords: LatLng[]): number {
   return area / 10000; // m² para ha
 }
 
-/** Gera a demarcação externa da propriedade (polígono amarelo) que envolve os talhões */
-function generatePropertyBoundary(talhaoCoords: LatLng[][], fallbackCenter?: LatLng): LatLng[] {
+/** Gera a demarcação externa da propriedade (polígono amarelo) que envolve os talhões cadastrados */
+function generatePropertyBoundaryFromTalhoes(talhaoCoords: LatLng[][]): LatLng[] {
   const allPoints = talhaoCoords.flat();
-  if (allPoints.length === 0) {
-    const c = fallbackCenter ?? { latitude: -24.689, longitude: -47.851 };
-    const dLat = 0.0035;
-    const dLng = 0.0045;
-    return [
-      { latitude: c.latitude - dLat * 0.8, longitude: c.longitude - dLng },
-      { latitude: c.latitude + dLat * 0.5, longitude: c.longitude - dLng * 0.9 },
-      { latitude: c.latitude + dLat, longitude: c.longitude - dLng * 0.2 },
-      { latitude: c.latitude + dLat * 0.9, longitude: c.longitude + dLng * 0.7 },
-      { latitude: c.latitude + dLat * 0.2, longitude: c.longitude + dLng },
-      { latitude: c.latitude - dLat * 0.9, longitude: c.longitude + dLng * 0.6 },
-      { latitude: c.latitude - dLat * 1.1, longitude: c.longitude - dLng * 0.1 },
-    ];
+  if (allPoints.length < 3) {
+    return [];
   }
 
   let minLat = Infinity,
@@ -119,7 +115,7 @@ function generatePropertyBoundary(talhaoCoords: LatLng[][], fallbackCenter?: Lat
   const padLat = (maxLat - minLat) * 0.18 || 0.001;
   const padLng = (maxLng - minLng) * 0.18 || 0.001;
 
-  // Cria um polígono suave que contorna a área externa
+  // Cria um polígono suave que contorna a área externa dos talhões
   return [
     { latitude: minLat - padLat, longitude: minLng - padLng * 0.6 },
     { latitude: maxLat - padLat * 0.2, longitude: minLng - padLng },
@@ -135,21 +131,21 @@ function generatePropertyBoundary(talhaoCoords: LatLng[][], fallbackCenter?: Lat
 
 export default function MapsLocationScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { selectedProperty } = useProperty();
   const { user } = useAuth();
   const mapRef = useRef<MapView>(null);
 
-  // Estados dos dados
+  // Estados dos dados REAIS
   const [dbUser, setDbUser] = useState<any>(null);
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
   const [allPes, setAllPes] = useState<PeWithTalhao[]>([]);
   const [loading, setLoading] = useState(false);
+  const [customPropertyPolygon, setCustomPropertyPolygon] = useState<LatLng[]>([]);
 
   // Filtros rápidos
   const [activeFilter, setActiveFilter] = useState<FilterKey>("todos");
 
-  // Bottom Sheets: 'none' | 'areaInfo' | 'layerFilters' | 'layerMode'
+  // Bottom Sheets: 'none' | 'areaInfo' | 'layerFilters' | 'layerMode' | 'datePicker'
   const [activeSheet, setActiveSheet] = useState<ActiveSheet>("none");
 
   // Camadas selecionadas (Bottom Sheet 2)
@@ -159,6 +155,12 @@ export default function MapsLocationScreen() {
 
   // Modo de visualização (Bottom Sheet 3: Satélite vs Mapa de Calor)
   const [viewMode, setViewMode] = useState<ViewMode>("satellite");
+
+  // Filtro de data: null = mostrar tudo ("Hoje" aberto); string "YYYY-MM-DD" = filtrar por dia
+  const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
+
+  // Tooltip de polígono (talhao ou propriedade)
+  const [polygonTooltip, setPolygonTooltip] = useState<PolygonTooltip | null>(null);
 
   // ── Carregar Dados do Usuário ──────────────────────────────────────────────
   useFocusEffect(
@@ -170,7 +172,7 @@ export default function MapsLocationScreen() {
     }, [user?.id])
   );
 
-  // ── Carregar Dados Georreferenciados ───────────────────────────────────────
+  // ── Carregar Dados Georreferenciados Reais ──────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -179,10 +181,22 @@ export default function MapsLocationScreen() {
         if (!selectedProperty?.id) {
           setTalhoes([]);
           setAllPes([]);
+          setCustomPropertyPolygon([]);
           return;
         }
         try {
           setLoading(true);
+
+          // Carrega polígono customizado salvo para a propriedade se houver
+          const storedBoundary = await AsyncStorage.getItem(
+            `property_boundary_${selectedProperty.id}`
+          );
+          if (storedBoundary && active) {
+            setCustomPropertyPolygon(parsePolygon(storedBoundary));
+          } else if (active) {
+            setCustomPropertyPolygon([]);
+          }
+
           const dbTalhoes = await getTalhoesByProperty(selectedProperty.id);
           if (!active) return;
           setTalhoes(dbTalhoes);
@@ -207,7 +221,7 @@ export default function MapsLocationScreen() {
     }, [selectedProperty?.id])
   );
 
-  // ── Coordenadas dos Talhões & Propriedade ──────────────────────────────────
+  // ── Coordenadas dos Talhões & Propriedade Reais ────────────────────────────
   const talhaoPolygonList = useMemo(() => {
     return talhoes
       .map((t) => ({
@@ -230,104 +244,74 @@ export default function MapsLocationScreen() {
     return c ?? { latitude: -24.689, longitude: -47.851 };
   }, [selectedProperty, talhaoPolygonList]);
 
-  // Polígono de delimitação externa (amarelo)
+  // Polígono de delimitação externa (amarelo) - Somente a partir de dados reais cadastrados
   const propertyBoundaryCoords = useMemo(() => {
-    return generatePropertyBoundary(
-      talhaoPolygonList.map((t) => t.coords),
-      propertyCenter
-    );
-  }, [talhaoPolygonList, propertyCenter]);
+    if (customPropertyPolygon.length >= 3) {
+      return customPropertyPolygon;
+    }
+    if (talhaoPolygonList.length > 0) {
+      return generatePropertyBoundaryFromTalhoes(
+        talhaoPolygonList.map((t) => t.coords)
+      );
+    }
+    return [];
+  }, [customPropertyPolygon, talhaoPolygonList]);
 
-  // Cálculo da área total em hectares
+  // Cálculo da área total em hectares dos talhões reais cadastrados
   const totalHectares = useMemo(() => {
     let ha = 0;
     talhaoPolygonList.forEach((t) => {
       ha += calculateHectares(t.coords);
     });
     if (ha > 0) return ha.toFixed(2).replace(".", ",");
-    // Fallback amigável
-    return "11,96";
+    return "0,00";
   }, [talhaoPolygonList]);
 
-  // ── Pés com filtro aplicado ───────────────────────────────────────────────
+  // ── Pés com filtro aplicado (DADOS REAIS + filtro de data) ──────────────
   const filteredPes = useMemo(() => {
     return allPes.filter((pe) => {
       if (!pe.latitude || !pe.longitude) return false;
+
+      // Filtro por data: se selectedDateStr definido, só mostra árvores
+      // atualizadas/criadas naquele dia
+      if (selectedDateStr) {
+        const dateToCheck = pe.updatedAt || pe.createdAt;
+        if (!dateToCheck) return false;
+        const peDay = dateToCheck.slice(0, 10); // "YYYY-MM-DD"
+        if (peDay !== selectedDateStr) return false;
+      }
+
       if (activeFilter === "todos") return true;
       if (activeFilter === "manganes") return Boolean(pe.deficienciaManganes);
       if (activeFilter === "tratado") return pe.situacao === "Tratado";
       if (activeFilter === "naoTratado") return pe.situacao === "Não-Tratado";
       return true;
     });
-  }, [allPes, activeFilter]);
+  }, [allPes, activeFilter, selectedDateStr]);
 
-  // Se o banco ainda não tiver pés com coordenadas cadastradas, geramos pontos de exemplo
-  // para os talhões existentes para exibir exatamente como nas imagens do usuário.
-  const displayPes = useMemo(() => {
-    if (filteredPes.length > 0) return filteredPes;
+  // Helper: formata data selecionada para exibição
+  const formattedSelectedDate = useMemo(() => {
+    if (!selectedDateStr) return null;
+    const d = new Date(selectedDateStr + "T12:00:00");
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  }, [selectedDateStr]);
 
-    // Gerar pés demonstrativos se a base de dados ainda não tiver GPS nos pés
-    const demoPes: PeWithTalhao[] = [];
-    if (talhaoPolygonList.length > 0) {
-      talhaoPolygonList.forEach((talhao, tIdx) => {
-        const center = getCentroid(talhao.coords);
-        if (!center) return;
-        const count = 6;
-        for (let i = 0; i < count; i++) {
-          const angle = (i / count) * 2 * Math.PI;
-          const rLat = (Math.sin(angle) * 0.0006) + (i % 2 === 0 ? 0.0002 : -0.0002);
-          const rLng = (Math.cos(angle) * 0.0007) + (i % 3 === 0 ? 0.0002 : -0.0002);
-          const isManganes = tIdx % 2 === 1 && i % 2 === 0;
-          const isCobre = tIdx % 2 === 0 && i % 2 === 0;
+  // Gera lista de datas únicas com análises (baseado nos pe.updatedAt)
+  const availableDates = useMemo(() => {
+    const datesSet = new Set<string>();
+    allPes.forEach((pe) => {
+      const d = pe.updatedAt || pe.createdAt;
+      if (d) datesSet.add(d.slice(0, 10));
+    });
+    return Array.from(datesSet).sort().reverse();
+  }, [allPes]);
 
-          if (activeFilter === "manganes" && !isManganes) continue;
-          if (activeFilter === "tratado" && i % 2 !== 0) continue;
-          if (activeFilter === "naoTratado" && i % 2 === 0) continue;
-
-          demoPes.push({
-            id: `demo-${talhao.id}-${i}`,
-            talhaoId: talhao.id,
-            nome: `Pé ${i + 1}`,
-            situacao: i % 2 === 0 ? "Tratado" : "Não-Tratado",
-            deficienciaManganes: isManganes,
-            outros: isCobre,
-            latitude: center.latitude + rLat,
-            longitude: center.longitude + rLng,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-        }
-      });
-    } else {
-      // Se nem talhão houver, cria coordenadas ao redor do centro da propriedade
-      const baseLat = propertyCenter.latitude;
-      const baseLng = propertyCenter.longitude;
-      for (let i = 0; i < 10; i++) {
-        const isManganes = i >= 5;
-        const isCobre = i < 3;
-        if (activeFilter === "manganes" && !isManganes) continue;
-        demoPes.push({
-          id: `demo-center-${i}`,
-          talhaoId: "default",
-          nome: `Pé ${i + 1}`,
-          situacao: i % 2 === 0 ? "Tratado" : "Não-Tratado",
-          deficienciaManganes: isManganes,
-          outros: isCobre,
-          latitude: baseLat + ((i % 4) - 1.5) * 0.0008,
-          longitude: baseLng + (Math.floor(i / 4) - 1) * 0.0009,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    }
-    return demoPes;
-  }, [filteredPes, talhaoPolygonList, propertyCenter, activeFilter]);
-
-  // Cor do Marcador de Árvore (como na imagem: Laranja = Cobre, Amarelo = Manganês, Cinza = Não informado)
+  // Cor do Marcador de Árvore (Amarelo = Manganês, Verde = Tratado/Saudável, Vermelho = Não Tratado, Cinza = Sem info)
   const getPeColor = (pe: PeWithTalhao) => {
     if (pe.deficienciaManganes) return "#EAB308"; // Amarelo (Manganês)
-    if (pe.outros) return "#EA580C"; // Laranja (Cobre)
-    return "#64748B"; // Cinza (Não informado / Padrão)
+    if (pe.situacao === "Tratado") return "#16A34A"; // Verde (Tratado / Saudável)
+    if (pe.situacao === "Não-Tratado") return "#EF4444"; // Vermelho (Não-Tratado)
+    return "#64748B"; // Cinza (Sem informação)
   };
 
   const filterOptions: { key: FilterKey; label: string }[] = [
@@ -350,25 +334,36 @@ export default function MapsLocationScreen() {
         initialRegion={{
           latitude: propertyCenter.latitude,
           longitude: propertyCenter.longitude,
-          latitudeDelta: 0.009,
-          longitudeDelta: 0.009,
+          latitudeDelta: 0.012,
+          longitudeDelta: 0.012,
         }}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
         showsScale={false}
       >
-        {/* 1. Demarcação da Propriedade (Polígono Amarelo) */}
+        {/* 1. Demarcação da Propriedade (Polígono Amarelo) - com onPress para tooltip */}
         {showPropertyBoundary && propertyBoundaryCoords.length >= 3 && (
           <Polygon
             coordinates={propertyBoundaryCoords}
             strokeColor="#F59E0B"
             strokeWidth={3}
-            fillColor="rgba(245, 158, 11, 0.05)"
+            fillColor="rgba(245, 158, 11, 0.06)"
+            tappable
+            onPress={() => {
+              const center = getCentroid(propertyBoundaryCoords);
+              if (center) {
+                setPolygonTooltip({
+                  name: selectedProperty?.name ?? "Propriedade",
+                  type: "property",
+                  coordinate: center,
+                });
+              }
+            }}
           />
         )}
 
-        {/* 2. Talhões (Polígonos Azuis) */}
+        {/* 2. Talhões (Polígonos Azuis) - com onPress para tooltip */}
         {showTalhoes &&
           talhaoPolygonList.map((t) => (
             <Polygon
@@ -377,39 +372,79 @@ export default function MapsLocationScreen() {
               strokeColor="#0EA5E9"
               strokeWidth={2.5}
               fillColor="rgba(14, 165, 233, 0.16)"
+              tappable
+              onPress={() => {
+                const center = getCentroid(t.coords);
+                if (center) {
+                  setPolygonTooltip({
+                    name: t.name,
+                    type: "talhao",
+                    coordinate: center,
+                  });
+                }
+              }}
             />
           ))}
 
-        {/* 3. Mapa de Calor (Círculos térmicos sobre incidências) */}
+        {/* 3. Mapa de Calor Aprimorado (Áreas maiores em casos afetados e verde em saudáveis) */}
         {viewMode === "heat" &&
-          displayPes
-            .filter((p) => p.deficienciaManganes || p.outros)
-            .map((p) => (
-              <React.Fragment key={`heat-${p.id}`}>
-                <Circle
-                  center={{ latitude: p.latitude!, longitude: p.longitude! }}
-                  radius={28}
-                  fillColor="rgba(234, 179, 8, 0.28)"
-                  strokeColor="transparent"
-                />
-                <Circle
-                  center={{ latitude: p.latitude!, longitude: p.longitude! }}
-                  radius={18}
-                  fillColor="rgba(249, 115, 22, 0.38)"
-                  strokeColor="transparent"
-                />
-                <Circle
-                  center={{ latitude: p.latitude!, longitude: p.longitude! }}
-                  radius={9}
-                  fillColor="rgba(239, 68, 68, 0.55)"
-                  strokeColor="transparent"
-                />
-              </React.Fragment>
-            ))}
+          filteredPes.map((p) => {
+            if (!p.latitude || !p.longitude) return null;
+            const isManganes = Boolean(p.deficienciaManganes);
+            const isSaudavel = p.situacao === "Tratado" && !isManganes;
 
-        {/* 4. Árvores de Cultivo (Pins Coloridos) */}
+            if (isManganes) {
+              // Mancha de calor expandida para Manganês (núcleo vermelho intenso, halo laranja e borda amarela difusa)
+              return (
+                <React.Fragment key={`heat-aff-${p.id}`}>
+                  <Circle
+                    center={{ latitude: p.latitude, longitude: p.longitude }}
+                    radius={80}
+                    fillColor="rgba(234, 179, 8, 0.25)"
+                    strokeColor="transparent"
+                  />
+                  <Circle
+                    center={{ latitude: p.latitude, longitude: p.longitude }}
+                    radius={50}
+                    fillColor="rgba(249, 115, 22, 0.40)"
+                    strokeColor="transparent"
+                  />
+                  <Circle
+                    center={{ latitude: p.latitude, longitude: p.longitude }}
+                    radius={24}
+                    fillColor="rgba(239, 68, 68, 0.65)"
+                    strokeColor="transparent"
+                  />
+                </React.Fragment>
+              );
+            }
+
+            if (isSaudavel) {
+              // Mancha verde para árvores saudáveis / tratadas
+              return (
+                <React.Fragment key={`heat-hlth-${p.id}`}>
+                  <Circle
+                    center={{ latitude: p.latitude, longitude: p.longitude }}
+                    radius={55}
+                    fillColor="rgba(74, 222, 128, 0.28)"
+                    strokeColor="transparent"
+                  />
+                  <Circle
+                    center={{ latitude: p.latitude, longitude: p.longitude }}
+                    radius={24}
+                    fillColor="rgba(34, 197, 94, 0.55)"
+                    strokeColor="transparent"
+                  />
+                </React.Fragment>
+              );
+            }
+
+            return null;
+          })}
+
+        {/* 4. Árvores de Cultivo Reais (Pins Coloridos) */}
         {showTrees &&
-          displayPes.map((pe) => {
+          filteredPes.map((pe) => {
             const color = getPeColor(pe);
             return (
               <Marker
@@ -420,12 +455,9 @@ export default function MapsLocationScreen() {
                 description={
                   pe.deficienciaManganes
                     ? "Deficiência de Manganês"
-                    : pe.outros
-                    ? "Deficiência de Cobre"
-                    : pe.situacao
+                    : `Situação: ${pe.situacao}`
                 }
               >
-                {/* Pin idêntico ao design com formato gota e ponto interno */}
                 <View style={styles.pinWrapper}>
                   <View style={[styles.pinDrop, { backgroundColor: color }]}>
                     <View style={styles.pinDot} />
@@ -439,7 +471,7 @@ export default function MapsLocationScreen() {
 
       {/* ── OVERLAY SUPERIOR ────────────────────────────────────────────── */}
       <SafeAreaView style={styles.topOverlay} edges={["top"]}>
-        {/* Card do Usuário (Roberto Almeida / Sítio Santa Aurora) */}
+        {/* Card do Usuário */}
         <View style={styles.headerCard}>
           <TouchableOpacity
             style={styles.headerProfileRow}
@@ -455,12 +487,12 @@ export default function MapsLocationScreen() {
             )}
             <View style={styles.headerUserInfo}>
               <Text style={styles.headerName} numberOfLines={1}>
-                {dbUser?.nome ?? user?.email?.split("@")[0] ?? "Roberto Almeida"}
+                {dbUser?.nome ?? user?.email?.split("@")[0] ?? "Usuário"}
               </Text>
               <View style={styles.headerPropertyRow}>
                 <Ionicons name="home-outline" size={13} color="#6B7280" />
                 <Text style={styles.headerProperty} numberOfLines={1}>
-                  {selectedProperty?.name ?? "Sítio Santa Aurora"}
+                  {selectedProperty?.name ?? "Nenhuma propriedade selecionada"}
                 </Text>
               </View>
             </View>
@@ -477,17 +509,48 @@ export default function MapsLocationScreen() {
 
         {/* Linha de Data e Calendário */}
         <View style={styles.dateRow}>
-          <View style={styles.datePillLeft}>
+          <TouchableOpacity
+            style={styles.datePillLeft}
+            onPress={() => setActiveSheet(activeSheet === "datePicker" ? "none" : "datePicker")}
+            activeOpacity={0.8}
+          >
             <Text style={styles.datePillLabel}>
-              <Text style={styles.dateBold}>Data: </Text>25 de Maio de 2025
+              <Text style={styles.dateBold}>Data: </Text>
+              {formattedSelectedDate ??
+                new Date().toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
             </Text>
-            <Ionicons name="chevron-down" size={16} color="#334155" />
-          </View>
+            <Ionicons name="chevron-down" size={16} color={selectedDateStr ? "#16A34A" : "#334155"} />
+          </TouchableOpacity>
 
-          <View style={styles.datePillRight}>
-            <Ionicons name="calendar-outline" size={16} color="#64748B" />
-            <Text style={styles.dateRightText}>28 Fev, 2026</Text>
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.datePillRight,
+              !selectedDateStr && styles.datePillRightActive,
+            ]}
+            onPress={() => {
+              setSelectedDateStr(null);
+              setActiveSheet("none");
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color={!selectedDateStr ? "#16A34A" : "#64748B"}
+            />
+            <Text
+              style={[
+                styles.dateRightText,
+                !selectedDateStr && styles.dateRightTextActive,
+              ]}
+            >
+              Hoje
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Filtros Rápidos (Chips) */}
@@ -519,9 +582,40 @@ export default function MapsLocationScreen() {
         </ScrollView>
       </SafeAreaView>
 
+      {/* Tooltip de Polígono */}
+      {polygonTooltip && (
+        <View style={styles.polygonTooltipWrapper} pointerEvents="none">
+          <View
+            style={[
+              styles.polygonTooltipCard,
+              polygonTooltip.type === "property"
+                ? styles.polygonTooltipProperty
+                : styles.polygonTooltipTalhao,
+            ]}
+          >
+            <Ionicons
+              name={polygonTooltip.type === "property" ? "home" : "grid-outline"}
+              size={14}
+              color={polygonTooltip.type === "property" ? "#F59E0B" : "#0EA5E9"}
+            />
+            <Text style={styles.polygonTooltipText}>{polygonTooltip.name}</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Dismiss tooltip ao tocar no mapa (overlay transparente) */}
+      {polygonTooltip && (
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={() => setPolygonTooltip(null)}
+          pointerEvents="box-only"
+        />
+      )}
+
       {/* ── BOTÕES FLUTUANTES (LADO DIREITO) ────────────────────────────── */}
       <View style={styles.fabColumn}>
-        {/* Botão 1: Informações da Área (Pin verde) */}
+        {/* Botão 1: Informações da Área */}
         <TouchableOpacity
           style={styles.fabWhite}
           onPress={() => setActiveSheet(activeSheet === "areaInfo" ? "none" : "areaInfo")}
@@ -530,7 +624,7 @@ export default function MapsLocationScreen() {
           <Ionicons name="location-sharp" size={24} color="#16A34A" />
         </TouchableOpacity>
 
-        {/* Botão 2: Camadas do Mapa (Satélite vs Calor) */}
+        {/* Botão 2: Modos de Mapa (Satélite vs Calor) */}
         <TouchableOpacity
           style={styles.fabWhite}
           onPress={() => setActiveSheet(activeSheet === "layerMode" ? "none" : "layerMode")}
@@ -543,7 +637,7 @@ export default function MapsLocationScreen() {
           />
         </TouchableOpacity>
 
-        {/* Botão 3: Filtros de Camadas e Legenda (Grid verde) */}
+        {/* Botão 3: Filtros de Camadas e Legenda */}
         <TouchableOpacity
           style={styles.fabGreen}
           onPress={() =>
@@ -557,7 +651,7 @@ export default function MapsLocationScreen() {
 
       {/* ── BOTTOM SHEETS (PAINÉIS INFERIORES) ──────────────────────────── */}
 
-      {/* 1. Bottom Sheet: Informações da Área (Imagem 1) */}
+      {/* 1. Bottom Sheet: Informações da Área */}
       {activeSheet === "areaInfo" && (
         <View style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetCard}>
@@ -581,27 +675,40 @@ export default function MapsLocationScreen() {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Nome</Text>
               <Text style={styles.infoValue}>
-                {selectedProperty?.name ?? "Sítio Santa Aurora"}
+                {selectedProperty?.name ?? "Não cadastrado"}
               </Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Área</Text>
+              <Text style={styles.infoLabel}>Área Cadastrada</Text>
               <Text style={styles.infoValue}>{totalHectares} ha</Text>
             </View>
 
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Município/UF</Text>
               <Text style={styles.infoValue}>
-                {selectedProperty?.cidade ?? "Pariquera-Açu"}/
-                {selectedProperty?.regiao ?? "SP"}
+                {selectedProperty?.cidade
+                  ? `${selectedProperty.cidade}/${selectedProperty?.regiao ?? "SP"}`
+                  : "Não informado"}
+              </Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Talhões Cadastrados</Text>
+              <Text style={styles.infoValue}>{talhoes.length}</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Árvores Mapeadas</Text>
+              <Text style={styles.infoValue}>
+                {allPes.filter((p) => p.latitude && p.longitude).length}
               </Text>
             </View>
           </View>
         </View>
       )}
 
-      {/* 2. Bottom Sheet: Filtros de Camadas e Legenda (Imagem 2) */}
+      {/* 2. Bottom Sheet: Filtros de Camadas e Legenda (SEM MENÇÃO A COBRE) */}
       {activeSheet === "layerFilters" && (
         <View style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetCard}>
@@ -677,14 +784,9 @@ export default function MapsLocationScreen() {
               <Text style={styles.checkboxLabel}>Árvores de cultivo</Text>
             </TouchableOpacity>
 
-            {/* Legenda na parte inferior */}
+            {/* Legenda Atualizada: Apenas Manganês, Tratado/Saudável e Sem informação */}
             <View style={styles.legendRow}>
               <Text style={styles.legendTitle}>Legenda:</Text>
-
-              <View style={styles.legendItem}>
-                <View style={[styles.miniDot, { backgroundColor: "#EA580C" }]} />
-                <Text style={styles.legendText}>Cobre</Text>
-              </View>
 
               <View style={styles.legendItem}>
                 <View style={[styles.miniDot, { backgroundColor: "#EAB308" }]} />
@@ -692,15 +794,25 @@ export default function MapsLocationScreen() {
               </View>
 
               <View style={styles.legendItem}>
+                <View style={[styles.miniDot, { backgroundColor: "#16A34A" }]} />
+                <Text style={styles.legendText}>Tratado / Saudável</Text>
+              </View>
+
+              <View style={styles.legendItem}>
+                <View style={[styles.miniDot, { backgroundColor: "#EF4444" }]} />
+                <Text style={styles.legendText}>Não Tratado</Text>
+              </View>
+
+              <View style={styles.legendItem}>
                 <View style={[styles.miniDot, { backgroundColor: "#64748B" }]} />
-                <Text style={styles.legendText}>Não informado</Text>
+                <Text style={styles.legendText}>Sem info</Text>
               </View>
             </View>
           </View>
         </View>
       )}
 
-      {/* 3. Bottom Sheet: Modos do Mapa (Satélite vs Calor - Imagem 3) */}
+      {/* 3. Bottom Sheet: Modos do Mapa (Satélite vs Calor) */}
       {activeSheet === "layerMode" && (
         <View style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetCard}>
@@ -709,7 +821,7 @@ export default function MapsLocationScreen() {
             <View style={styles.sheetHeaderRow}>
               <View style={styles.sheetTitleGroup}>
                 <Ionicons name="layers" size={20} color="#16A34A" />
-                <Text style={styles.sheetTitle}>Camadas do Mapa</Text>
+                <Text style={styles.sheetTitle}>Modos de Visualização</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setActiveSheet("none")}
@@ -756,16 +868,119 @@ export default function MapsLocationScreen() {
               activeOpacity={0.8}
             >
               <View style={styles.modeIconCircle}>
-                <Ionicons name="flame" size={22} color="#16A34A" />
+                <Ionicons name="flame" size={22} color="#EA580C" />
               </View>
               <View style={styles.modeTextGroup}>
                 <Text style={styles.modeTitle}>Mapa de Calor</Text>
                 <Text style={styles.modeSubtitle}>
-                  Regiões com maior incidência de deficiência
+                  Áreas térmicas: vermelho/amarelo para Manganês e verde para saudável
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Bottom Sheet: Seletor de Data */}
+      {activeSheet === "datePicker" && (
+        <View style={styles.bottomSheetContainer}>
+          <View style={[styles.bottomSheetCard, { maxHeight: 360 }]}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.sheetHeaderRow}>
+              <View style={styles.sheetTitleGroup}>
+                <Ionicons name="calendar" size={20} color="#16A34A" />
+                <Text style={styles.sheetTitle}>Selecionar Data</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setActiveSheet("none")}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={22} color="#1E293B" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Opção: Ver Todas */}
+            <TouchableOpacity
+              style={[
+                styles.dateOptionRow,
+                !selectedDateStr && styles.dateOptionRowActive,
+              ]}
+              onPress={() => {
+                setSelectedDateStr(null);
+                setActiveSheet("none");
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="earth-outline"
+                size={18}
+                color={!selectedDateStr ? "#16A34A" : "#64748B"}
+              />
+              <Text
+                style={[
+                  styles.dateOptionText,
+                  !selectedDateStr && styles.dateOptionTextActive,
+                ]}
+              >
+                Todas as análises
+              </Text>
+              {!selectedDateStr && (
+                <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+              )}
+            </TouchableOpacity>
+
+            {availableDates.length === 0 ? (
+              <Text style={styles.dateEmptyText}>
+                Nenhuma data de análise encontrada.
+              </Text>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: 200 }}
+              >
+                {availableDates.map((d) => {
+                  const isActive = selectedDateStr === d;
+                  const displayDate = new Date(d + "T12:00:00").toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  });
+                  return (
+                    <TouchableOpacity
+                      key={d}
+                      style={[
+                        styles.dateOptionRow,
+                        isActive && styles.dateOptionRowActive,
+                      ]}
+                      onPress={() => {
+                        setSelectedDateStr(d);
+                        setActiveSheet("none");
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name="calendar-outline"
+                        size={18}
+                        color={isActive ? "#16A34A" : "#64748B"}
+                      />
+                      <Text
+                        style={[
+                          styles.dateOptionText,
+                          isActive && styles.dateOptionTextActive,
+                        ]}
+                      >
+                        {displayDate}
+                      </Text>
+                      {isActive && (
+                        <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
           </View>
         </View>
       )}
@@ -904,10 +1119,88 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+  datePillRightActive: {
+    backgroundColor: "#DCFCE7",
+    borderWidth: 1,
+    borderColor: "#16A34A",
+  },
   dateRightText: {
     fontSize: 12,
     fontWeight: "600",
     color: "#475569",
+  },
+  dateRightTextActive: {
+    color: "#16A34A",
+    fontWeight: "700",
+  },
+
+  // Seletor de data (Bottom Sheet)
+  dateOptionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  dateOptionRowActive: {
+    backgroundColor: "#F0FDF4",
+  },
+  dateOptionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#334155",
+    fontWeight: "500",
+  },
+  dateOptionTextActive: {
+    color: "#16A34A",
+    fontWeight: "700",
+  },
+  dateEmptyText: {
+    fontSize: 13,
+    color: "#94A3B8",
+    textAlign: "center",
+    paddingVertical: 20,
+  },
+
+  // Tooltip de polígono flutuante
+  polygonTooltipWrapper: {
+    position: "absolute",
+    top: "30%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 25,
+    paddingHorizontal: 20,
+  },
+  polygonTooltipCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  polygonTooltipProperty: {
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1.5,
+    borderColor: "#F59E0B",
+  },
+  polygonTooltipTalhao: {
+    backgroundColor: "#E0F2FE",
+    borderWidth: 1.5,
+    borderColor: "#0EA5E9",
+  },
+  polygonTooltipText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0F172A",
   },
 
   // Filtros rápidos

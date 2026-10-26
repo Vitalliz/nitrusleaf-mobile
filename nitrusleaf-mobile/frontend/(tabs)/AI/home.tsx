@@ -12,6 +12,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
+import Svg, {
+  Path,
+  Defs,
+  LinearGradient as SvgGradient,
+  Stop,
+  Circle as SvgCircle,
+  Line as SvgLine,
+  Text as SvgText,
+  G,
+  Rect as SvgRect,
+} from "react-native-svg";
 
 // Componentes reutilizáveis e layout
 import { Button } from "@/components/ui/button";
@@ -25,20 +36,65 @@ import { useProperty } from "@/contexts/PropertyContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
+import { getRelatoriosByPes } from "@/repositories/relatorioRepository";
 import type { Pe } from "@/types/pe";
+import type { Relatorio } from "@/types/relatorio";
 import {
   computePropertyDeficiencyStats,
   isPeAnalyzed,
 } from "@/utils/peStats";
 
+function isManganesRelatorio(r: Relatorio): boolean {
+  if (r.deficienciaManganes) return true;
+  if (r.observacoes) {
+    const obs = r.observacoes.toLowerCase();
+    if (obs.includes("classe: manganês") || obs.includes("classe: manganes") || obs.includes("manganes") || obs.includes("manganês")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isSaudavelRelatorio(r: Relatorio): boolean {
+  if (isManganesRelatorio(r)) return false;
+  if (r.observacoes) {
+    const obs = r.observacoes.toLowerCase();
+    if (obs.includes("classe: saudável") || obs.includes("classe: saudavel") || obs.includes("saudavel") || obs.includes("saudável")) {
+      return true;
+    }
+  }
+  return !r.deficienciaManganes && !r.outros;
+}
+
 type TimePeriod = "6months" | "3months" | "1month";
 
-function getLastMonths(n: number): string[] {
-  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+function getPeriodCutoffs(period: TimePeriod): { label: string; cutoff: Date }[] {
   const now = new Date();
-  return Array.from({ length: n }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1);
-    return monthNames[d.getMonth()];
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  if (period === "1month") {
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return [
+      { label: "Sem 1", cutoff: new Date(y, m, 7, 23, 59, 59, 999) },
+      { label: "Sem 2", cutoff: new Date(y, m, 14, 23, 59, 59, 999) },
+      { label: "Sem 3", cutoff: new Date(y, m, 21, 23, 59, 59, 999) },
+      { label: "Sem 4", cutoff: now },
+    ];
+  }
+
+  const count = period === "3months" ? 3 : 6;
+  return Array.from({ length: count }, (_, i) => {
+    const offset = count - 1 - i;
+    const cutoff =
+      offset === 0
+        ? now
+        : new Date(now.getFullYear(), now.getMonth() - offset + 1, 0, 23, 59, 59, 999);
+    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    return {
+      label: monthNames[d.getMonth()],
+      cutoff,
+    };
   });
 }
 
@@ -62,9 +118,11 @@ export default function HomeScreen() {
   } = useProperty();
 
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>("6months");
+  const [chartWidth, setChartWidth] = useState(300);
   const [dbUser, setDbUser] = useState<any>(null);
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [allTrees, setAllTrees] = useState<Pe[]>([]);
+  const [allRelatorios, setAllRelatorios] = useState<Relatorio[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -98,6 +156,7 @@ export default function HomeScreen() {
           if (isActive) {
             setTalhoes([]);
             setAllTrees([]);
+            setAllRelatorios([]);
             setLoading(false);
           }
           return;
@@ -116,9 +175,21 @@ export default function HomeScreen() {
               const pts = await getPesByTalhao(t.id);
               treesList.push(...pts);
             }
-            if (isActive) setAllTrees(treesList);
+            if (!isActive) return;
+            setAllTrees(treesList);
+
+            if (treesList.length > 0) {
+              const peIds = treesList.map((t) => t.id);
+              const rels = await getRelatoriosByPes(peIds);
+              if (isActive) setAllRelatorios(rels);
+            } else {
+              if (isActive) setAllRelatorios([]);
+            }
           } else {
-            if (isActive) setAllTrees([]);
+            if (isActive) {
+              setAllTrees([]);
+              setAllRelatorios([]);
+            }
           }
         } catch (err) {
           console.error("Erro ao carregar dados do painel:", err);
@@ -135,61 +206,119 @@ export default function HomeScreen() {
     }, [selectedProperty?.id])
   );
 
+  // Mapeia o diagnóstico mais recente de cada pé a partir dos relatórios do banco
+  const treeLatestRelatorioMap = useMemo(() => {
+    const map = new Map<string, Relatorio>();
+    for (const r of allRelatorios) {
+      if (r.peId) {
+        const existing = map.get(r.peId);
+        const existingDate = existing
+          ? new Date(existing.dataAnalise || existing.createdAt).getTime()
+          : 0;
+        const currentDate = new Date(r.dataAnalise || r.createdAt).getTime();
+        if (!existing || currentDate >= existingDate) {
+          map.set(r.peId, r);
+        }
+      }
+    }
+    return map;
+  }, [allRelatorios]);
+
+  const isTreeManganes = useCallback(
+    (tree: Pe): boolean => {
+      const rel = treeLatestRelatorioMap.get(tree.id);
+      if (rel) {
+        return isManganesRelatorio(rel);
+      }
+      return Boolean(tree.deficienciaManganes) || tree.situacao === "Não-Tratado";
+    },
+    [treeLatestRelatorioMap]
+  );
+
+  const isTreeSaudavel = useCallback(
+    (tree: Pe): boolean => {
+      const rel = treeLatestRelatorioMap.get(tree.id);
+      if (rel) {
+        return isSaudavelRelatorio(rel);
+      }
+      return tree.situacao === "Tratado" && !tree.deficienciaManganes;
+    },
+    [treeLatestRelatorioMap]
+  );
+
+  const isTreeAnalyzed = useCallback(
+    (tree: Pe): boolean => {
+      return treeLatestRelatorioMap.has(tree.id) || isPeAnalyzed(tree);
+    },
+    [treeLatestRelatorioMap]
+  );
+
   const totalTrees = allTrees.length;
-  const analyzedTrees = allTrees.filter(isPeAnalyzed).length;
+  const analyzedTrees = allTrees.filter(isTreeAnalyzed).length;
   const notAnalyzedTrees = Math.max(0, totalTrees - analyzedTrees);
   const hasTrees = totalTrees > 0;
-  const hasAnalyses = analyzedTrees > 0;
-
-  const deficiencyStats = useMemo(
-    () => computePropertyDeficiencyStats(allTrees),
-    [allTrees]
-  );
+  const hasAnalyses = analyzedTrees > 0 || allRelatorios.length > 0;
 
   const nutritionalPercentages = useMemo(() => {
     if (totalTrees === 0) return { manganes: 0, saudavel: 0, semInfo: 100 };
 
-    const manganesTrees = deficiencyStats.manganes;
-    const semInfoTrees = notAnalyzedTrees;
-    const saudavelTrees = Math.max(0, analyzedTrees - manganesTrees - deficiencyStats.adversos);
+    const manganesTrees = allTrees.filter(isTreeManganes).length;
+    const saudavelTrees = allTrees.filter(isTreeSaudavel).length;
+    const semInfoTrees = Math.max(0, totalTrees - manganesTrees - saudavelTrees);
 
     const manganesPct = Math.round((manganesTrees / totalTrees) * 100);
-    const semInfoPct = Math.round((semInfoTrees / totalTrees) * 100);
-    const saudavelPct = Math.max(0, 100 - manganesPct - semInfoPct);
+    const saudavelPct = Math.round((saudavelTrees / totalTrees) * 100);
+    const semInfoPct = Math.max(0, 100 - manganesPct - saudavelPct);
 
     return {
       manganes: manganesPct,
       saudavel: saudavelPct,
       semInfo: semInfoPct,
     };
-  }, [totalTrees, analyzedTrees, notAnalyzedTrees, deficiencyStats]);
+  }, [totalTrees, allTrees, isTreeManganes, isTreeSaudavel]);
 
   const evolutionChartData = useMemo(() => {
-    const monthsCount = selectedPeriod === "6months" ? 6 : selectedPeriod === "3months" ? 3 : 1;
-    const labels = getLastMonths(monthsCount);
+    const cutoffs = getPeriodCutoffs(selectedPeriod);
+    const labels = cutoffs.map((c) => c.label);
 
     let hasDataForPeriod = false;
 
-    const values = labels.map((monthLabel) => {
-      const monthTrees = allTrees.filter((tree) => {
-        if (!isPeAnalyzed(tree)) return false;
-        const dateStr = tree.updatedAt || tree.createdAt;
-        if (!dateStr) return false;
-        const d = new Date(dateStr);
-        const mLabel = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][d.getMonth()];
-        return mLabel === monthLabel;
+    const values = cutoffs.map(({ cutoff }) => {
+      // 1. Relatórios / Diagnósticos registrados no banco até a data deste período
+      const periodRelatorios = allRelatorios.filter((r) => {
+        const dateStr = r.dataAnalise || r.createdAt;
+        if (!dateStr) return true;
+        return new Date(dateStr) <= cutoff;
       });
 
-      if (monthTrees.length > 0) {
+      if (periodRelatorios.length > 0) {
         hasDataForPeriod = true;
-        const stats = computePropertyDeficiencyStats(monthTrees);
-        return stats.manganesPct;
+        const manganesCount = periodRelatorios.filter(isManganesRelatorio).length;
+        // % de incidência de manganês entre as análises realizadas até a data
+        return Math.round((manganesCount / periodRelatorios.length) * 100);
       }
+
+      // 2. Fallback para árvores cadastradas se ainda não houver relatórios na data
+      const periodTrees = allTrees.filter((tree) => {
+        const dateStr = tree.createdAt || tree.updatedAt;
+        if (!dateStr) return true;
+        return new Date(dateStr) <= cutoff;
+      });
+
+      if (periodTrees.length > 0) {
+        const analyzed = periodTrees.filter(isTreeAnalyzed);
+        if (analyzed.length > 0) {
+          hasDataForPeriod = true;
+          const manganesCount = periodTrees.filter(isTreeManganes).length;
+          return Math.round((manganesCount / analyzed.length) * 100);
+        }
+      }
+
       return 0;
     });
 
     return { labels, values, hasData: hasDataForPeriod };
-  }, [allTrees, selectedPeriod]);
+  }, [allRelatorios, allTrees, selectedPeriod, isTreeAnalyzed, isTreeManganes]);
 
   // Exibe os primeiros 5 talhões cadastrados no banco
   const talhoesChartData = useMemo(() => {
@@ -199,9 +328,8 @@ export default function HomeScreen() {
 
     return talhoes.slice(0, 5).map((t, index) => {
       const tTrees = allTrees.filter((tree) => tree.talhaoId === t.id);
-      const manganesCount = tTrees.filter((tree) => tree.deficienciaManganes).length;
-      const analyzedCount = tTrees.filter(isPeAnalyzed).length;
-      const saudavelCount = Math.max(0, analyzedCount - manganesCount);
+      const manganesCount = tTrees.filter(isTreeManganes).length;
+      const saudavelCount = tTrees.filter(isTreeSaudavel).length;
 
       return {
         id: t.id,
@@ -210,7 +338,15 @@ export default function HomeScreen() {
         manganes: manganesCount,
       };
     });
-  }, [talhoes, allTrees]);
+  }, [talhoes, allTrees, isTreeManganes, isTreeSaudavel]);
+
+  const maxTalhaoTreeCount = useMemo(() => {
+    if (talhoesChartData.length === 0) return 20;
+    const maxVal = Math.max(
+      ...talhoesChartData.map((d) => Math.max(d.saudavel, d.manganes))
+    );
+    return Math.max(20, Math.ceil(maxVal / 5) * 5);
+  }, [talhoesChartData]);
 
   const handleVerDetalhes = useCallback(() => {
     router.push("/(tabs)/History/history");
@@ -451,38 +587,160 @@ export default function HomeScreen() {
                   </View>
 
                   {/* Área do Gráfico */}
-                  <View style={styles.chartContainer}>
-                    {[50, 40, 30, 20, 10, 0].map((val) => (
-                      <View key={val} style={styles.chartGridRow}>
-                        <Text style={styles.chartYAxisText}>{val}</Text>
-                        <View style={styles.chartGridLine} />
-                      </View>
-                    ))}
+                  <View
+                    style={styles.chartContainer}
+                    onLayout={(e) => {
+                      const w = e.nativeEvent.layout.width;
+                      if (w > 0 && Math.abs(w - chartWidth) > 1) {
+                        setChartWidth(w);
+                      }
+                    }}
+                  >
+                    {(() => {
+                      const CHART_HEIGHT = 145;
+                      const PADDING_LEFT = 28;
+                      const PADDING_RIGHT = 14;
+                      const PADDING_TOP = 14;
+                      const PADDING_BOTTOM = 24;
+                      const plotWidth = Math.max(10, chartWidth - PADDING_LEFT - PADDING_RIGHT);
+                      const plotHeight = CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
 
-                    {/* Exibe a área laranja e os pontos APENAS se houver análises reais */}
-                    {hasAnalyses && evolutionChartData.hasData && (
-                      <View style={styles.chartAreaWrapper}>
-                        <View style={styles.chartAreaFill} />
-                        <View style={styles.pointsRow}>
-                          {evolutionChartData.values.map((v, i) => (
-                            <View
-                              key={i}
-                              style={[
-                                styles.chartPoint,
-                                { bottom: Math.min(100, Math.max(8, (v / 50) * 105)) },
-                              ]}
-                            />
+                      const maxVal = Math.max(...evolutionChartData.values, 0);
+                      const yMax = maxVal <= 50 ? 50 : 100;
+                      const ySteps = yMax === 50 ? [50, 40, 30, 20, 10, 0] : [100, 80, 60, 40, 20, 0];
+
+                      const numPoints = evolutionChartData.values.length;
+                      const points = evolutionChartData.values.map((v, i) => {
+                        const x =
+                          numPoints > 1
+                            ? PADDING_LEFT + (i / (numPoints - 1)) * plotWidth
+                            : PADDING_LEFT + plotWidth / 2;
+                        const y =
+                          PADDING_TOP + (1 - Math.min(yMax, Math.max(0, v)) / yMax) * plotHeight;
+                        return { x, y, value: v, label: evolutionChartData.labels[i] };
+                      });
+
+                      const baseY = PADDING_TOP + plotHeight;
+                      const linePath = points
+                        .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+                        .join(" ");
+                      const areaPath =
+                        points.length > 0
+                          ? `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${baseY.toFixed(1)} L ${points[0].x.toFixed(1)} ${baseY.toFixed(1)} Z`
+                          : "";
+
+                      return (
+                        <Svg width={chartWidth} height={CHART_HEIGHT}>
+                          <Defs>
+                            <SvgGradient id="evolutionAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                              <Stop offset="0%" stopColor={Palette.deficiencyManganese} stopOpacity="0.35" />
+                              <Stop offset="100%" stopColor={Palette.deficiencyManganese} stopOpacity="0.02" />
+                            </SvgGradient>
+                          </Defs>
+
+                          {/* Linhas de Grade e Eixo Y */}
+                          {ySteps.map((step) => {
+                            const y = PADDING_TOP + (1 - step / yMax) * plotHeight;
+                            return (
+                              <G key={`grid-${step}`}>
+                                <SvgLine
+                                  x1={PADDING_LEFT}
+                                  y1={y}
+                                  x2={chartWidth - PADDING_RIGHT}
+                                  y2={y}
+                                  stroke="#E5E7EB"
+                                  strokeWidth={1}
+                                />
+                                <SvgText
+                                  x={PADDING_LEFT - 6}
+                                  y={y + 4}
+                                  fontSize={11}
+                                  fill={Palette.textSecondary}
+                                  textAnchor="end"
+                                  fontWeight="500"
+                                >
+                                  {step}
+                                </SvgText>
+                              </G>
+                            );
+                          })}
+
+                          {/* Gráfico preenchido e curva */}
+                          {hasTrees && points.length > 0 && (
+                            <>
+                              <Path d={areaPath} fill="url(#evolutionAreaGrad)" />
+                              <Path
+                                d={linePath}
+                                fill="none"
+                                stroke={Palette.deficiencyManganese}
+                                strokeWidth={2.5}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+
+                              {/* Pontos nas coordenadas */}
+                              {points.map((p, i) => (
+                                <G key={`pt-${i}`}>
+                                  <SvgCircle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r={5}
+                                    fill="#FFFFFF"
+                                    stroke={Palette.deficiencyManganese}
+                                    strokeWidth={2}
+                                  />
+                                  <SvgCircle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r={2.5}
+                                    fill={Palette.deficiencyManganese}
+                                  />
+                                </G>
+                              ))}
+
+                              {/* Badge de destaque com o valor na medição atual */}
+                              {points.length > 0 && (hasAnalyses || evolutionChartData.hasData) && (
+                                <G>
+                                  <SvgRect
+                                    x={points[points.length - 1].x - 17}
+                                    y={Math.max(2, points[points.length - 1].y - 20)}
+                                    width={34}
+                                    height={16}
+                                    rx={8}
+                                    fill={Palette.deficiencyManganese}
+                                  />
+                                  <SvgText
+                                    x={points[points.length - 1].x}
+                                    y={Math.max(2, points[points.length - 1].y - 20) + 11.5}
+                                    fontSize={10}
+                                    fill="#FFFFFF"
+                                    textAnchor="middle"
+                                    fontWeight="bold"
+                                  >
+                                    {`${points[points.length - 1].value}%`}
+                                  </SvgText>
+                                </G>
+                              )}
+                            </>
+                          )}
+
+                          {/* Rótulos do Eixo X perfeitamente alinhados sob os pontos */}
+                          {points.map((p, i) => (
+                            <SvgText
+                              key={`xlabel-${i}`}
+                              x={p.x}
+                              y={baseY + 16}
+                              fontSize={11}
+                              fill={Palette.textSecondary}
+                              textAnchor="middle"
+                              fontWeight="500"
+                            >
+                              {p.label}
+                            </SvgText>
                           ))}
-                        </View>
-                      </View>
-                    )}
-
-                    {/* Eixo X com alinhamento horizontal compensando a coluna Y */}
-                    <View style={styles.chartXAxisRow}>
-                      {evolutionChartData.labels.map((m, i) => (
-                        <Text key={i} style={styles.chartXAxisText}>{m}</Text>
-                      ))}
-                    </View>
+                        </Svg>
+                      );
+                    })()}
                   </View>
 
                   <TouchableOpacity
@@ -499,7 +757,13 @@ export default function HomeScreen() {
                   <Text style={styles.cardTitle}>Deficiência por talhão</Text>
 
                   <View style={styles.columnChartWrapper}>
-                    {[20, 15, 10, 5, 0].map((val) => (
+                    {[
+                      maxTalhaoTreeCount,
+                      Math.round(maxTalhaoTreeCount * 0.75),
+                      Math.round(maxTalhaoTreeCount * 0.5),
+                      Math.round(maxTalhaoTreeCount * 0.25),
+                      0,
+                    ].map((val) => (
                       <View key={val} style={styles.chartGridRow}>
                         <Text style={styles.chartYAxisText}>{val}</Text>
                         <View style={styles.chartGridLine} />
@@ -513,13 +777,23 @@ export default function HomeScreen() {
                             <View
                               style={[
                                 styles.barSaudavel,
-                                { height: item.saudavel > 0 ? Math.max(12, (item.saudavel / 20) * 85) : 4 },
+                                {
+                                  height:
+                                    item.saudavel > 0
+                                      ? Math.max(12, (item.saudavel / maxTalhaoTreeCount) * 85)
+                                      : 4,
+                                },
                               ]}
                             />
                             <View
                               style={[
                                 styles.barManganes,
-                                { height: item.manganes > 0 ? Math.max(12, (item.manganes / 20) * 85) : 4 },
+                                {
+                                  height:
+                                    item.manganes > 0
+                                      ? Math.max(12, (item.manganes / maxTalhaoTreeCount) * 85)
+                                      : 4,
+                                },
                               ]}
                             />
                           </View>

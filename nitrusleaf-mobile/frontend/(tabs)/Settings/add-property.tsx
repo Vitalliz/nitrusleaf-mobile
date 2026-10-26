@@ -12,7 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polygon, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ROUTES, safeBack } from '@/utils/navigation';
 import { Background } from '@/components/ui/background';
@@ -56,10 +57,8 @@ export default function AddPropertyScreen() {
 
   const [loading, setLoading] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [polygonPoints, setPolygonPoints] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [boundaryString, setBoundaryString] = useState<string>('');
 
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -93,15 +92,44 @@ export default function AddPropertyScreen() {
 
   const handleMapPress = (event: any) => {
     const { coordinate } = event.nativeEvent;
-    setSelectedLocation(coordinate);
+    if (!coordinate?.latitude || !coordinate?.longitude) return;
+    setPolygonPoints((prev) => [...prev, coordinate]);
+  };
+
+  const handleUndoPoint = () => {
+    setPolygonPoints((prev) => prev.slice(0, -1));
+  };
+
+  const handleClearPoints = () => {
+    setPolygonPoints([]);
   };
 
   const handleConfirmLocation = () => {
-    if (selectedLocation) {
+    if (polygonPoints.length === 0) {
+      setShowMapModal(false);
+      return;
+    }
+
+    if (polygonPoints.length >= 3) {
+      const latSum = polygonPoints.reduce((acc, p) => acc + p.latitude, 0);
+      const lngSum = polygonPoints.reduce((acc, p) => acc + p.longitude, 0);
+      const centerLat = (latSum / polygonPoints.length).toFixed(6);
+      const centerLng = (lngSum / polygonPoints.length).toFixed(6);
+
+      const str = polygonPoints.map((p) => `${p.latitude},${p.longitude}`).join(';');
+      setBoundaryString(str);
+
       setFormData((prev) => ({
         ...prev,
-        latitude: selectedLocation.latitude.toString(),
-        longitude: selectedLocation.longitude.toString(),
+        latitude: centerLat,
+        longitude: centerLng,
+      }));
+    } else {
+      const p = polygonPoints[0];
+      setFormData((prev) => ({
+        ...prev,
+        latitude: p.latitude.toFixed(6),
+        longitude: p.longitude.toFixed(6),
       }));
     }
     setShowMapModal(false);
@@ -154,6 +182,9 @@ export default function AddPropertyScreen() {
       };
 
       const created = await createProperty(propertyData);
+      if (boundaryString) {
+        await AsyncStorage.setItem(`property_boundary_${created.id}`, boundaryString);
+      }
       await refreshProperties();
       await selectProperty(created.id);
 
@@ -286,49 +317,54 @@ export default function AddPropertyScreen() {
           </View>
 
           {/* Localização */}
-          <Text style={styles.sectionTitle}>Localização (Opcional)</Text>
+          {/* Demarcação no Mapa */}
+          <Text style={styles.sectionTitle}>Demarcação da Fazenda</Text>
+          <TouchableOpacity
+            style={styles.mapBannerBtn}
+            onPress={() => setShowMapModal(true)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.mapBannerIconBox}>
+              <Ionicons name="map" size={24} color={Palette.primary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.mapBannerTitle}>
+                {polygonPoints.length >= 3
+                  ? `Área Demarcada (${polygonPoints.length} pontos)`
+                  : 'Demarcar Limites da Fazenda no Mapa'}
+              </Text>
+              <Text style={styles.mapBannerSubtitle}>
+                {polygonPoints.length >= 3
+                  ? 'Toque para visualizar ou ajustar o polígono'
+                  : 'Toque para desenhar o contorno da propriedade no mapa'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Palette.textSecondary} />
+          </TouchableOpacity>
 
           <View style={styles.row}>
             <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-              <Text style={styles.label}>Latitude</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  value={formData.latitude}
-                  onChangeText={(value) => handleInputChange('latitude', value)}
-                  style={[styles.input, styles.inputFlex]}
-                  placeholder="-24.550520"
-                  placeholderTextColor={Palette.textSecondary}
-                  keyboardType="numeric"
-                />
-                <TouchableOpacity
-                  style={styles.mapBtn}
-                  onPress={() => setShowMapModal(true)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="map-outline" size={20} color={Palette.primary} />
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.label}>Latitude Central</Text>
+              <TextInput
+                value={formData.latitude}
+                onChangeText={(value) => handleInputChange('latitude', value)}
+                style={styles.input}
+                placeholder="-24.550520"
+                placeholderTextColor={Palette.textSecondary}
+                keyboardType="numeric"
+              />
             </View>
 
             <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Longitude</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  value={formData.longitude}
-                  onChangeText={(value) => handleInputChange('longitude', value)}
-                  style={[styles.input, styles.inputFlex]}
-                  placeholder="-47.633308"
-                  placeholderTextColor={Palette.textSecondary}
-                  keyboardType="numeric"
-                />
-                <TouchableOpacity
-                  style={styles.mapBtn}
-                  onPress={() => setShowMapModal(true)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="map-outline" size={20} color={Palette.primary} />
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.label}>Longitude Central</Text>
+              <TextInput
+                value={formData.longitude}
+                onChangeText={(value) => handleInputChange('longitude', value)}
+                style={styles.input}
+                placeholder="-47.633308"
+                placeholderTextColor={Palette.textSecondary}
+                keyboardType="numeric"
+              />
             </View>
           </View>
 
@@ -344,7 +380,7 @@ export default function AddPropertyScreen() {
           </View>
         </ScrollView>
 
-        {/* Modal do Mapa */}
+        {/* Modal do Mapa de Demarcação */}
         <Modal
           visible={showMapModal}
           animationType="slide"
@@ -359,34 +395,97 @@ export default function AddPropertyScreen() {
               >
                 <Ionicons name="close" size={24} color={Palette.textPrimary} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Selecionar Localização</Text>
+              <Text style={styles.modalTitle}>Demarcar Limites da Fazenda</Text>
               <TouchableOpacity
                 onPress={handleConfirmLocation}
                 style={styles.modalConfirmBtn}
                 activeOpacity={0.85}
               >
-                <Text style={styles.modalConfirmText}>Confirmar</Text>
+                <Text style={styles.modalConfirmText}>
+                  Confirmar ({polygonPoints.length})
+                </Text>
               </TouchableOpacity>
+            </View>
+
+            {/* Banner de instrução */}
+            <View style={styles.modalInstructionBanner}>
+              <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
+              <Text style={styles.modalInstructionText}>
+                Toque no mapa para marcar os pontos da fazenda. Com 3 ou mais pontos a forma fecha em amarelo.
+              </Text>
             </View>
 
             <MapView
               style={styles.map}
+              mapType="satellite"
               initialRegion={{
-                latitude: -24.68964,
-                longitude: -47.85112,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitude: formData.latitude ? parseFloat(formData.latitude) : -24.68964,
+                longitude: formData.longitude ? parseFloat(formData.longitude) : -47.85112,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015,
               }}
               onPress={handleMapPress}
               provider={PROVIDER_GOOGLE}
             >
-              {selectedLocation && (
-                <Marker
-                  coordinate={selectedLocation}
-                  title="Localização selecionada"
+              {/* Linhas conectando os pontos */}
+              {polygonPoints.length >= 2 && (
+                <Polyline
+                  coordinates={polygonPoints}
+                  strokeColor="#F59E0B"
+                  strokeWidth={2.5}
                 />
               )}
+
+              {/* Polígono preenchido quando 3+ pontos */}
+              {polygonPoints.length >= 3 && (
+                <Polygon
+                  coordinates={polygonPoints}
+                  strokeColor="#F59E0B"
+                  strokeWidth={3}
+                  fillColor="rgba(245, 158, 11, 0.25)"
+                />
+              )}
+
+              {/* Marcadores numerados dos vértices */}
+              {polygonPoints.map((point, idx) => (
+                <Marker
+                  key={`pt-${idx}`}
+                  coordinate={point}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                >
+                  <View style={styles.pointMarker}>
+                    <Text style={styles.pointMarkerText}>{idx + 1}</Text>
+                  </View>
+                </Marker>
+              ))}
             </MapView>
+
+            {/* Barra de Controles Inferiores */}
+            <View style={styles.mapControlsBar}>
+              <TouchableOpacity
+                style={styles.mapControlBtn}
+                onPress={handleUndoPoint}
+                disabled={polygonPoints.length === 0}
+              >
+                <Ionicons name="arrow-undo-outline" size={18} color="#1E293B" />
+                <Text style={styles.mapControlBtnText}>Desfazer</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.mapControlBtn}
+                onPress={handleClearPoints}
+                disabled={polygonPoints.length === 0}
+              >
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                <Text style={[styles.mapControlBtnText, { color: '#EF4444' }]}>Limpar</Text>
+              </TouchableOpacity>
+
+              <View style={styles.pointsCounterBadge}>
+                <Text style={styles.pointsCounterText}>
+                  {polygonPoints.length} {polygonPoints.length === 1 ? 'ponto' : 'pontos'}
+                </Text>
+              </View>
+            </View>
           </SafeAreaView>
         </Modal>
 
@@ -528,5 +627,107 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  mapBannerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  mapBannerIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  mapBannerSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  modalInstructionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#BAE6FD',
+  },
+  modalInstructionText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#0369A1',
+    lineHeight: 16,
+  },
+  pointMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F59E0B',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pointMarkerText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  mapControlsBar: {
+    position: 'absolute',
+    bottom: 24,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  mapControlBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+  },
+  mapControlBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  pointsCounterBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  pointsCounterText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#D97706',
   },
 });
