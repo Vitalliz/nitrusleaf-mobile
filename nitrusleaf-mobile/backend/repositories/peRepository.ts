@@ -37,19 +37,13 @@ type DbPeRow = Record<string, unknown> & {
   longitude: number | null;
 };
 
-type DbCopperReportRow = {
-  id_pe: number | null;
-  deficiencia_cobre: boolean | number;
-};
-
-function mapPe(row: DbPeRow, deficienciaCobre = false): Pe {
+function mapPe(row: DbPeRow): Pe {
   const ts = readCreatedUpdated(row);
   return {
     id: String(row.id_pe),
     talhaoId: String(row.id_talhao),
     nome: row.nome,
     situacao: row.situacao as SituacaoPe,
-    deficienciaCobre,
     deficienciaManganes: Boolean(row.deficiencia_manganes),
     outros: Boolean(row.outros),
     observacoes: row.observacoes ?? undefined,
@@ -60,46 +54,7 @@ function mapPe(row: DbPeRow, deficienciaCobre = false): Pe {
   };
 }
 
-async function getLatestCopperFlags(
-  peIds: number[]
-): Promise<Map<number, boolean>> {
-  const uniqueIds = [...new Set(peIds)];
-  const flags = new Map<number, boolean>();
-  if (uniqueIds.length === 0) return flags;
 
-  const supabase = getSupabase();
-  const idChunkSize = 200;
-  const pageSize = 1000;
-
-  for (let start = 0; start < uniqueIds.length; start += idChunkSize) {
-    const idChunk = uniqueIds.slice(start, start + idChunkSize);
-    let offset = 0;
-
-    while (true) {
-      const { data, error } = await supabase
-        .from("relatorios")
-        .select("id_pe, deficiencia_cobre")
-        .in("id_pe", idChunk)
-        .order("id_relatorio", { ascending: false })
-        .range(offset, offset + pageSize - 1);
-
-      throwIfError(error);
-
-      const rows = (data ?? []) as DbCopperReportRow[];
-      for (const row of rows) {
-        if (row.id_pe !== null && !flags.has(row.id_pe)) {
-          flags.set(row.id_pe, Boolean(row.deficiencia_cobre));
-        }
-      }
-
-      const chunkResolved = idChunk.every((id) => flags.has(id));
-      if (rows.length < pageSize || chunkResolved) break;
-      offset += pageSize;
-    }
-  }
-
-  return flags;
-}
 
 function throwIfError(error: { message: string } | null) {
   if (error) throw new Error(error.message);
@@ -140,13 +95,7 @@ export async function getPesByTalhao(talhaoId: string): Promise<Pe[]> {
     .order("id_pe", { ascending: false });
 
   throwIfError(error);
-  const rows = (data ?? []) as DbPeRow[];
-  const copperFlags = await getLatestCopperFlags(
-    rows.map((row) => row.id_pe)
-  );
-  return rows.map((row) =>
-    mapPe(row, copperFlags.get(row.id_pe) ?? false)
-  );
+  return ((data ?? []) as DbPeRow[]).map(mapPe);
 }
 
 export async function getPeById(id: string): Promise<Pe | null> {
@@ -159,11 +108,7 @@ export async function getPeById(id: string): Promise<Pe | null> {
     .maybeSingle();
 
   throwIfError(error);
-  if (!data) return null;
-
-  const row = data as DbPeRow;
-  const copperFlags = await getLatestCopperFlags([row.id_pe]);
-  return mapPe(row, copperFlags.get(row.id_pe) ?? false);
+  return data ? mapPe(data as DbPeRow) : null;
 }
 
 export async function updatePe(id: string, params: UpdatePeRequest): Promise<Pe> {

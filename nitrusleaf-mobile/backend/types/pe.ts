@@ -11,7 +11,6 @@ export interface Pe {
   talhaoId: string;
   nome: string;
   situacao: SituacaoPe;
-  deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
   observacoes?: string;
