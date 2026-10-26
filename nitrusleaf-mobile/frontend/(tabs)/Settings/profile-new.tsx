@@ -117,7 +117,7 @@ export default function ProfileScreen() {
       setUploadingAvatar(true);
       setAvatarUri(picked.localUri);
 
-      const storedUrl = await uploadProfileAvatar(user.id, picked.localUri);
+      const storedUrl = await uploadProfileAvatar(user.id, picked.localUri, picked.base64);
       await updateUsuarioAvatar(user.id, storedUrl);
       setAvatarUri(storedUrl);
       showAlert('Foto de perfil atualizada com sucesso.', 'Sucesso', 'success');

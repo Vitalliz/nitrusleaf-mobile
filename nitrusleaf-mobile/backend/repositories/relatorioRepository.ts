@@ -8,7 +8,6 @@ type DbRelatorioRow = Record<string, unknown> & {
   id_relatorio: number;
   id_pe: number | null;
   id_foto: number | null;
-  deficiencia_cobre: number | boolean;
   deficiencia_manganes: number | boolean;
   outros: number | boolean;
   observacoes: string | null;
@@ -26,7 +25,6 @@ function mapRelatorio(row: DbRelatorioRow): Relatorio {
     id: String(row.id_relatorio),
     peId: row.id_pe ? String(row.id_pe) : undefined,
     fotoId: row.id_foto ? String(row.id_foto) : undefined,
-    deficienciaCobre: asBool(row.deficiencia_cobre),
     deficienciaManganes: asBool(row.deficiencia_manganes),
     outros: asBool(row.outros),
     observacoes: row.observacoes ?? undefined,
@@ -48,13 +46,12 @@ export async function createRelatorio(params: CreateRelatorioRequest): Promise<R
     .insert({
       id_pe: params.peId ? Number(params.peId) : null,
       id_foto: params.fotoId ? Number(params.fotoId) : null,
-      deficiencia_cobre: Boolean(params.deficienciaCobre),
       deficiencia_manganes: Boolean(params.deficienciaManganes),
       outros: Boolean(params.outros),
       observacoes: params.observacoes ?? null,
       data_analise: params.dataAnalise,
     })
-    .select("*")
+    .select("id_relatorio, id_pe, id_foto, deficiencia_manganes, outros, observacoes, data_analise, createdat, updatedat")
     .single();
 
   throwIfError(error);
@@ -67,7 +64,7 @@ export async function getRelatoriosByPe(peId: string): Promise<Relatorio[]> {
 
   const { data, error } = await supabase
     .from("relatorios")
-    .select("*")
+    .select("id_relatorio, id_pe, id_foto, deficiencia_manganes, outros, observacoes, data_analise, createdat, updatedat")
     .eq("id_pe", Number(peId))
     .order("id_relatorio", { ascending: false });
 
@@ -80,7 +77,7 @@ export async function getRelatorioById(id: string): Promise<Relatorio | null> {
 
   const { data, error } = await supabase
     .from("relatorios")
-    .select("*")
+    .select("id_relatorio, id_pe, id_foto, deficiencia_manganes, outros, observacoes, data_analise, createdat, updatedat")
     .eq("id_relatorio", Number(id))
     .maybeSingle();
 
@@ -93,9 +90,6 @@ export async function updateRelatorio(id: string, params: UpdateRelatorioRequest
 
   const patch: Record<string, unknown> = {};
 
-  if (params.deficienciaCobre !== undefined) {
-    patch.deficiencia_cobre = params.deficienciaCobre;
-  }
   if (params.deficienciaManganes !== undefined) {
     patch.deficiencia_manganes = params.deficienciaManganes;
   }

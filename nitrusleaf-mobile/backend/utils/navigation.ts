@@ -8,7 +8,7 @@ export const ROUTES = {
   scan: "/(tabs)/AI/scan",
   analysisSummary: "/(tabs)/AI/analysis-summary",
   profile: "/(tabs)/Settings/profile-new",
-  maps: "/(tabs)/Maps/maps",
+  maps: "/(tabs)/Maps/maps-location",
   login: "/login",
   welcome: "/welcome",
   addProperty: "/(tabs)/Settings/add-property",

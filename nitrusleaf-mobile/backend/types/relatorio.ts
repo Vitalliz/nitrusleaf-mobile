@@ -2,7 +2,6 @@ export interface Relatorio {
   id: string;
   peId?: string;
   fotoId?: string;
-  deficienciaCobre: boolean;
   deficienciaManganes: boolean;
   outros: boolean;
   observacoes?: string;
@@ -14,7 +13,6 @@ export interface Relatorio {
 export interface CreateRelatorioRequest {
   peId?: string;
   fotoId?: string;
-  deficienciaCobre: boolean;
   deficienciaManganes: boolean;
   outros: boolean;
   observacoes?: string;
@@ -22,7 +20,6 @@ export interface CreateRelatorioRequest {
 }
 
 export interface UpdateRelatorioRequest {
-  deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
   observacoes?: string;
