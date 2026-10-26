@@ -11,6 +11,9 @@ type DbTalhaoRow = Record<string, unknown> & {
   latitude: number | null;
   longitude: number | null;
   coordenadas_poligono: string | null;
+  total_pes?: number | null;
+  pes_analisados?: number | null;
+  pes_diagnosticados?: number | null;
 };
 
 function mapTalhao(row: DbTalhaoRow): Talhao {
@@ -24,6 +27,9 @@ function mapTalhao(row: DbTalhaoRow): Talhao {
     latitude: row.latitude ?? undefined,
     longitude: row.longitude ?? undefined,
     coordenadasPoligono: row.coordenadas_poligono ?? undefined,
+    totalPes: row.total_pes ?? 0,
+    pesAnalisados: row.pes_analisados ?? 0,
+    pesDiagnosticados: row.pes_diagnosticados ?? 0,
     createdAt: ts.createdAt,
     updatedAt: ts.updatedAt,
   };

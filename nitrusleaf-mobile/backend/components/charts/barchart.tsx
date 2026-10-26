@@ -8,7 +8,7 @@ export type TimePeriod = '6months' | '3months' | '1month';
 
 export interface EvolutionData {
   period: string;
-  cobre: number;
+  cobre?: number;
   manganes: number;
 }
 
@@ -46,8 +46,8 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
 
   const chartWidth = screenWidth - 25 * 2 - 16 * 2; // page padding + card padding
 
-  const safeData = data.length > 0 ? data : [{ period: "-", cobre: 0, manganes: 0 }];
-  const maxValue = Math.max(...safeData.flatMap((d) => [d.cobre, d.manganes]), 1);
+  const safeData = data.length > 0 ? data : [{ period: "-", manganes: 0 }];
+  const maxValue = Math.max(...safeData.map((d) => d.manganes), 1);
   const yAxisMax = Math.max(10, Math.ceil(maxValue / 10) * 10);
   const yAxisSteps = Array.from(
     { length: yAxisMax / 10 + 1 },
@@ -55,7 +55,7 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
   );
 
   const drawHeight = height - 32 - TOP_PADDING;
-  const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 10;
+  const groupWidth = BAR_WIDTH * 2 + 10;
   const totalGroupsWidth = groupWidth * safeData.length;
   const availableWidth = chartWidth - Y_AXIS_WIDTH;
   const startX = Y_AXIS_WIDTH + Math.max(0, (availableWidth - totalGroupsWidth) / 2);
@@ -69,7 +69,7 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
 
   return (
     <CustomCard variant="white-large">
-      <View style={styles.cardContent}><Text style={styles.title}>Evolução das deficiências (%)</Text><View style={styles.filterRow}>
+      <View style={styles.cardContent}><Text style={styles.title}>Evolução da deficiência de Manganês (%)</Text><View style={styles.filterRow}>
           {periods.map(p => (
             <TouchableOpacity
               key={p.value}
@@ -107,26 +107,18 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
               );
             })}{safeData.map((item, i) => {
               const gx = startX + i * groupWidth;
-              const cobreH = getBarH(item.cobre);
               const manganesH = getBarH(item.manganes);
 
               return (
                 <G key={i}><Rect
-                    x={gx}
-                    y={baseY - cobreH}
-                    width={BAR_WIDTH}
-                    height={cobreH}
-                    fill="#E65723"
-                    rx={4}
-                  /><Rect
-                    x={gx + BAR_WIDTH + BAR_GAP}
+                    x={gx + BAR_WIDTH / 2}
                     y={baseY - manganesH}
                     width={BAR_WIDTH}
                     height={manganesH}
                     fill="#FBBF24"
                     rx={4}
                   /><SvgText
-                    x={gx + BAR_WIDTH + BAR_GAP / 2}
+                    x={gx + BAR_WIDTH}
                     y={baseY + 16}
                     fontSize={11}
                     fill="#666"
@@ -139,10 +131,6 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
             })}
           </Svg>
         </View><View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#E65723' }]} />
-            <Text style={styles.legendText}>Cobre</Text>
-          </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
             <Text style={styles.legendText}>Manganês</Text>

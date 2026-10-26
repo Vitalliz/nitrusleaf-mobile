@@ -63,7 +63,7 @@ export default function HeatMapScreen() {
           const [lat, lng] = coord.split(",").map(Number);
 
           const deficiencyCount = pesGroup.filter(
-            (pe) => pe.deficienciaCobre || pe.deficienciaManganes || pe.outros
+            (pe) => pe.deficienciaManganes || pe.outros
           ).length;
 
           if (deficiencyCount > 0) {

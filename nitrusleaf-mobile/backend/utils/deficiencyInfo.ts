@@ -1,4 +1,4 @@
-export type DeficiencyType = "Cobre" | "Manganês" | "Saudável" | "Indefinido";
+export type DeficiencyType = "Manganês" | "Saudável" | "Indefinido";
 
 export function normalizeDeficiencyType(raw: string | undefined): DeficiencyType {
   if (!raw?.trim()) return "Indefinido";
@@ -7,7 +7,6 @@ export function normalizeDeficiencyType(raw: string | undefined): DeficiencyType
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-  if (n.includes("cobre")) return "Cobre";
   if (n.includes("manganes") || n.includes("manganese")) return "Manganês";
   if (
     n.includes("saudavel") ||
@@ -21,7 +20,6 @@ export function normalizeDeficiencyType(raw: string | undefined): DeficiencyType
 }
 
 export function getDeficiencyAccentColor(type: DeficiencyType): string {
-  if (type === "Cobre") return "#E65723";
   if (type === "Manganês") return "#FBBF24";
   if (type === "Saudável") return "#58B741";
   return "#6B7280";
@@ -59,27 +57,11 @@ export function getDeficiencyExplanation(
     };
   }
 
-  if (type === "Cobre") {
-    return {
-      title: "Deficiência de Cobre",
-      meaning:
-        "O modelo indicou sinais compatíveis com deficiência de cobre. Em plantas cítricas, pode haver folhas pequenas, deformadas, queda prematura e menor qualidade dos frutos quando o desequilíbrio persiste.",
-      recommendations: [
-        "Validar o diagnóstico com análise foliar e histórico do manejo da área.",
-        "Evitar aplicações repetidas sem laudo: excesso de cobre também prejudica a lavoura.",
-        "Ajustar programa de micronutrientes somente com recomendação técnica.",
-        "Registrar o pé/talhão e reavaliar em 30 a 45 dias.",
-      ],
-      footer:
-        "Recomendações básicas. Consulte um agrônomo para prescrição segura de fontes e doses de cobre.",
-    };
-  }
-
   if (type === "Saudável") {
     return {
       title: "Nada identificado",
       meaning:
-        "A imagem analisada não apresentou, com confiança suficiente, padrão típico de deficiência de manganês ou cobre no modelo atual. Isso não substitui avaliação presencial nem análise laboratorial.",
+        "A imagem analisada não apresentou, com confiança suficiente, padrão típico de deficiência de manganês no modelo atual. Isso não substitui avaliação presencial nem análise laboratorial.",
       recommendations: [
         "Manter o monitoramento periódico das folhas e do vigor das plantas.",
         "Seguir o plano de adubação e manejo já adotado na propriedade.",

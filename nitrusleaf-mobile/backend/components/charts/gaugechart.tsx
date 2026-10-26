@@ -4,7 +4,7 @@ import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 
 interface GaugeChartProps {
   percentage: number;
-  deficiencyType?: "Cobre" | "Manganês" | "Saudável";
+  deficiencyType?: "Manganês" | "Saudável";
   label?: string;
   sublabel?: string;
   size?: number;
@@ -37,9 +37,6 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
     }
     if (deficiencyType === 'Manganês') {
       return '#FBBF24'; // Amarelo/Laranja
-    }
-    if (deficiencyType === 'Cobre') {
-      return '#E65723'; // Laranja escuro
     }
     return '#6BC24A';
   };

@@ -5,7 +5,7 @@ import { CustomCard } from '@/components/cards/card';
 
 export interface GroupedColumnData {
   talhao: string;
-  cobre: number;
+  cobre?: number;
   manganes: number;
 }
 
@@ -29,14 +29,14 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
 }) => {
   const chartWidth = screenWidth - 50 * 2; // 25 page padding * 2 + card internal padding
 
-  const safeData = data.length > 0 ? data : [{ talhao: "-", cobre: 0, manganes: 0 }];
-  const maxValue = Math.max(...safeData.flatMap((d) => [d.cobre, d.manganes]), 1);
+  const safeData = data.length > 0 ? data : [{ talhao: "-", manganes: 0 }];
+  const maxValue = Math.max(...safeData.map((d) => d.manganes), 1);
   const yAxisMax = Math.max(5, Math.ceil(maxValue / 5) * 5);
   const yAxisSteps = [0, 5, 10, 15, 20].filter(s => s <= yAxisMax + 5);
 
   const TOP_PADDING = 16;  // espaço para o label "20" não ser cortado
   const drawHeight = height - 32 - TOP_PADDING; // leave room for x-axis labels + top
-  const groupWidth = BAR_WIDTH * 2 + BAR_GAP + 16;
+  const groupWidth = BAR_WIDTH + 24;
   const totalGroupsWidth = groupWidth * safeData.length;
   const availableWidth = chartWidth - Y_AXIS_WIDTH;
   const startX = Y_AXIS_WIDTH + Math.max(0, (availableWidth - totalGroupsWidth) / 2);
@@ -50,7 +50,7 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
 
   return (
     <CustomCard variant="white-large">
-      <View style={styles.cardContent}><Text style={styles.title}>Deficiência por talhão</Text><View style={{ height: height + 20 }}>
+      <View style={styles.cardContent}><Text style={styles.title}>Deficiência de Manganês por talhão</Text><View style={{ height: height + 20 }}>
           <Svg width={chartWidth} height={height + 20}>{yAxisSteps.map((step) => {
               const y = baseY - getBarH(step);
               return (
@@ -76,26 +76,18 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
               );
             })}{safeData.map((item, i) => {
               const gx = startX + i * groupWidth;
-              const cobreH = getBarH(item.cobre);
               const manganesH = getBarH(item.manganes);
 
               return (
                 <G key={i}><Rect
                     x={gx}
-                    y={baseY - cobreH}
-                    width={BAR_WIDTH}
-                    height={cobreH}
-                    fill="#E65723"
-                    rx={4}
-                  /><Rect
-                    x={gx + BAR_WIDTH + BAR_GAP}
                     y={baseY - manganesH}
                     width={BAR_WIDTH}
                     height={manganesH}
                     fill="#FBBF24"
                     rx={4}
                   /><SvgText
-                    x={gx + BAR_WIDTH + BAR_GAP / 2}
+                    x={gx + BAR_WIDTH / 2}
                     y={baseY + 16}
                     fontSize={11}
                     fill="#666"
@@ -108,10 +100,6 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
             })}
           </Svg>
         </View><View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#E65723' }]} />
-            <Text style={styles.legendText}>Cobre</Text>
-          </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#FBBF24' }]} />
             <Text style={styles.legendText}>Manganês</Text>

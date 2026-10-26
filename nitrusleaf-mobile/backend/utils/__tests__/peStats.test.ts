@@ -33,7 +33,7 @@ describe("peStats", () => {
     it("calcula totais do talhão", () => {
       const pes = [
         basePe({ id: "1", situacao: "Tratado" }),
-        basePe({ id: "2", deficienciaCobre: true, situacao: "Não-Tratado" }),
+        basePe({ id: "2", deficienciaManganes: true, situacao: "Não-Tratado" }),
         basePe({ id: "3" }),
       ];
 
@@ -53,17 +53,17 @@ describe("peStats", () => {
   });
 
   describe("computePropertyDeficiencyStats", () => {
-    it("calcula % nutricional só entre cobre e manganês", () => {
+    it("calcula % nutricional para manganês", () => {
       const pes = [
-        basePe({ id: "1", deficienciaCobre: true, situacao: "Não-Tratado" }),
+        basePe({ id: "1", deficienciaManganes: true, situacao: "Não-Tratado" }),
         basePe({ id: "2", situacao: "Tratado" }),
       ];
       const stats = computePropertyDeficiencyStats(pes);
 
-      expect(stats.nutritionalCobrePct).toBe(100);
-      expect(stats.nutritionalManganesPct).toBe(0);
+      expect(stats.nutritionalManganesPct).toBe(50);
+      expect(stats.manganes).toBe(1);
       expect(stats.adversos).toBe(1);
-      expect(stats.cobrePct).toBe(50);
+      expect(stats.manganesPct).toBe(50);
       expect(stats.adversosPct).toBe(50);
     });
 

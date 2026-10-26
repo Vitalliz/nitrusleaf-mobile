@@ -7,6 +7,9 @@ export interface Talhao {
   latitude?: number;
   longitude?: number;
   coordenadasPoligono?: string;
+  totalPes?: number;
+  pesAnalisados?: number;
+  pesDiagnosticados?: number;
   createdAt: string;
   updatedAt: string;
 }

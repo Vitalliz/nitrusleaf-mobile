@@ -15,12 +15,11 @@ export async function persistAnalysisResult(params: {
   probability: number;
 }): Promise<{ fotoId: string; relatorioId: string }> {
   const now = new Date().toISOString();
-  const isCobre = params.deficiencyType === "Cobre";
   const isManganes = params.deficiencyType === "Manganês";
   const isSaudavel = params.deficiencyType === "Saudável";
   const isOutros =
     params.deficiencyType === "Indefinido" ||
-    (!isCobre && !isManganes && !isSaudavel);
+    (!isManganes && !isSaudavel);
 
   const previousPe = await getPeById(params.peId);
   if (!previousPe) throw new Error("Pé não encontrado para salvar a análise.");
@@ -42,7 +41,7 @@ export async function persistAnalysisResult(params: {
     const relatorio = await createRelatorio({
       peId: params.peId,
       fotoId: foto.id,
-      deficienciaCobre: isCobre,
+      deficienciaCobre: false,
       deficienciaManganes: isManganes,
       outros: isOutros,
       observacoes: `Probabilidade IA: ${params.probability}%. Classe: ${params.deficiencyType}.`,

@@ -16,7 +16,6 @@ export function parseRelatorioObservacoes(observacoes?: string): {
 
 export function deficiencyLabelFromRelatorio(r: Relatorio): string {
   if (r.deficienciaManganes) return "Manganês";
-  if (r.deficienciaCobre) return "Cobre";
   if (r.outros) return "Adversos";
   return "Saudável";
 }
@@ -27,7 +26,7 @@ export function statusLabelFromRelatorio(
 ): string {
   if (peSituacao === "Tratado") return "Tratado";
   if (peSituacao === "Não-Tratado") return "Não-Tratado";
-  if (r.deficienciaManganes || r.deficienciaCobre || r.outros) {
+  if (r.deficienciaManganes || r.outros) {
     return "Em tratamento";
   }
   return peSituacao || "Sem-informações";

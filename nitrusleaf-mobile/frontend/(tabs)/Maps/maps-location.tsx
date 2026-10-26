@@ -34,7 +34,6 @@ export default function LocationMapScreen() {
   const [filterTratado, setFilterTratado] = useState(true);
   const [filterNaoTratado, setFilterNaoTratado] = useState(true);
   const [filterSemInfo, setFilterSemInfo] = useState(true);
-  const [filterDeficienciaCobre, setFilterDeficienciaCobre] = useState(true);
   const [filterDeficienciaManganes, setFilterDeficienciaManganes] = useState(true);
   const [filterOutros, setFilterOutros] = useState(true);
 
@@ -57,7 +56,6 @@ export default function LocationMapScreen() {
     filterTratado,
     filterNaoTratado,
     filterSemInfo,
-    filterDeficienciaCobre,
     filterDeficienciaManganes,
     filterOutros,
   ]);
@@ -98,10 +96,9 @@ export default function LocationMapScreen() {
         (filterSemInfo && pe.situacao === "Sem-informações");
 
       const deficienciaMatch =
-        (filterDeficienciaCobre && pe.deficienciaCobre) ||
         (filterDeficienciaManganes && pe.deficienciaManganes) ||
         (filterOutros && pe.outros) ||
-        (!pe.deficienciaCobre && !pe.deficienciaManganes && !pe.outros);
+        (!pe.deficienciaManganes && !pe.outros);
 
       return situacaoMatch && deficienciaMatch && pe.latitude && pe.longitude;
     });
@@ -113,7 +110,7 @@ export default function LocationMapScreen() {
     if (pe.situacao === "Sem-informações") return "#6B7280";
     if (pe.situacao === "Não-Tratado") return Palette.error;
     if (pe.situacao === "Tratado") return "#8B5CF6";
-    if (pe.deficienciaCobre || pe.deficienciaManganes || pe.outros) return Palette.orangePrimary;
+    if (pe.deficienciaManganes || pe.outros) return Palette.orangePrimary;
     return Palette.primary;
   };
 
@@ -273,25 +270,6 @@ export default function LocationMapScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.filterChip, filterDeficienciaCobre && styles.filterChipActive]}
-              onPress={() => setFilterDeficienciaCobre(!filterDeficienciaCobre)}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="water"
-                size={15}
-                color={filterDeficienciaCobre ? Palette.white : Palette.orangePrimary}
-              />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  filterDeficienciaCobre && styles.filterChipTextActive,
-                ]}
-              >
-                Cobre
-              </Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
               style={[

@@ -3,13 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface NutritionalStatusProps {
   manganesPercentage: number;
-  cobrePercentage: number;
+  cobrePercentage?: number;
   onPress?: () => void;
 }
 
 export const NutritionalStatusCard: React.FC<NutritionalStatusProps> = ({
   manganesPercentage,
-  cobrePercentage,
   onPress,
 }) => {
   return (
@@ -21,13 +20,6 @@ export const NutritionalStatusCard: React.FC<NutritionalStatusProps> = ({
           <Text style={styles.statusValue}>{manganesPercentage}%</Text>
           <View style={[styles.badge, { backgroundColor: '#F5A623' }]}>
             <Text style={styles.badgeText}>Manganês</Text>
-          </View>
-        </View><View style={styles.divider} />
-
-        <View style={styles.statusItem}>
-          <Text style={styles.statusValue}>{cobrePercentage}%</Text>
-          <View style={[styles.badge, { backgroundColor: '#E65723' }]}>
-            <Text style={styles.badgeText}>Cobre</Text>
           </View>
         </View>
       </View>
