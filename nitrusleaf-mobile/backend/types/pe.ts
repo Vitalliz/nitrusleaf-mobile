@@ -25,7 +25,6 @@ export interface CreatePeRequest {
   talhaoId: string;
   nome: string;
   situacao?: SituacaoPe;
-  deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
   observacoes?: string;
@@ -37,10 +36,9 @@ export interface UpdatePeRequest {
   talhaoId?: string;
   nome?: string;
   situacao?: SituacaoPe;
-  deficienciaCobre?: boolean;
   deficienciaManganes?: boolean;
   outros?: boolean;
-  observacoes?: string;
+  observacoes?: string | null;
   latitude?: number;
   longitude?: number;
 }

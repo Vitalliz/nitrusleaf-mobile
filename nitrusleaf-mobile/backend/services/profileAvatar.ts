@@ -49,24 +49,26 @@ export async function uploadProfileAvatar(
   const supabase = getSupabase();
   const path = `user-${userId}-${Date.now()}.jpg`;
 
-  try {
-    const response = await fetch(localUri);
-    const blob = await response.blob();
+  const response = await fetch(localUri);
+  if (!response.ok) {
+    throw new Error("Não foi possível ler a imagem selecionada.");
+  }
+  const blob = await response.blob();
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, blob, {
-        contentType: "image/jpeg",
-        upsert: true,
-      });
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, blob, {
+      contentType: "image/jpeg",
+      upsert: true,
+    });
 
-    if (!uploadError) {
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      if (data?.publicUrl) return data.publicUrl;
-    }
-  } catch (e) {
-    console.warn("[avatar] upload storage:", e);
+  if (uploadError) {
+    throw new Error(`Não foi possível enviar a foto de perfil: ${uploadError.message}`);
   }
 
-  return localUri;
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  if (!data.publicUrl) {
+    throw new Error("O upload foi concluído, mas não foi possível obter a URL da foto.");
+  }
+  return data.publicUrl;
 }
