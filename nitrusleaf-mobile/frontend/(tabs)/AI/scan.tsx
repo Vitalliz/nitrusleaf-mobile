@@ -46,41 +46,59 @@ export default function RealCameraScreen() {
     }
   }, [permission]);
 
-  const sendImageToApi = async (uri: string) => {
+  const sendImageToApi = async (uri: string): Promise<void> => {
     const API_URL = getApiUrl();
 
     const formData = new FormData();
+    // XMLHttpRequest suporta o padrão { uri, type, name } do React Native
+    // ao contrário do fetch nativo na nova arquitetura (RN 0.76+)
     formData.append('imagem', {
       uri,
       type: 'image/jpeg',
       name: 'folha.jpg',
     } as any);
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', API_URL);
+
+      xhr.onload = () => {
+        try {
+          const resultado = JSON.parse(xhr.responseText);
+
+          if (resultado.status === 'sucesso') {
+            router.push({
+              pathname: ROUTES.analysisSummary,
+              params: {
+                analysisId: Date.now().toString(),
+                probability: String(resultado.probabilidade),
+                deficiencyType: String(resultado.classe_nome ?? ''),
+                imageUri: uri,
+              },
+            });
+            resolve();
+            return;
+          }
+
+          Alert.alert('Erro', resultado.mensagem || 'Erro ao analisar imagem');
+          setIsProcessing(false);
+          resolve();
+        } catch {
+          reject(new Error('Resposta inválida do servidor'));
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Falha na conexão com o servidor'));
+      };
+
+      xhr.ontimeout = () => {
+        reject(new Error('Tempo de conexão esgotado'));
+      };
+
+      xhr.timeout = 30000; // 30 segundos
+      xhr.send(formData);
     });
-
-    const resultado = await response.json();
-
-    if (resultado.status === 'sucesso') {
-      router.push({
-        pathname: ROUTES.analysisSummary,
-        params: {
-          analysisId: Date.now().toString(),
-          probability: String(resultado.probabilidade),
-          deficiencyType: String(resultado.classe_nome ?? ''),
-          imageUri: uri,
-        },
-      });
-      return;
-    }
-
-    Alert.alert('Erro', resultado.mensagem || 'Erro ao analisar imagem');
-    setIsProcessing(false);
   };
 
   const handleCapture = async () => {
