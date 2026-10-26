@@ -42,8 +42,10 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     [properties, selectedPropertyId]
   );
 
+  const userId = user?.id;
+
   const refreshProperties = useCallback(async () => {
-    if (!user?.id) {
+    if (!userId) {
       setProperties([]);
       setSelectedPropertyId(null);
       setLoading(false);
@@ -52,10 +54,10 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setLoading(true);
-      const props = await getPropertiesByUser(user.id);
+      const props = await getPropertiesByUser(userId);
       setProperties(props);
 
-      const storageKey = `${SELECTED_PROPERTY_KEY}_${user.id}`;
+      const storageKey = `${SELECTED_PROPERTY_KEY}_${userId}`;
       const stored = await AsyncStorage.getItem(storageKey);
 
       if (stored && props.some((p) => p.id === stored)) {
@@ -72,9 +74,10 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [userId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshProperties();
   }, [refreshProperties]);
 
@@ -82,14 +85,14 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     async (propertyId: string) => {
       if (!properties.some((p) => p.id === propertyId)) return;
       setSelectedPropertyId(propertyId);
-      if (user?.id) {
+      if (userId) {
         await AsyncStorage.setItem(
-          `${SELECTED_PROPERTY_KEY}_${user.id}`,
+          `${SELECTED_PROPERTY_KEY}_${userId}`,
           propertyId
         );
       }
     },
-    [properties, user?.id]
+    [properties, userId]
   );
 
   const showPropertyPicker = useCallback(() => {
