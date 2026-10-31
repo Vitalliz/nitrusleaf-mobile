@@ -17,14 +17,13 @@ permissions:
 env:
   NODE_VERSION: "22"
 
-defaults:
-  run:
-    working-directory: nitrusleaf-mobile
-
 jobs:
   quality:
     name: Qualidade & Testes
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nitrusleaf-mobile
     steps:
       - name: Checkout do Repositório
         uses: actions/checkout@v4
@@ -49,13 +48,15 @@ jobs:
         run: npm run test -- --ci --coverage --coverageReporters=text-summary
 
       - name: Diagnóstico Expo Doctor
-        continue-on-error: true
         run: npx --yes expo-doctor
 
   build:
     name: Build Web (GitHub Pages)
     needs: quality
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nitrusleaf-mobile
     outputs:
       repo_name: ${{ steps.set-repo.outputs.repo_name }}
     steps:
@@ -141,9 +142,9 @@ jobs:
 
       - name: Resumo do Deploy
         run: |
-          echo "### 🚀 Deploy Concluído com Sucesso!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "O web app foi publicado no GitHub Pages:" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL Oficial:** [${{ steps.deployment.outputs.page_url }}](${{ steps.deployment.outputs.page_url }})" >> $GITHUB_STEP_SUMMARY
-          echo "- **Ambiente:** GitHub Pages (Static Hosting)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Deploy Concluído com Sucesso!" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "O web app foi publicado no GitHub Pages:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **URL Oficial:** [${{ steps.deployment.outputs.page_url }}](${{ steps.deployment.outputs.page_url }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Ambiente:** GitHub Pages (Static Hosting)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
