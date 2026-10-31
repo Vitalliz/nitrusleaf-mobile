@@ -77,7 +77,6 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   }, [userId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshProperties();
   }, [refreshProperties]);
 

@@ -152,7 +152,7 @@ const variantStyles = StyleSheet.create({
     fontFamily: 'Roboto_500Medium',
   },
   semibold: {
-    fontFamily: 'Roboto_500Medium', // Roboto não tem semibold nativo
+    fontFamily: 'Roboto_500Medium',
   },
   bold: {
     fontFamily: 'Roboto_700Bold',

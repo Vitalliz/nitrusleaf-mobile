@@ -3,7 +3,7 @@ import type { AuthContextType, RegisterRequest, User } from "@/types/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUserByIdLocal, loginLocal, registerLocal } from "@/repositories/authRepository";
 import { createProperty } from "@/repositories/propertyRepository";
-import { getAuthSession, getSupabase } from "@/services/supabase";
+import { getAuthSession, getSupabase, isSupabaseConfigured } from "@/services/supabase";
 import { withTimeout } from "@/utils/withTimeout";
 import { isAuthProfileWriteInProgress } from "@/utils/authFlowLock";
 
@@ -23,6 +23,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const initializeAuth = useCallback(async () => {
     try {
+      if (!isSupabaseConfigured()) {
+        setUser(null);
+        setToken(null);
+        return;
+      }
       const supabase = getSupabase();
       const session = await getAuthSession();
 
@@ -52,42 +57,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void initializeAuth();
   }, [initializeAuth]);
 
   useEffect(() => {
-    const supabase = getSupabase();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_OUT") {
-        setUser(null);
-        setToken(null);
-        await AsyncStorage.removeItem(AUTH_USER_ID_KEY);
-        return;
-      }
-      if (session?.access_token && session.user?.id) {
-        if (isAuthProfileWriteInProgress()) {
+    if (!isSupabaseConfigured()) return;
+    try {
+      const supabase = getSupabase();
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_OUT") {
+          setUser(null);
+          setToken(null);
+          await AsyncStorage.removeItem(AUTH_USER_ID_KEY);
           return;
         }
-        try {
-          const profile = await withTimeout(
-            getUserByIdLocal(session.user.id),
-            12_000,
-            ""
-          );
-          if (profile) {
-            setUser(profile);
-            setToken(session.access_token);
-            await AsyncStorage.setItem(AUTH_USER_ID_KEY, session.user.id);
+        if (session?.access_token && session.user?.id) {
+          if (isAuthProfileWriteInProgress()) {
+            return;
           }
-        } catch {
-          /* timeout ou rede: não trava o app */
+          try {
+            const profile = await withTimeout(
+              getUserByIdLocal(session.user.id),
+              12_000,
+              ""
+            );
+            if (profile) {
+              setUser(profile);
+              setToken(session.access_token);
+              await AsyncStorage.setItem(AUTH_USER_ID_KEY, session.user.id);
+            }
+          } catch {
+          }
         }
-      }
-    });
-    return () => subscription.unsubscribe();
+      });
+      return () => subscription.unsubscribe();
+    } catch (e) {
+      console.warn("AuthContext: Supabase indisponível no listener:", e);
+    }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

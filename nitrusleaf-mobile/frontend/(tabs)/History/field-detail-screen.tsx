@@ -4,7 +4,6 @@ import { ROUTES, safeBack } from "@/utils/navigation";
 import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,6 +13,7 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 import { Background } from "@/components/ui/background";
 import BottomNavbar from "@/components/ui/tab-bar";
@@ -72,7 +72,6 @@ export default function TalhaoDetailScreen() {
   const [arvores, setArvores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Lista de filtros estritamente sem menção a cobre
   const [selectedFilter, setSelectedFilter] = useState("Todos");
   const filters = ["Todos", "Manganês", "Adversos"];
 
@@ -252,7 +251,7 @@ export default function TalhaoDetailScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar style="dark" />
 
         <Header
           userName={
@@ -285,7 +284,6 @@ export default function TalhaoDetailScreen() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
               <>
-                {/* Cabeçalho do Talhão */}
                 <View style={styles.titleRow}>
                   <TouchableOpacity
                     style={styles.backButtonCircle}
@@ -312,7 +310,6 @@ export default function TalhaoDetailScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Input de Busca */}
                 <View style={styles.searchContainer}>
                   <TextInput
                     placeholder="Buscar árvore"
@@ -329,7 +326,6 @@ export default function TalhaoDetailScreen() {
                   />
                 </View>
 
-                {/* Botão Cadastrar Árvore Pill */}
                 <TouchableOpacity
                   style={styles.cadastrarButton}
                   activeOpacity={0.85}
@@ -339,7 +335,6 @@ export default function TalhaoDetailScreen() {
                   <Text style={styles.cadastrarButtonText}>Cadastrar Árvore</Text>
                 </TouchableOpacity>
 
-                {/* Seção Filtros com divisor suave */}
                 <View style={styles.filtersSection}>
                   <Text style={styles.filtersTitle}>Filtros:</Text>
                   <View style={styles.filtersDivider} />
@@ -372,7 +367,6 @@ export default function TalhaoDetailScreen() {
                   </View>
                 </View>
 
-                {/* Subcabeçalho da Lista e Botão Ordenar */}
                 <View style={styles.listSubHeader}>
                   <Text style={styles.listCount}>
                     {filteredArvores.length} Árvores cadastradas
@@ -453,7 +447,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  /* Cabeçalho do Talhão */
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -480,7 +473,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  /* Campo de Busca */
   searchContainer: {
     position: "relative",
     width: "100%",
@@ -504,7 +496,6 @@ const styles = StyleSheet.create({
     right: 14,
   },
 
-  /* Botão Cadastrar Árvore */
   cadastrarButton: {
     width: "100%",
     height: 48,
@@ -522,7 +513,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.semiBold,
   },
 
-  /* Filtros */
   filtersSection: {
     marginBottom: 16,
   },
@@ -563,7 +553,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.bold,
   },
 
-  /* Linha Contagem e Botão Ordenar */
   listSubHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -590,7 +579,6 @@ const styles = StyleSheet.create({
     color: "#374151",
   },
 
-  /* Card Individual de Árvore */
   arvoreCard: {
     backgroundColor: Palette.white,
     borderRadius: 8,
@@ -665,7 +653,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
 
-  /* Empty State */
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",

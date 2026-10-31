@@ -220,7 +220,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   
-  /* Step Edit */
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -261,7 +260,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
 
-  /* Step Confirm Delete */
   confirmIconWrapper: {
     alignItems: "center",
     marginBottom: 16,

@@ -8,7 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "lint:ci": "eslint backend/utils backend/types backend/repositories backend/services backend/contexts --max-warnings 0",
+    "lint:ci": "eslint . --max-warnings 0",
     "test": "jest",
     "typecheck": "tsc -p tsconfig.ci.json --noEmit",
     "validate": "npm run typecheck && npm run test",

@@ -56,7 +56,6 @@ export default function AddTreeScreen() {
   const [talhaoLabel, setTalhaoLabel] = useState(talhaoName ?? "");
   const [talhaoData, setTalhaoData] = useState<Talhao | null>(null);
 
-  // Coordenadas georreferenciadas da árvore
   const [latitude, setLatitude] = useState<number | undefined>();
   const [longitude, setLongitude] = useState<number | undefined>();
   const [tempLocation, setTempLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -64,7 +63,6 @@ export default function AddTreeScreen() {
 
   const [loading, setLoading] = useState(false);
 
-  // Estado unificado do CustomAlert (Sucesso, Aviso e Erro)
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -182,7 +180,6 @@ export default function AddTreeScreen() {
         console.warn("Sync talhão (opcional):", syncErr);
       }
 
-      // Alerta de sucesso com redirecionamento ao clicar no botão
       showAlert(
         "Sucesso!",
         "Árvore cadastrada com sucesso com sua localização.",
@@ -312,7 +309,6 @@ export default function AddTreeScreen() {
           </View>
         </View>
 
-        {/* Marcação da Posição da Árvore no Mapa */}
         <Text style={styles.sectionTitle}>Localização da Árvore no Mapa</Text>
         <TouchableOpacity
           style={styles.mapBannerBtn}
@@ -358,7 +354,6 @@ export default function AddTreeScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal do Mapa de Posicionamento da Árvore */}
       <Modal
         visible={showMapModal}
         animationType="slide"
@@ -383,7 +378,6 @@ export default function AddTreeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Banner de instrução */}
           <View style={styles.modalInstructionBanner}>
             <Ionicons name="information-circle-outline" size={18} color="#16A34A" />
             <Text style={styles.modalInstructionText}>
@@ -402,7 +396,6 @@ export default function AddTreeScreen() {
             onPress={handleMapPress}
             provider={PROVIDER_GOOGLE}
           >
-            {/* Polígono do talhão como guia visual (azul) */}
             {talhaoPolygon.length >= 3 && (
               <Polygon
                 coordinates={talhaoPolygon}
@@ -412,7 +405,6 @@ export default function AddTreeScreen() {
               />
             )}
 
-            {/* Marcador selecionado para a nova árvore */}
             {tempLocation && (
               <Marker
                 coordinate={tempLocation}
@@ -429,7 +421,6 @@ export default function AddTreeScreen() {
             )}
           </MapView>
 
-          {/* Rodapé com coordenadas selecionadas */}
           <View style={styles.mapFooter}>
             <Text style={styles.mapFooterText}>
               {tempLocation
@@ -440,7 +431,6 @@ export default function AddTreeScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Componente Modal CustomAlert integrado para Sucesso, Avisos e Erros */}
       <CustomAlert
         visible={alertConfig.visible}
         title={alertConfig.title}
@@ -552,7 +542,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  // Banner no formulário
   mapBannerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -582,7 +571,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Modal do Mapa
   modalContainer: {
     flex: 1,
     backgroundColor: Palette.white,

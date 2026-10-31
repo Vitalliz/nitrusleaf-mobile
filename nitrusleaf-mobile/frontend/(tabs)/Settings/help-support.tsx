@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  StatusBar,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -70,9 +70,8 @@ export default function HelpSupportScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -90,7 +89,6 @@ export default function HelpSupportScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Seção: Canais de Atendimento */}
           <Text style={styles.sectionTitle}>Canais de Atendimento</Text>
 
           <View style={styles.contactCardsRow}>
@@ -119,7 +117,6 @@ export default function HelpSupportScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Seção: Perguntas Frequentes */}
           <Text style={styles.sectionTitle}>Perguntas Frequentes</Text>
 
           <View style={styles.faqList}>

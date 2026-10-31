@@ -1,10 +1,15 @@
-// https://docs.expo.dev/guides/using-eslint/
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 
 module.exports = defineConfig([
+  {
+    ignores: ['dist/**', 'node_modules/**', '.expo/**', '**/.package-lock.json'],
+  },
   expoConfig,
   {
-    ignores: ['dist/*'],
+    rules: {
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ]);

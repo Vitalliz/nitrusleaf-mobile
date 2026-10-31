@@ -5,13 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   Image,
   Alert,
   ActivityIndicator,
   Modal,
   Pressable,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
@@ -210,13 +210,12 @@ export default function ProfileScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <StatusBar barStyle="light-content" backgroundColor={Palette.orangePrimary} />
+        <StatusBar style="light" />
 
         <ScrollView
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* Cabeçalho */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <TouchableOpacity
@@ -234,7 +233,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Cartão de Perfil */}
           <View style={styles.profileCard}>
             <TouchableOpacity
               style={styles.avatarWrapper}
@@ -268,7 +266,6 @@ export default function ProfileScreen() {
               {loading ? '' : dbUser?.email || user?.email || ''}
             </Text>
 
-            {/* Botão Interativo de Propriedade Ativa */}
             <TouchableOpacity
               style={styles.propertyBadgeButton}
               activeOpacity={0.7}
@@ -281,7 +278,6 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-down" size={14} color={Palette.primaryPressed} />
             </TouchableOpacity>
 
-            {/* Cartão de Análises */}
             <View style={styles.analysesCard}>
               <Text style={styles.analysesLabel}>Total de Análises Realizadas</Text>
               <View style={styles.analysesBadge}>
@@ -294,7 +290,6 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Menu</Text>
           </View>
 
-          {/* Lista de Opções */}
           <View style={styles.menuCard}>
             {menuItems.map((item, index) => (
               <TouchableOpacity
@@ -343,7 +338,6 @@ export default function ProfileScreen() {
 
         <TabBar />
 
-        {/* Modal Bottom Sheet de Troca de Propriedade */}
         <Modal
           visible={propertyModalVisible}
           transparent
@@ -507,7 +501,6 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.surfaceGray,
   },
 
-  /* HEADER */
   header: {
     backgroundColor: Palette.orangePrimary,
     height: 260,
@@ -539,7 +532,6 @@ const styles = StyleSheet.create({
     color: Palette.white,
   },
 
-  /* CARD PERFIL */
   profileCard: {
     backgroundColor: Palette.white,
     marginHorizontal: 20,
@@ -553,7 +545,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  /* AVATAR */
   avatarWrapper: {
     position: 'absolute',
     top: -55,
@@ -597,7 +588,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* BOTÃO DA PROPRIEDADE ATIVA (CLEAN) */
   propertyBadgeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -616,7 +606,6 @@ const styles = StyleSheet.create({
     maxWidth: 180,
   },
 
-  /* CARD ANÁLISES */
   analysesCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -650,7 +639,6 @@ const styles = StyleSheet.create({
     color: Palette.white,
   },
 
-  /* SECTION */
   sectionHeader: {
     paddingHorizontal: 20,
     marginTop: 20,
@@ -662,7 +650,6 @@ const styles = StyleSheet.create({
     color: Palette.textPrimary,
   },
 
-  /* MENU */
   menuCard: {
     backgroundColor: Palette.white,
     borderRadius: 16,
@@ -707,7 +694,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  /* BOTÃO EDITAR */
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -725,7 +711,6 @@ const styles = StyleSheet.create({
     color: Palette.white,
   },
 
-  /* BOTÃO SAIR */
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -745,7 +730,6 @@ const styles = StyleSheet.create({
     color: Palette.error,
   },
 
-  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',

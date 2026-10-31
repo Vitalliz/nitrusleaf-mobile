@@ -44,14 +44,12 @@ export default function RealCameraScreen() {
     if (permission && !permission.granted) {
       requestPermission();
     }
-  }, [permission]);
+  }, [permission, requestPermission]);
 
   const sendImageToApi = async (uri: string): Promise<void> => {
     const API_URL = getApiUrl();
 
     const formData = new FormData();
-    // XMLHttpRequest suporta o padrão { uri, type, name } do React Native
-    // ao contrário do fetch nativo na nova arquitetura (RN 0.76+)
     formData.append('imagem', {
       uri,
       type: 'image/jpeg',
@@ -96,7 +94,7 @@ export default function RealCameraScreen() {
         reject(new Error('Tempo de conexão esgotado'));
       };
 
-      xhr.timeout = 30000; // 30 segundos
+      xhr.timeout = 30000;
       xhr.send(formData);
     });
   };

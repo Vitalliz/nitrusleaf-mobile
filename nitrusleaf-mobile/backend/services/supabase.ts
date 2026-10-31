@@ -6,10 +6,21 @@ const extra = Constants.expoConfig?.extra as
   | { supabaseUrl?: string; supabaseAnonKey?: string }
   | undefined;
 
-const supabaseUrl = extra?.supabaseUrl?.trim() ?? "";
-const supabaseAnonKey = extra?.supabaseAnonKey?.trim() ?? "";
+const supabaseUrl =
+  extra?.supabaseUrl?.trim() ||
+  process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() ||
+  "";
+
+const supabaseAnonKey =
+  extra?.supabaseAnonKey?.trim() ||
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+  "";
 
 let _client: SupabaseClient | null = null;
+
+export function isSupabaseConfigured(): boolean {
+  return Boolean(supabaseUrl && supabaseAnonKey);
+}
 
 export function getSupabase(): SupabaseClient {
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -31,22 +42,29 @@ export function getSupabase(): SupabaseClient {
 }
 
 export async function getAuthSession(): Promise<Session | null> {
-  const supabase = getSupabase();
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-  if (error) {
-    console.warn("[Supabase] getSession:", error.message);
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const supabase = getSupabase();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    if (error) {
+      console.warn("[Supabase] getSession:", error.message);
+      return null;
+    }
+    return session;
+  } catch (err) {
+    console.warn("[Supabase] getAuthSession falhou:", err);
     return null;
   }
-  return session;
 }
 
 export async function waitForAuthSession(
   maxWaitMs = 5000,
   intervalMs = 150
 ): Promise<Session | null> {
+  if (!isSupabaseConfigured()) return null;
   const deadline = Date.now() + maxWaitMs;
   while (Date.now() < deadline) {
     const s = await getAuthSession();

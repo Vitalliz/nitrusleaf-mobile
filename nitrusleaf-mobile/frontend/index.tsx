@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, useWindowDimensions, StatusBar } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import NitrusleafLogo from '@/assets/images/nitrusleaf-logo.svg';
@@ -22,14 +23,13 @@ export default function SplashScreen() {
   }, [router, isInitializing, isSignedIn]);
 
   const BLEED_OFFSET = 20;
-
   const logoWidth = screenWidth * 0.72;
   const logoHeight = logoWidth * (100 / 316);
   const waveHeight = screenHeight * 0.33;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
+      <StatusBar style="dark" />
 
       <View style={[styles.contentArea, { paddingBottom: waveHeight * 0.35 }]}>
         <NitrusleafLogo width={logoWidth} height={logoHeight} />

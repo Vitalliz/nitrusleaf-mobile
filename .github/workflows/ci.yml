@@ -1,14 +1,18 @@
-name: CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 env:
   NODE_VERSION: "22"
@@ -19,56 +23,104 @@ defaults:
 
 jobs:
   quality:
-    name: quality
+    name: Qualidade & Testes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Configurar Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: nitrusleaf-mobile/package-lock.json
 
-      - run: npm ci
-      - run: npm run ci
+      - name: Instalar Dependências
+        run: npm ci
 
-      - name: expo-doctor
+      - name: Verificação de Tipos TypeScript (Full Codebase)
+        run: npm run typecheck
+
+      - name: Análise Estática ESLint (Full Codebase)
+        run: npm run lint:ci
+
+      - name: Testes Unitários & Cobertura
+        run: npm run test -- --ci --coverage --coverageReporters=text-summary
+
+      - name: Diagnóstico Expo Doctor
         continue-on-error: true
         run: npx --yes expo-doctor
 
   build:
-    name: build
+    name: Build Web (GitHub Pages)
     needs: quality
     runs-on: ubuntu-latest
+    outputs:
+      repo_name: ${{ steps.set-repo.outputs.repo_name }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Obter Nome do Repositório
+        id: set-repo
+        run: |
+          REPO_NAME="${{ github.event.repository.name }}"
+          echo "repo_name=$REPO_NAME" >> "$GITHUB_OUTPUT"
+          echo "Construindo para base path: /$REPO_NAME"
+
+      - name: Configurar Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: nitrusleaf-mobile/package-lock.json
 
-      - run: npm ci
+      - name: Instalar Dependências
+        run: npm ci
 
-      - name: export web
+      - name: Exportar Web (Expo Static Export)
         env:
-          SUPABASE_URL: https://placeholder.supabase.co
-          SUPABASE_ANON_KEY: placeholder-anon-key
-          EXPO_PUBLIC_ENV: ci
+          EXPO_BASE_URL: /${{ steps.set-repo.outputs.repo_name }}
+          GITHUB_PAGES: "true"
+          EXPO_PUBLIC_ENV: production
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
         run: npx expo export --platform web --output-dir dist
 
-      - uses: actions/upload-artifact@v4
+      - name: Otimizar para GitHub Pages (.nojekyll & SPA 404 Fallback)
+        run: |
+          touch dist/.nojekyll
+          cp dist/index.html dist/404.html
+          echo "Arquivos .nojekyll e 404.html criados com sucesso."
+
+      - name: Validar Integridade do Build Web
+        run: |
+          test -f dist/index.html || { echo "ERRO: dist/index.html não foi gerado"; exit 1; }
+          test -d dist/_expo || { echo "ERRO: diretório dist/_expo não foi gerado"; exit 1; }
+          test -f dist/.nojekyll || { echo "ERRO: dist/.nojekyll ausente"; exit 1; }
+          test -f dist/404.html || { echo "ERRO: dist/404.html ausente"; exit 1; }
+          echo "Integridade do build web validada com sucesso!"
+
+      - name: Upload de Artefato para Inspeção
+        uses: actions/upload-artifact@v4
         with:
-          name: web-build
+          name: web-dist
           path: nitrusleaf-mobile/dist
           retention-days: 14
 
+      - name: Upload de Artefato para GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: nitrusleaf-mobile/dist
+
   deploy:
-    name: deploy
+    name: Deploy GitHub Pages
     needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,18 +130,20 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: dist
-
-      - uses: actions/configure-pages@v5
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-      - id: deployment
+      - name: Efetuar Deploy no GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Resumo do Deploy
+        run: |
+          echo "### 🚀 Deploy Concluído com Sucesso!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "O web app foi publicado no GitHub Pages:" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL Oficial:** [${{ steps.deployment.outputs.page_url }}](${{ steps.deployment.outputs.page_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ambiente:** GitHub Pages (Static Hosting)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

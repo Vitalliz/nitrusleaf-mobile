@@ -77,14 +77,12 @@ export async function uploadProfileAvatar(
         });
       }
     } catch {
-      // Fallback below
     }
   }
 
   if (!base64Data) {
     try {
       const response = await fetch(localUri);
-      // In React Native, local URIs (file://, content://) have status === 0, so response.ok is false.
       if (!response.ok && response.status !== 0) {
         throw new Error("Falha na resposta ao obter imagem local.");
       }

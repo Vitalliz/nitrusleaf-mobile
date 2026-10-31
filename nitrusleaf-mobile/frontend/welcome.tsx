@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, View, useWindowDimensions, StatusBar } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -25,33 +26,32 @@ export default function WelcomeScreen() {
 
   return (
     <Background>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      
-      <View 
+      <StatusBar style="dark" />
+
+      <View
         style={[
-          styles.container, 
-          { 
-            paddingTop: insets.top, 
+          styles.container,
+          {
+            paddingTop: insets.top,
             paddingBottom: Math.max(insets.bottom, 16) + 16,
-          }
+          },
         ]}
       >
-        <View 
+        <View
           style={[
-            styles.logoContainer, 
-            { paddingTop: screenHeight * 0.06 } 
+            styles.logoContainer,
+            { paddingTop: screenHeight * 0.06 },
           ]}
         >
           <NitrusleafLogoPhrase width={logoWidth} height={logoHeight} />
         </View>
 
-        {/* Rodapé fixo */}
         <View style={styles.buttonGroup}>
-          <LoginButton 
-            onPress={handleLoginNavigation} 
-            title="Entrar" 
+          <LoginButton
+            onPress={handleLoginNavigation}
+            title="Entrar"
           />
-          <SignUpButton 
+          <SignUpButton
             onPress={handleRegisterNavigation}
             title="Cadastrar-se"
           />

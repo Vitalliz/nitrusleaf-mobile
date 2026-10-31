@@ -1,5 +1,6 @@
 import React from "react";
-import { View, StyleSheet, Text, StatusBar, TouchableOpacity } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,9 +24,8 @@ export default function LocationMapScreenWeb() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho Padronizado */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -38,7 +38,6 @@ export default function LocationMapScreenWeb() {
           <View style={styles.headerSpacer} />
         </View>
 
-        {/* Conteúdo Central de Fallback */}
         <View style={styles.content}>
           <View style={styles.iconCircle}>
             <Ionicons name="navigate-outline" size={48} color={Palette.primary} />
@@ -59,7 +58,6 @@ export default function LocationMapScreenWeb() {
           </View>
         </View>
 
-        {/* Barra de Navegação Inferior */}
         <TabBar />
       </SafeAreaView>
     </Background>

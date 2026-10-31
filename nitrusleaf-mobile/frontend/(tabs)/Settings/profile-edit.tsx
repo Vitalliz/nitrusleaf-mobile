@@ -9,8 +9,8 @@ import {
   Alert,
   Image,
   ActivityIndicator,
-  StatusBar,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -164,9 +164,8 @@ export default function ProfileEditScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho com o ícone de voltar original */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => safeBack(router, ROUTES.profile)}
@@ -190,7 +189,6 @@ export default function ProfileEditScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Foto de Perfil */}
             <View style={styles.avatarSection}>
               <TouchableOpacity
                 style={styles.avatarWrapper}
@@ -230,7 +228,6 @@ export default function ProfileEditScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Formulário Direto na Tela */}
             <Text style={styles.sectionTitle}>Informações Pessoais</Text>
 
             <View style={styles.formGroup}>
@@ -357,7 +354,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  /* Avatar */
   avatarSection: {
     alignItems: "center",
     marginVertical: 16,
@@ -402,7 +398,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  /* Formulário */
   sectionTitle: {
     fontSize: FontSizes.md,
     fontWeight: FontWeights.bold,

@@ -3,7 +3,6 @@ import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
-  StatusBar,
   StyleSheet,
   Text,
   Image,
@@ -13,6 +12,7 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { TalhaoData } from "@/components/cards/talhao-card";
@@ -235,7 +235,7 @@ export default function HistoryScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar style="dark" />
 
         <Header
           userName={
@@ -270,7 +270,6 @@ export default function HistoryScreen() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
               <>
-                {/* Título da Seção com Data */}
                 <View style={styles.titleContainer}>
                   <Text style={styles.sectionHeaderTitle}>
                     Histórico de Análises
@@ -281,12 +280,10 @@ export default function HistoryScreen() {
                   </View>
                 </View>
 
-                {/* Card Dados Gerais */}
                 <View style={styles.dadosGeraisCard}>
                   <Text style={styles.dadosGeraisTitle}>Dados Gerais</Text>
 
                   <View style={styles.statsRow}>
-                    {/* Stat: Árvores Analisadas */}
                     <View style={styles.statBox}>
                       <View style={styles.statHeaderRow}>
                         <Ionicons
@@ -306,7 +303,6 @@ export default function HistoryScreen() {
                       </Text>
                     </View>
 
-                    {/* Stat: Deficiência Detectada */}
                     <View style={styles.statBox}>
                       <View style={styles.statHeaderRow}>
                         <Ionicons
@@ -325,11 +321,9 @@ export default function HistoryScreen() {
                   </View>
                 </View>
 
-                {/* Seção Talhões */}
                 <View style={styles.talhoesSection}>
                   <Text style={styles.talhoesTitle}>Talhões</Text>
 
-                  {/* Input de Busca */}
                   <View style={styles.searchContainer}>
                     <TextInput
                       placeholder="Buscar talhão"
@@ -346,7 +340,6 @@ export default function HistoryScreen() {
                     />
                   </View>
 
-                  {/* Botão Cadastrar Talhão Pill */}
                   <TouchableOpacity
                     style={styles.cadastrarButton}
                     activeOpacity={0.85}
@@ -358,7 +351,6 @@ export default function HistoryScreen() {
                     </Text>
                   </TouchableOpacity>
 
-                  {/* Linha Contagem e Botão Ordenar */}
                   <View style={styles.listSubHeader}>
                     <Text style={styles.listCount}>
                       {filteredTalhoes.length} Talhões cadastrados
@@ -426,7 +418,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
 
-  /* Card Dados Gerais */
   dadosGeraisCard: {
     backgroundColor: Palette.white,
     borderRadius: 16,
@@ -488,7 +479,6 @@ const styles = StyleSheet.create({
     color: Palette.textSecondary,
   },
 
-  /* Seção Talhões */
   talhoesSection: {
     width: "100%",
   },
@@ -562,7 +552,6 @@ const styles = StyleSheet.create({
     color: "#374151",
   },
 
-  /* Cards Individuais de Talhão */
   talhaoCard: {
     backgroundColor: Palette.white,
     borderRadius: 8,
@@ -606,7 +595,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
 
-  /* Empty State Tela Cheia */
   emptyFullScreen: {
     flex: 1,
     alignItems: "center",

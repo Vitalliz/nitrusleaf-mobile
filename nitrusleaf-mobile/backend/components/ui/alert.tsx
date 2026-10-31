@@ -40,9 +40,6 @@ const config = {
   },
 };
 
-/**
- * Mapeia erros comuns em inglês para mensagens amigáveis em português.
- */
 function translateErrorMessage(msg: string): string {
   if (!msg) return "Ocorreu um erro inesperado. Tente novamente.";
 
@@ -121,7 +118,6 @@ export function CustomAlert({
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.card}>
-              {/* Botão de Fechar discreto */}
               <TouchableOpacity
                 style={styles.closeIconBtn}
                 onPress={onClose}
@@ -135,7 +131,6 @@ export function CustomAlert({
                 />
               </TouchableOpacity>
 
-              {/* Ícone reduzido e delicado */}
               <View
                 style={[
                   styles.iconCircle,
@@ -149,13 +144,10 @@ export function CustomAlert({
                 />
               </View>
 
-              {/* Título opcional */}
               {title ? <Text style={styles.title}>{title}</Text> : null}
 
-              {/* Mensagem compacta */}
               <Text style={styles.message}>{translatedMessage}</Text>
 
-              {/* Botão compacto */}
               <TouchableOpacity
                 style={styles.button}
                 activeOpacity={0.8}

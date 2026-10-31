@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -10,6 +9,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import Svg, {
@@ -24,7 +24,6 @@ import Svg, {
   Rect as SvgRect,
 } from "react-native-svg";
 
-// Componentes reutilizáveis e layout
 import { Button } from "@/components/ui/button";
 import { Background } from "@/components/ui/background";
 import BottomNavbar from "@/components/ui/tab-bar";
@@ -40,7 +39,6 @@ import { getRelatoriosByPes } from "@/repositories/relatorioRepository";
 import type { Pe } from "@/types/pe";
 import type { Relatorio } from "@/types/relatorio";
 import {
-  computePropertyDeficiencyStats,
   isPeAnalyzed,
 } from "@/utils/peStats";
 
@@ -206,7 +204,6 @@ export default function HomeScreen() {
     }, [selectedProperty?.id])
   );
 
-  // Mapeia o diagnóstico mais recente de cada pé a partir dos relatórios do banco
   const treeLatestRelatorioMap = useMemo(() => {
     const map = new Map<string, Relatorio>();
     for (const r of allRelatorios) {
@@ -264,7 +261,6 @@ export default function HomeScreen() {
 
     const manganesTrees = allTrees.filter(isTreeManganes).length;
     const saudavelTrees = allTrees.filter(isTreeSaudavel).length;
-    const semInfoTrees = Math.max(0, totalTrees - manganesTrees - saudavelTrees);
 
     const manganesPct = Math.round((manganesTrees / totalTrees) * 100);
     const saudavelPct = Math.round((saudavelTrees / totalTrees) * 100);
@@ -281,10 +277,7 @@ export default function HomeScreen() {
     const cutoffs = getPeriodCutoffs(selectedPeriod);
     const labels = cutoffs.map((c) => c.label);
 
-    let hasDataForPeriod = false;
-
     const values = cutoffs.map(({ cutoff }) => {
-      // 1. Relatórios / Diagnósticos registrados no banco até a data deste período
       const periodRelatorios = allRelatorios.filter((r) => {
         const dateStr = r.dataAnalise || r.createdAt;
         if (!dateStr) return true;
@@ -292,13 +285,10 @@ export default function HomeScreen() {
       });
 
       if (periodRelatorios.length > 0) {
-        hasDataForPeriod = true;
         const manganesCount = periodRelatorios.filter(isManganesRelatorio).length;
-        // % de incidência de manganês entre as análises realizadas até a data
         return Math.round((manganesCount / periodRelatorios.length) * 100);
       }
 
-      // 2. Fallback para árvores cadastradas se ainda não houver relatórios na data
       const periodTrees = allTrees.filter((tree) => {
         const dateStr = tree.createdAt || tree.updatedAt;
         if (!dateStr) return true;
@@ -308,7 +298,6 @@ export default function HomeScreen() {
       if (periodTrees.length > 0) {
         const analyzed = periodTrees.filter(isTreeAnalyzed);
         if (analyzed.length > 0) {
-          hasDataForPeriod = true;
           const manganesCount = periodTrees.filter(isTreeManganes).length;
           return Math.round((manganesCount / analyzed.length) * 100);
         }
@@ -317,10 +306,11 @@ export default function HomeScreen() {
       return 0;
     });
 
-    return { labels, values, hasData: hasDataForPeriod };
+    const hasData = allRelatorios.length > 0 || allTrees.some(isTreeAnalyzed);
+
+    return { labels, values, hasData };
   }, [allRelatorios, allTrees, selectedPeriod, isTreeAnalyzed, isTreeManganes]);
 
-  // Exibe os primeiros 5 talhões cadastrados no banco
   const talhoesChartData = useMemo(() => {
     if (talhoes.length === 0) {
       return [];
@@ -398,7 +388,7 @@ export default function HomeScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
         <Header
           userName={
@@ -430,7 +420,6 @@ export default function HomeScreen() {
             ]}
             showsVerticalScrollIndicator={false}
           >
-            {/* Cabeçalho */}
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Análises Gerais</Text>
               <View style={styles.dateRow}>
@@ -458,7 +447,6 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={styles.cardsContainer}>
-                {/* CARD 1: Status Nutricional */}
                 <View style={styles.card}>
                   <View style={styles.cardHeaderRow}>
                     <Text style={styles.cardTitle}>Status Nutricional da Propriedade</Text>
@@ -493,7 +481,6 @@ export default function HomeScreen() {
                   </View>
                 </View>
 
-                {/* CARD 2: Cobertura das análises */}
                 <View style={styles.card}>
                   <Text style={styles.cardTitle}>Cobertura das análises</Text>
 
@@ -525,11 +512,9 @@ export default function HomeScreen() {
                   </View>
                 </View>
 
-                {/* CARD 3: Evolução da deficiência de manganês (%) */}
                 <View style={styles.card}>
                   <Text style={styles.cardTitle}>Evolução da deficiência de manganês (%)</Text>
 
-                  {/* Chips de Período distribuídos uniformemente */}
                   <View style={styles.periodRow}>
                     <TouchableOpacity
                       style={[
@@ -586,7 +571,6 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Área do Gráfico */}
                   <View
                     style={styles.chartContainer}
                     onLayout={(e) => {
@@ -638,7 +622,6 @@ export default function HomeScreen() {
                             </SvgGradient>
                           </Defs>
 
-                          {/* Linhas de Grade e Eixo Y */}
                           {ySteps.map((step) => {
                             const y = PADDING_TOP + (1 - step / yMax) * plotHeight;
                             return (
@@ -665,7 +648,6 @@ export default function HomeScreen() {
                             );
                           })}
 
-                          {/* Gráfico preenchido e curva */}
                           {hasTrees && points.length > 0 && (
                             <>
                               <Path d={areaPath} fill="url(#evolutionAreaGrad)" />
@@ -678,7 +660,6 @@ export default function HomeScreen() {
                                 strokeLinejoin="round"
                               />
 
-                              {/* Pontos nas coordenadas */}
                               {points.map((p, i) => (
                                 <G key={`pt-${i}`}>
                                   <SvgCircle
@@ -698,7 +679,6 @@ export default function HomeScreen() {
                                 </G>
                               ))}
 
-                              {/* Badge de destaque com o valor na medição atual */}
                               {points.length > 0 && (hasAnalyses || evolutionChartData.hasData) && (
                                 <G>
                                   <SvgRect
@@ -724,7 +704,6 @@ export default function HomeScreen() {
                             </>
                           )}
 
-                          {/* Rótulos do Eixo X perfeitamente alinhados sob os pontos */}
                           {points.map((p, i) => (
                             <SvgText
                               key={`xlabel-${i}`}
@@ -752,7 +731,6 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* CARD 4: Deficiência por talhão */}
                 <View style={styles.card}>
                   <Text style={styles.cardTitle}>Deficiência por talhão</Text>
 
@@ -841,7 +819,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
 
-  /* Cabeçalho */
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -865,7 +842,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
 
-  /* Cartões */
   cardsContainer: {
     paddingHorizontal: 16,
     gap: 18,
@@ -896,7 +872,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  /* Card 1: Status Nutricional */
   nutritionalRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -950,7 +925,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.semiBold,
   },
 
-  /* Card 2: Cobertura */
   coverageValueRow: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -1010,7 +984,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.bold,
   },
 
-  /* Card 3: Evolução */
   periodRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1122,7 +1095,6 @@ const styles = StyleSheet.create({
     color: Palette.primary,
   },
 
-  /* Card 4: Deficiência por talhão */
   columnChartWrapper: {
     position: "relative",
     height: 135,
@@ -1192,7 +1164,6 @@ const styles = StyleSheet.create({
     color: Palette.textPrimary,
   },
 
-  /* Estado vazio */
   emptyStateContainer: {
     flex: 1,
     backgroundColor: Palette.white,

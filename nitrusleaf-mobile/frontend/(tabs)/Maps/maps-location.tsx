@@ -4,12 +4,12 @@ import {
   Text,
   TouchableOpacity,
   View,
-  StatusBar,
   ActivityIndicator,
   Image,
   ScrollView,
   Platform,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import MapView, {
   Marker,
   Polygon,
@@ -30,7 +30,6 @@ import { getUsuarioDetails } from "@/repositories/profileRepository";
 import type { Talhao } from "@/types/talhao";
 import type { Pe } from "@/types/pe";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
 
 type FilterKey = "todos" | "manganes" | "tratado" | "naoTratado";
 type ViewMode = "satellite" | "heat";
@@ -51,9 +50,7 @@ interface PolygonTooltip {
   coordinate: LatLng;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Converte string "lat,lng;lat,lng;..." salva no banco em coordenadas */
 function parsePolygon(raw?: string): LatLng[] {
   if (!raw) return [];
   return raw
@@ -66,7 +63,6 @@ function parsePolygon(raw?: string): LatLng[] {
     .filter(Boolean) as LatLng[];
 }
 
-/** Calcula o centroide de uma lista de coordenadas */
 function getCentroid(coords: LatLng[]): LatLng | null {
   if (coords.length === 0) return null;
   const lat = coords.reduce((s, c) => s + c.latitude, 0) / coords.length;
@@ -74,10 +70,9 @@ function getCentroid(coords: LatLng[]): LatLng | null {
   return { latitude: lat, longitude: lng };
 }
 
-/** Calcula área aproximada em hectares a partir de coordenadas GPS */
 function calculateHectares(coords: LatLng[]): number {
   if (coords.length < 3) return 0;
-  const radius = 6378137; // Raio da Terra em metros
+  const radius = 6378137;
   let area = 0;
   for (let i = 0; i < coords.length; i++) {
     const j = (i + 1) % coords.length;
@@ -90,10 +85,9 @@ function calculateHectares(coords: LatLng[]): number {
     area += (lng2 - lng1) * (2 + Math.sin(lat1) + Math.sin(lat2));
   }
   area = (Math.abs(area) * radius * radius) / 2.0;
-  return area / 10000; // m² para ha
+  return area / 10000;
 }
 
-/** Gera a demarcação externa da propriedade (polígono amarelo) que envolve os talhões cadastrados */
 function generatePropertyBoundaryFromTalhoes(talhaoCoords: LatLng[][]): LatLng[] {
   const allPoints = talhaoCoords.flat();
   if (allPoints.length < 3) {
@@ -115,7 +109,6 @@ function generatePropertyBoundaryFromTalhoes(talhaoCoords: LatLng[][]): LatLng[]
   const padLat = (maxLat - minLat) * 0.18 || 0.001;
   const padLng = (maxLng - minLng) * 0.18 || 0.001;
 
-  // Cria um polígono suave que contorna a área externa dos talhões
   return [
     { latitude: minLat - padLat, longitude: minLng - padLng * 0.6 },
     { latitude: maxLat - padLat * 0.2, longitude: minLng - padLng },
@@ -127,7 +120,6 @@ function generatePropertyBoundaryFromTalhoes(talhaoCoords: LatLng[][]): LatLng[]
   ];
 }
 
-// ─── Componente Principal ───────────────────────────────────────────────────
 
 export default function MapsLocationScreen() {
   const router = useRouter();
@@ -135,34 +127,26 @@ export default function MapsLocationScreen() {
   const { user } = useAuth();
   const mapRef = useRef<MapView>(null);
 
-  // Estados dos dados REAIS
   const [dbUser, setDbUser] = useState<any>(null);
   const [talhoes, setTalhoes] = useState<Talhao[]>([]);
   const [allPes, setAllPes] = useState<PeWithTalhao[]>([]);
   const [loading, setLoading] = useState(false);
   const [customPropertyPolygon, setCustomPropertyPolygon] = useState<LatLng[]>([]);
 
-  // Filtros rápidos
   const [activeFilter, setActiveFilter] = useState<FilterKey>("todos");
 
-  // Bottom Sheets: 'none' | 'areaInfo' | 'layerFilters' | 'layerMode' | 'datePicker'
   const [activeSheet, setActiveSheet] = useState<ActiveSheet>("none");
 
-  // Camadas selecionadas (Bottom Sheet 2)
   const [showPropertyBoundary, setShowPropertyBoundary] = useState(true);
   const [showTalhoes, setShowTalhoes] = useState(true);
   const [showTrees, setShowTrees] = useState(true);
 
-  // Modo de visualização (Bottom Sheet 3: Satélite vs Mapa de Calor)
   const [viewMode, setViewMode] = useState<ViewMode>("satellite");
 
-  // Filtro de data: null = mostrar tudo ("Hoje" aberto); string "YYYY-MM-DD" = filtrar por dia
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
 
-  // Tooltip de polígono (talhao ou propriedade)
   const [polygonTooltip, setPolygonTooltip] = useState<PolygonTooltip | null>(null);
 
-  // ── Carregar Dados do Usuário ──────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return;
@@ -172,7 +156,6 @@ export default function MapsLocationScreen() {
     }, [user?.id])
   );
 
-  // ── Carregar Dados Georreferenciados Reais ──────────────────────────────────
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -187,7 +170,6 @@ export default function MapsLocationScreen() {
         try {
           setLoading(true);
 
-          // Carrega polígono customizado salvo para a propriedade se houver
           const storedBoundary = await AsyncStorage.getItem(
             `property_boundary_${selectedProperty.id}`
           );
@@ -221,7 +203,6 @@ export default function MapsLocationScreen() {
     }, [selectedProperty?.id])
   );
 
-  // ── Coordenadas dos Talhões & Propriedade Reais ────────────────────────────
   const talhaoPolygonList = useMemo(() => {
     return talhoes
       .map((t) => ({
@@ -244,7 +225,6 @@ export default function MapsLocationScreen() {
     return c ?? { latitude: -24.689, longitude: -47.851 };
   }, [selectedProperty, talhaoPolygonList]);
 
-  // Polígono de delimitação externa (amarelo) - Somente a partir de dados reais cadastrados
   const propertyBoundaryCoords = useMemo(() => {
     if (customPropertyPolygon.length >= 3) {
       return customPropertyPolygon;
@@ -257,7 +237,6 @@ export default function MapsLocationScreen() {
     return [];
   }, [customPropertyPolygon, talhaoPolygonList]);
 
-  // Cálculo da área total em hectares dos talhões reais cadastrados
   const totalHectares = useMemo(() => {
     let ha = 0;
     talhaoPolygonList.forEach((t) => {
@@ -267,17 +246,14 @@ export default function MapsLocationScreen() {
     return "0,00";
   }, [talhaoPolygonList]);
 
-  // ── Pés com filtro aplicado (DADOS REAIS + filtro de data) ──────────────
   const filteredPes = useMemo(() => {
     return allPes.filter((pe) => {
       if (!pe.latitude || !pe.longitude) return false;
 
-      // Filtro por data: se selectedDateStr definido, só mostra árvores
-      // atualizadas/criadas naquele dia
       if (selectedDateStr) {
         const dateToCheck = pe.updatedAt || pe.createdAt;
         if (!dateToCheck) return false;
-        const peDay = dateToCheck.slice(0, 10); // "YYYY-MM-DD"
+        const peDay = dateToCheck.slice(0, 10);
         if (peDay !== selectedDateStr) return false;
       }
 
@@ -289,14 +265,12 @@ export default function MapsLocationScreen() {
     });
   }, [allPes, activeFilter, selectedDateStr]);
 
-  // Helper: formata data selecionada para exibição
   const formattedSelectedDate = useMemo(() => {
     if (!selectedDateStr) return null;
     const d = new Date(selectedDateStr + "T12:00:00");
     return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
   }, [selectedDateStr]);
 
-  // Gera lista de datas únicas com análises (baseado nos pe.updatedAt)
   const availableDates = useMemo(() => {
     const datesSet = new Set<string>();
     allPes.forEach((pe) => {
@@ -306,12 +280,11 @@ export default function MapsLocationScreen() {
     return Array.from(datesSet).sort().reverse();
   }, [allPes]);
 
-  // Cor do Marcador de Árvore (Amarelo = Manganês, Verde = Tratado/Saudável, Vermelho = Não Tratado, Cinza = Sem info)
   const getPeColor = (pe: PeWithTalhao) => {
-    if (pe.deficienciaManganes) return "#EAB308"; // Amarelo (Manganês)
-    if (pe.situacao === "Tratado") return "#16A34A"; // Verde (Tratado / Saudável)
-    if (pe.situacao === "Não-Tratado") return "#EF4444"; // Vermelho (Não-Tratado)
-    return "#64748B"; // Cinza (Sem informação)
+    if (pe.deficienciaManganes) return "#EAB308";
+    if (pe.situacao === "Tratado") return "#16A34A";
+    if (pe.situacao === "Não-Tratado") return "#EF4444";
+    return "#64748B";
   };
 
   const filterOptions: { key: FilterKey; label: string }[] = [
@@ -323,9 +296,8 @@ export default function MapsLocationScreen() {
 
   return (
     <View style={styles.root}>
-      <StatusBar translucent barStyle="light-content" backgroundColor="transparent" />
+      <StatusBar style="light" />
 
-      {/* ── MAPA DO GOOGLE (FULL SCREEN) ─────────────────────────────────── */}
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
@@ -342,7 +314,6 @@ export default function MapsLocationScreen() {
         showsCompass={false}
         showsScale={false}
       >
-        {/* 1. Demarcação da Propriedade (Polígono Amarelo) - com onPress para tooltip */}
         {showPropertyBoundary && propertyBoundaryCoords.length >= 3 && (
           <Polygon
             coordinates={propertyBoundaryCoords}
@@ -363,7 +334,6 @@ export default function MapsLocationScreen() {
           />
         )}
 
-        {/* 2. Talhões (Polígonos Azuis) - com onPress para tooltip */}
         {showTalhoes &&
           talhaoPolygonList.map((t) => (
             <Polygon
@@ -386,7 +356,6 @@ export default function MapsLocationScreen() {
             />
           ))}
 
-        {/* 3. Mapa de Calor Aprimorado (Áreas maiores em casos afetados e verde em saudáveis) */}
         {viewMode === "heat" &&
           filteredPes.map((p) => {
             if (!p.latitude || !p.longitude) return null;
@@ -394,7 +363,6 @@ export default function MapsLocationScreen() {
             const isSaudavel = p.situacao === "Tratado" && !isManganes;
 
             if (isManganes) {
-              // Mancha de calor expandida para Manganês (núcleo vermelho intenso, halo laranja e borda amarela difusa)
               return (
                 <React.Fragment key={`heat-aff-${p.id}`}>
                   <Circle
@@ -420,7 +388,6 @@ export default function MapsLocationScreen() {
             }
 
             if (isSaudavel) {
-              // Mancha verde para árvores saudáveis / tratadas
               return (
                 <React.Fragment key={`heat-hlth-${p.id}`}>
                   <Circle
@@ -442,7 +409,6 @@ export default function MapsLocationScreen() {
             return null;
           })}
 
-        {/* 4. Árvores de Cultivo Reais (Pins Coloridos) */}
         {showTrees &&
           filteredPes.map((pe) => {
             const color = getPeColor(pe);
@@ -469,9 +435,7 @@ export default function MapsLocationScreen() {
           })}
       </MapView>
 
-      {/* ── OVERLAY SUPERIOR ────────────────────────────────────────────── */}
       <SafeAreaView style={styles.topOverlay} edges={["top"]}>
-        {/* Card do Usuário */}
         <View style={styles.headerCard}>
           <TouchableOpacity
             style={styles.headerProfileRow}
@@ -507,7 +471,6 @@ export default function MapsLocationScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Linha de Data e Calendário */}
         <View style={styles.dateRow}>
           <TouchableOpacity
             style={styles.datePillLeft}
@@ -553,7 +516,6 @@ export default function MapsLocationScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Filtros Rápidos (Chips) */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -582,7 +544,6 @@ export default function MapsLocationScreen() {
         </ScrollView>
       </SafeAreaView>
 
-      {/* Tooltip de Polígono */}
       {polygonTooltip && (
         <View style={styles.polygonTooltipWrapper} pointerEvents="none">
           <View
@@ -603,19 +564,15 @@ export default function MapsLocationScreen() {
         </View>
       )}
 
-      {/* Dismiss tooltip ao tocar no mapa (overlay transparente) */}
       {polygonTooltip && (
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
           activeOpacity={1}
           onPress={() => setPolygonTooltip(null)}
-          pointerEvents="box-only"
         />
       )}
 
-      {/* ── BOTÕES FLUTUANTES (LADO DIREITO) ────────────────────────────── */}
       <View style={styles.fabColumn}>
-        {/* Botão 1: Informações da Área */}
         <TouchableOpacity
           style={styles.fabWhite}
           onPress={() => setActiveSheet(activeSheet === "areaInfo" ? "none" : "areaInfo")}
@@ -624,7 +581,6 @@ export default function MapsLocationScreen() {
           <Ionicons name="location-sharp" size={24} color="#16A34A" />
         </TouchableOpacity>
 
-        {/* Botão 2: Modos de Mapa (Satélite vs Calor) */}
         <TouchableOpacity
           style={styles.fabWhite}
           onPress={() => setActiveSheet(activeSheet === "layerMode" ? "none" : "layerMode")}
@@ -637,7 +593,6 @@ export default function MapsLocationScreen() {
           />
         </TouchableOpacity>
 
-        {/* Botão 3: Filtros de Camadas e Legenda */}
         <TouchableOpacity
           style={styles.fabGreen}
           onPress={() =>
@@ -649,9 +604,7 @@ export default function MapsLocationScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ── BOTTOM SHEETS (PAINÉIS INFERIORES) ──────────────────────────── */}
 
-      {/* 1. Bottom Sheet: Informações da Área */}
       {activeSheet === "areaInfo" && (
         <View style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetCard}>
@@ -708,7 +661,6 @@ export default function MapsLocationScreen() {
         </View>
       )}
 
-      {/* 2. Bottom Sheet: Filtros de Camadas e Legenda (SEM MENÇÃO A COBRE) */}
       {activeSheet === "layerFilters" && (
         <View style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetCard}>
@@ -727,7 +679,6 @@ export default function MapsLocationScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Checkbox 1: Demarcação da Propriedade */}
             <TouchableOpacity
               style={styles.checkboxRow}
               activeOpacity={0.8}
@@ -746,7 +697,6 @@ export default function MapsLocationScreen() {
               <Text style={styles.checkboxLabel}>Demarcação da propriedade</Text>
             </TouchableOpacity>
 
-            {/* Checkbox 2: Talhões */}
             <TouchableOpacity
               style={styles.checkboxRow}
               activeOpacity={0.8}
@@ -765,7 +715,6 @@ export default function MapsLocationScreen() {
               <Text style={styles.checkboxLabel}>Talhões</Text>
             </TouchableOpacity>
 
-            {/* Checkbox 3: Árvores de cultivo */}
             <TouchableOpacity
               style={styles.checkboxRow}
               activeOpacity={0.8}
@@ -784,7 +733,6 @@ export default function MapsLocationScreen() {
               <Text style={styles.checkboxLabel}>Árvores de cultivo</Text>
             </TouchableOpacity>
 
-            {/* Legenda Atualizada: Apenas Manganês, Tratado/Saudável e Sem informação */}
             <View style={styles.legendRow}>
               <Text style={styles.legendTitle}>Legenda:</Text>
 
@@ -812,7 +760,6 @@ export default function MapsLocationScreen() {
         </View>
       )}
 
-      {/* 3. Bottom Sheet: Modos do Mapa (Satélite vs Calor) */}
       {activeSheet === "layerMode" && (
         <View style={styles.bottomSheetContainer}>
           <View style={styles.bottomSheetCard}>
@@ -831,7 +778,6 @@ export default function MapsLocationScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Card: Mapa de Satélite */}
             <TouchableOpacity
               style={[
                 styles.modeCard,
@@ -855,7 +801,6 @@ export default function MapsLocationScreen() {
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </TouchableOpacity>
 
-            {/* Card: Mapa de Calor */}
             <TouchableOpacity
               style={[
                 styles.modeCard,
@@ -882,7 +827,6 @@ export default function MapsLocationScreen() {
         </View>
       )}
 
-      {/* Bottom Sheet: Seletor de Data */}
       {activeSheet === "datePicker" && (
         <View style={styles.bottomSheetContainer}>
           <View style={[styles.bottomSheetCard, { maxHeight: 360 }]}>
@@ -901,7 +845,6 @@ export default function MapsLocationScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Opção: Ver Todas */}
             <TouchableOpacity
               style={[
                 styles.dateOptionRow,
@@ -985,14 +928,12 @@ export default function MapsLocationScreen() {
         </View>
       )}
 
-      {/* Loading */}
       {loading && (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="small" color="#16A34A" />
         </View>
       )}
 
-      {/* ── BARRA DE ABAS INFERIOR (TAB BAR) ────────────────────────────── */}
       <View style={styles.tabBarFixed}>
         <TabBar />
       </View>
@@ -1000,7 +941,6 @@ export default function MapsLocationScreen() {
   );
 }
 
-// ─── Estilos ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: {
@@ -1008,7 +948,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
 
-  // Overlay superior (Header e Filtros)
   topOverlay: {
     position: "absolute",
     top: 0,
@@ -1019,7 +958,6 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "android" ? 10 : 0,
   },
 
-  // Card do Usuário
   headerCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -1074,7 +1012,6 @@ const styles = StyleSheet.create({
     padding: 6,
   },
 
-  // Linha de Data & Calendário
   dateRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1134,7 +1071,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  // Seletor de data (Bottom Sheet)
   dateOptionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1164,7 +1100,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
 
-  // Tooltip de polígono flutuante
   polygonTooltipWrapper: {
     position: "absolute",
     top: "30%",
@@ -1203,7 +1138,6 @@ const styles = StyleSheet.create({
     color: "#0F172A",
   },
 
-  // Filtros rápidos
   filterScroll: {
     flexDirection: "row",
     gap: 8,
@@ -1232,7 +1166,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
-  // Coluna de FABs flutuantes à direita
   fabColumn: {
     position: "absolute",
     right: 16,
@@ -1268,7 +1201,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // Marcadores Customizados (Pin estilo gota)
   pinWrapper: {
     alignItems: "center",
     justifyContent: "center",
@@ -1299,7 +1231,6 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
 
-  // Painéis Inferiores (Bottom Sheets)
   bottomSheetContainer: {
     position: "absolute",
     bottom: 64,
@@ -1351,7 +1282,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // Dados da Área (Sheet 1)
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1368,7 +1298,6 @@ const styles = StyleSheet.create({
     color: "#0F172A",
   },
 
-  // Checkboxes de Camadas (Sheet 2)
   checkboxRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1424,7 +1353,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // Modos de Camada (Sheet 3)
   modeCard: {
     flexDirection: "row",
     alignItems: "center",

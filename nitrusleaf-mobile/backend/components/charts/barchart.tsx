@@ -21,7 +21,6 @@ interface EvolutionBarChartProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 const BAR_WIDTH = 12;
-const BAR_GAP = 3;
 const Y_AXIS_WIDTH = 32;
 const TOP_PADDING = 20;
 
@@ -44,7 +43,7 @@ export const EvolutionBarChart: React.FC<EvolutionBarChartProps> = ({
     onPeriodChange?.(period);
   };
 
-  const chartWidth = screenWidth - 25 * 2 - 16 * 2; // page padding + card padding
+  const chartWidth = screenWidth - 25 * 2 - 16 * 2;
 
   const safeData = data.length > 0 ? data : [{ period: "-", manganes: 0 }];
   const maxValue = Math.max(...safeData.map((d) => d.manganes), 1);

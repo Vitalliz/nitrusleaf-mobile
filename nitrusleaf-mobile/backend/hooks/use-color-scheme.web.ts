@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
+const subscribe = () => () => {};
+
 export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
-
+  const isHydrated = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false
+  );
   const colorScheme = useRNColorScheme();
 
-  if (hasHydrated) {
+  if (isHydrated) {
     return colorScheme;
   }
 

@@ -7,8 +7,8 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  StatusBar,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -92,7 +92,7 @@ export default function PropertyDataScreen() {
       }
     }
     void loadData();
-  }, [user?.id, selectedProperty?.id, showAlert]);
+  }, [user?.id, selectedProperty, showAlert]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -133,9 +133,8 @@ export default function PropertyDataScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => safeBack(router, ROUTES.profile)}

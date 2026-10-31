@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  StatusBar,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -55,7 +55,6 @@ const RECENT_NOTIFICATIONS: NotificationItem[] = [
 export default function NotificationsScreen() {
   const router = useRouter();
 
-  // Estados dos toggles de preferências
   const [pushEnabled, setPushEnabled] = useState(true);
   const [analysisAlerts, setAnalysisAlerts] = useState(true);
   const [weeklyReport, setWeeklyReport] = useState(false);
@@ -71,9 +70,8 @@ export default function NotificationsScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -91,7 +89,6 @@ export default function NotificationsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Seção: Preferências */}
           <Text style={styles.sectionTitle}>Preferências de Alerta</Text>
 
           <View style={styles.settingsGroup}>
@@ -145,7 +142,6 @@ export default function NotificationsScreen() {
             </View>
           </View>
 
-          {/* Seção: Histórico Recente */}
           <Text style={styles.sectionTitle}>Recentes</Text>
 
           <View style={styles.notificationsList}>

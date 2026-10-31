@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { Palette, FontWeights } from '@/constants/theme';
 
 interface StatCardProps {
   icon: keyof typeof Ionicons.glyphMap;

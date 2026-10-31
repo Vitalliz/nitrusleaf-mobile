@@ -18,7 +18,6 @@ interface GroupedColumnChartProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 const BAR_WIDTH = 24;
-const BAR_GAP = 8;
 const Y_AXIS_WIDTH = 32;
 
 export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
@@ -27,15 +26,15 @@ export const GroupedColumnChart: React.FC<GroupedColumnChartProps> = ({
   height = 220,
   showDownloadButton = true,
 }) => {
-  const chartWidth = screenWidth - 50 * 2; // 25 page padding * 2 + card internal padding
+  const chartWidth = screenWidth - 50 * 2;
 
   const safeData = data.length > 0 ? data : [{ talhao: "-", manganes: 0 }];
   const maxValue = Math.max(...safeData.map((d) => d.manganes), 1);
   const yAxisMax = Math.max(5, Math.ceil(maxValue / 5) * 5);
   const yAxisSteps = [0, 5, 10, 15, 20].filter(s => s <= yAxisMax + 5);
 
-  const TOP_PADDING = 16;  // espaço para o label "20" não ser cortado
-  const drawHeight = height - 32 - TOP_PADDING; // leave room for x-axis labels + top
+  const TOP_PADDING = 16;
+  const drawHeight = height - 32 - TOP_PADDING;
   const groupWidth = BAR_WIDTH + 24;
   const totalGroupsWidth = groupWidth * safeData.length;
   const availableWidth = chartWidth - Y_AXIS_WIDTH;

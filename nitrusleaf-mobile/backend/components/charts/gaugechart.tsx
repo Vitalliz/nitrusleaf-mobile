@@ -33,10 +33,10 @@ export const GaugeChart: React.FC<GaugeChartProps> = ({
   const displayPct = Number.isInteger(safePct) ? safePct : Math.round(safePct * 10) / 10;
   const getGaugeColor = () => {
     if (deficiencyType === 'Saudável') {
-      return '#6BC24A'; // Verde
+      return '#6BC24A';
     }
     if (deficiencyType === 'Manganês') {
-      return '#FBBF24'; // Amarelo/Laranja
+      return '#FBBF24';
     }
     return '#6BC24A';
   };

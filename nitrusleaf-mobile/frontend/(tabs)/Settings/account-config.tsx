@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  StatusBar,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -137,9 +137,8 @@ export default function AccountConfigScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho Padronizado */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => safeBack(router, ROUTES.profile)}
@@ -162,7 +161,6 @@ export default function AccountConfigScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Formulário Direto na Tela */}
             <Text style={styles.sectionTitle}>Credenciais de Acesso</Text>
 
             <View style={styles.formGroup}>
@@ -237,7 +235,6 @@ export default function AccountConfigScreen() {
               />
             </View>
 
-            {/* Bloco de Zona de Risco */}
             <View style={styles.dangerZone}>
               <Text style={styles.dangerTitle}>Zona de Risco</Text>
               <Text style={styles.dangerDesc}>

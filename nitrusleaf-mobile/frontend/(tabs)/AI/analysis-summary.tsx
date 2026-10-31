@@ -4,7 +4,6 @@ import { ROUTES, exitAnalysisFlow, safeBack } from "@/utils/navigation";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
@@ -89,7 +89,9 @@ export default function AnalysisSummaryScreen() {
   const { selectedProperty } = useProperty();
   const params = useLocalSearchParams();
 
-  const analysisId = (params.analysisId as string) || Date.now().toString();
+  const [analysisId] = useState<string>(
+    () => (params.analysisId as string) || Date.now().toString()
+  );
   const returnTo = params.returnTo as string | undefined;
   const imageUri = params.imageUri as string | undefined;
   const probability = Math.min(
@@ -114,12 +116,10 @@ export default function AnalysisSummaryScreen() {
   const [status, setStatus] = useState<TreeStatus>("Não informado");
   const [observacoes, setObservacoes] = useState<string>("");
 
-  // Modais de Seleção Personalizados
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [talhaoModalVisible, setTalhaoModalVisible] = useState(false);
   const [peModalVisible, setPeModalVisible] = useState(false);
 
-  // Mapa ref para animar para a posição do pé selecionado
   const mapViewRef = useRef<MapView | null>(null);
 
   const accentColor = getDeficiencyAccentColor(deficiencyType);
@@ -131,13 +131,11 @@ export default function AnalysisSummaryScreen() {
   const selectedTalhao = talhoes.find((t) => t.id === selectedTalhaoId);
   const selectedPe = pes.find((p) => p.id === selectedPeId);
 
-  // Espelha dinamicamente as cores e ícone do status selecionado
   const currentStatusConfig = useMemo(() => {
     return STATUS_OPTIONS.find((opt) => opt.id === status) || STATUS_OPTIONS[0];
   }, [status]);
 
   const formattedId = useMemo(() => {
-    // Prefer the real DB relatorio ID after saving
     const idToUse = savedRelatorioId || analysisId;
     if (!idToUse) return "001";
     const num = parseInt(idToUse, 10);
@@ -280,7 +278,6 @@ export default function AnalysisSummaryScreen() {
         probability,
       });
       setSavedToDb(true);
-      // Salva o ID real do banco para exibir no cabeçalho
       setSavedRelatorioId(result.relatorioId);
       Alert.alert(
         "Salvo",
@@ -304,12 +301,11 @@ export default function AnalysisSummaryScreen() {
   const gaugeType: DeficiencyType =
     deficiencyType === "Indefinido" ? "Saudável" : deficiencyType;
 
-  // TELA 1: RESULTADO DA ANÁLISE
   if (view === "result") {
     return (
       <Background>
         <SafeAreaView style={styles.safeArea} edges={["top", "bottom", "left", "right"]}>
-          <StatusBar barStyle="dark-content" backgroundColor="#FAF1E5" />
+          <StatusBar style="dark" />
 
           <TouchableOpacity
             style={[styles.floatingBackBtn, { top: insets.top + 8 }]}
@@ -375,13 +371,11 @@ export default function AnalysisSummaryScreen() {
     );
   }
 
-  // TELA 2: RESUMO DA ANÁLISE (STATUS REFLETE COR E ÍCONE)
   return (
     <View style={styles.summaryScreenContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+      <StatusBar style="dark" />
 
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom", "left", "right"]}>
-        {/* Cabeçalho Branco */}
         <View style={styles.summaryTopHeader}>
           <TouchableOpacity
             style={styles.summaryBackBtn}
@@ -398,7 +392,6 @@ export default function AnalysisSummaryScreen() {
           contentContainerStyle={styles.summaryScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* BLOCO 1: Informações Gerais da Análise */}
           <View style={styles.blockContainer}>
             <View style={styles.rowSpaced}>
               <Text style={styles.summaryAnalysisId}>Análise #{formattedId}</Text>
@@ -441,7 +434,6 @@ export default function AnalysisSummaryScreen() {
 
           <View style={styles.sectionSeparator} />
 
-          {/* BLOCO 2: Localização da Amostra */}
           <View style={styles.blockContainer}>
             <Text style={styles.sectionHeading}>Localização da amostra</Text>
 
@@ -481,7 +473,7 @@ export default function AnalysisSummaryScreen() {
                     pinColor="#16A34A"
                     title={selectedPe.nome}
                   />
-                ) : selectedProperty?.latitude ? (
+                ) : selectedProperty?.latitude && selectedProperty?.longitude ? (
                   <Marker
                     coordinate={{
                       latitude: selectedProperty.latitude,
@@ -539,7 +531,6 @@ export default function AnalysisSummaryScreen() {
 
           <View style={styles.sectionSeparator} />
 
-          {/* BLOCO 3: Informações Técnicas */}
           <View style={styles.blockContainer}>
             <Text style={styles.sectionHeading}>Informações</Text>
 
@@ -559,7 +550,6 @@ export default function AnalysisSummaryScreen() {
               </View>
             </View>
 
-            {/* STATUS DINÂMICO COM COR E ÍCONE ESPELHADOS */}
             <View style={styles.infoTableRow}>
               <Text style={styles.infoRowTitle}>Status:</Text>
               <TouchableOpacity
@@ -599,7 +589,6 @@ export default function AnalysisSummaryScreen() {
 
           <View style={styles.sectionSeparator} />
 
-          {/* BLOCO 4: Relatório / Observações */}
           <View style={styles.blockContainer}>
             <Text style={styles.sectionHeading}>Relatório</Text>
             <TextInput
@@ -615,7 +604,6 @@ export default function AnalysisSummaryScreen() {
 
           <View style={styles.sectionSeparator} />
 
-          {/* BLOCO 5: Botões de Ação */}
           <View style={styles.buttonsBlock}>
             <TouchableOpacity
               style={styles.saveHistoryPillBtn}
@@ -650,7 +638,6 @@ export default function AnalysisSummaryScreen() {
           </View>
         </ScrollView>
 
-        {/* MODAL PERSONALIZADO DE STATUS */}
         <Modal
           visible={statusModalVisible}
           transparent
@@ -730,7 +717,6 @@ export default function AnalysisSummaryScreen() {
           </TouchableWithoutFeedback>
         </Modal>
 
-        {/* MODAL PERSONALIZADO DE SELEÇÃO DE TALHÃO */}
         <Modal
           visible={talhaoModalVisible}
           transparent
@@ -813,7 +799,6 @@ export default function AnalysisSummaryScreen() {
           </TouchableWithoutFeedback>
         </Modal>
 
-        {/* MODAL PERSONALIZADO DE SELEÇÃO DE PÉ / ÁRVORE */}
         <Modal
           visible={peModalVisible}
           transparent
@@ -908,7 +893,6 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.white,
   },
 
-  /* TELA 1 (RESULTADO CENTRALIZADO) */
   floatingBackBtn: {
     position: "absolute",
     left: 16,
@@ -1024,7 +1008,6 @@ const styles = StyleSheet.create({
     width: 18,
   },
 
-  /* TELA 2 (HEADER E ESPAÇAMENTOS MOBILE EXPANDIDOS) */
   summaryTopHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -1204,7 +1187,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
 
-  /* PÍLULA DE STATUS DINÂMICA */
   statusPillPicker: {
     flexDirection: "row",
     alignItems: "center",
@@ -1275,7 +1257,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.bold,
   },
 
-  /* ESTILOS DOS MODAIS CUSTOMIZADOS */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.35)",

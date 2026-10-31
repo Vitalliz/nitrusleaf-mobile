@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { ROUTES, safeBack } from "@/utils/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import {
   ActivityIndicator,
   FlatList,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Background } from "@/components/ui/background";
@@ -257,7 +257,7 @@ export default function HistoryTreeScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar style="dark" />
 
         <Header
           userName={
@@ -290,7 +290,6 @@ export default function HistoryTreeScreen() {
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
               <>
-                {/* Linha do Título com Botão Circular Verde */}
                 <View style={styles.titleRow}>
                   <TouchableOpacity
                     style={styles.backButtonCircle}
@@ -317,7 +316,6 @@ export default function HistoryTreeScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Subcabeçalho de Contagem e Botão Ordenar */}
                 <View style={styles.listSubHeader}>
                   <Text style={styles.listCount}>
                     {sortedAnalyses.length} Análises realizadas
@@ -389,7 +387,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  /* Cabeçalho da Árvore */
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -415,7 +412,6 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  /* Subcabeçalho de Contagem e Ordenação */
   listSubHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -442,7 +438,6 @@ const styles = StyleSheet.create({
     color: "#374151",
   },
 
-  /* Cartão Individual de Análise */
   card: {
     backgroundColor: Palette.white,
     borderRadius: 8,
@@ -513,7 +508,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.medium,
   },
 
-  /* Empty State */
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",

@@ -41,7 +41,6 @@ export async function persistAnalysisResult(params: {
     const relatorio = await createRelatorio({
       peId: params.peId,
       fotoId: foto.id,
-      deficienciaCobre: false,
       deficienciaManganes: isManganes,
       outros: isOutros,
       observacoes: `Probabilidade IA: ${params.probability}%. Classe: ${params.deficiencyType}.`,

@@ -60,7 +60,6 @@ export const Header = ({
 
   const getInitial = () => userName.charAt(0).toUpperCase();
 
-  // Abre exclusivamente o modal personalizado, sem acionar o seletor nativo do contexto
   const handleOpenPicker = () => {
     setModalVisible(true);
   };
@@ -87,7 +86,6 @@ export const Header = ({
   return (
     <>
       <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-        {/* Avatar */}
         <TouchableOpacity
           onPress={onAvatarPress}
           style={styles.avatarButton}
@@ -102,7 +100,6 @@ export const Header = ({
           )}
         </TouchableOpacity>
 
-        {/* Textos: Nome do Utilizador e Propriedade Ativa */}
         <View style={styles.textContainer}>
           <Text style={styles.name}>{userName}</Text>
 
@@ -133,7 +130,6 @@ export const Header = ({
           </TouchableOpacity>
         </View>
 
-        {/* Botão de Atalho para Definições */}
         <TouchableOpacity
           onPress={() => router.push('/(tabs)/Settings/settings-all')}
           style={styles.configButton}
@@ -143,7 +139,6 @@ export const Header = ({
         </TouchableOpacity>
       </View>
 
-      {/* Modal Inferior Personalizado */}
       <Modal
         visible={modalVisible}
         transparent
@@ -355,7 +350,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  /* Modal Personalizado Bottom Sheet */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',

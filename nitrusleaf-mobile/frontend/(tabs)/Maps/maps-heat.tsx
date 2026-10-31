@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ScrollView,
-  StatusBar,
   ActivityIndicator,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, Circle, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRouter } from "expo-router";
@@ -27,13 +27,7 @@ export default function HeatMapScreen() {
   const [heatData, setHeatData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (selectedProperty) {
-      void loadHeatData();
-    }
-  }, [selectedProperty?.id]);
-
-  const loadHeatData = async () => {
+  const loadHeatData = useCallback(async () => {
     if (!selectedProperty) return;
 
     try {
@@ -84,13 +78,19 @@ export default function HeatMapScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedProperty]);
+
+  useEffect(() => {
+    if (selectedProperty) {
+      void loadHeatData();
+    }
+  }, [selectedProperty, loadHeatData]);
 
   const getHeatColor = (deficiencyCount: number) => {
-    if (deficiencyCount >= 5) return "rgba(220, 38, 38, 0.6)"; // Vermelho intenso
-    if (deficiencyCount >= 3) return "rgba(234, 88, 12, 0.6)"; // Laranja
-    if (deficiencyCount >= 1) return "rgba(245, 158, 11, 0.6)"; // Amarelo
-    return "rgba(34, 197, 94, 0.6)"; // Verde
+    if (deficiencyCount >= 5) return "rgba(220, 38, 38, 0.6)";
+    if (deficiencyCount >= 3) return "rgba(234, 88, 12, 0.6)";
+    if (deficiencyCount >= 1) return "rgba(245, 158, 11, 0.6)";
+    return "rgba(34, 197, 94, 0.6)";
   };
 
   const handleBack = () => {
@@ -104,9 +104,8 @@ export default function HeatMapScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho Padronizado */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -119,14 +118,12 @@ export default function HeatMapScreen() {
           <View style={styles.headerSpacer} />
         </View>
 
-        {/* Subtítulo informativo */}
         <View style={styles.subtitleContainer}>
           <Text style={styles.subtitle}>
             Zonas com maior concentração de deficiências
           </Text>
         </View>
 
-        {/* Seletor de Propriedades */}
         <View style={styles.selectorWrapper}>
           <ScrollView
             horizontal
@@ -157,7 +154,6 @@ export default function HeatMapScreen() {
           </ScrollView>
         </View>
 
-        {/* Área do Mapa */}
         <View style={styles.mapContainer}>
           {selectedProperty && (
             <MapView
@@ -204,7 +200,6 @@ export default function HeatMapScreen() {
           )}
         </View>
 
-        {/* Card de Legenda */}
         <View style={styles.legendCard}>
           <Text style={styles.legendTitle}>Legenda de Incidência</Text>
           <View style={styles.legendGrid}>
@@ -247,7 +242,6 @@ export default function HeatMapScreen() {
           </View>
         </View>
 
-        {/* Barra de Navegação Inferior */}
         <TabBar />
       </SafeAreaView>
     </Background>

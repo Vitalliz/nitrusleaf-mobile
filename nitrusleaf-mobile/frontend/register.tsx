@@ -8,8 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StatusBar,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -44,7 +44,6 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
-  // Estado do Alert Estilizado
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState<{
     title: string;
@@ -66,7 +65,6 @@ export default function RegisterScreen() {
   }, [isSignedIn, router]);
 
   const handleNext = async () => {
-    // Validações por etapa
     if (step === 1) {
       if (!name.trim() || !lastName.trim() || !cpf.trim() || !phone.trim()) {
         showAlert("Atenção", "Por favor, preencha todos os dados pessoais.", "warning");
@@ -139,13 +137,11 @@ export default function RegisterScreen() {
     }
   };
 
-  const handleGoogleRegister = () => {
-    // Integração com Google
-  };
+  const handleGoogleRegister = () => {};
 
   return (
     <Background>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar style="dark" />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -171,7 +167,6 @@ export default function RegisterScreen() {
               <Ionicons name="chevron-back" size={26} color={Palette.textPrimary} />
             </TouchableOpacity>
 
-            {/* Passo 1: Dados Pessoais */}
             {step === 1 && (
               <View style={styles.stepContainer}>
                 <View style={styles.header}>
@@ -257,7 +252,6 @@ export default function RegisterScreen() {
               </View>
             )}
 
-            {/* Passo 2: Nome da Propriedade */}
             {step === 2 && (
               <View style={styles.stepContainer}>
                 <View style={styles.header}>
@@ -293,7 +287,6 @@ export default function RegisterScreen() {
               </View>
             )}
 
-            {/* Passo 3: Endereço da Propriedade */}
             {step === 3 && (
               <View style={styles.stepContainer}>
                 <View style={styles.header}>
@@ -383,7 +376,6 @@ export default function RegisterScreen() {
               </View>
             )}
 
-            {/* Passo 4: Acesso */}
             {step === 4 && (
               <View style={styles.stepContainer}>
                 <View style={styles.header}>

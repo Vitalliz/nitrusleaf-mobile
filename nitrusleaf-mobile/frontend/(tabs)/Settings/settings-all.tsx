@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   Alert,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -105,7 +105,7 @@ export default function SettingsAllScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
         <Header
           userName={userName}
@@ -121,13 +121,11 @@ export default function SettingsAllScreen() {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* Barra de Subcabeçalho */}
           <View style={styles.sectionHeader}>
             <Ionicons name="settings-outline" size={18} color={Palette.textPrimary} />
             <Text style={styles.sectionTitle}>Configurações</Text>
           </View>
 
-          {/* Lista de Opções */}
           <View style={styles.listContainer}>
             {MENU_ITEMS.map((item) => (
               <TouchableOpacity
@@ -153,7 +151,6 @@ export default function SettingsAllScreen() {
               </TouchableOpacity>
             ))}
 
-            {/* Botão Sair mantido de forma discreta na base da rolagem */}
             <TouchableOpacity
               style={styles.logoutButton}
               activeOpacity={0.8}
@@ -181,7 +178,6 @@ const styles = StyleSheet.create({
     backgroundColor: Palette.white,
   },
 
-  /* Subcabeçalho */
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -198,7 +194,6 @@ const styles = StyleSheet.create({
     color: Palette.textPrimary,
   },
 
-  /* Lista */
   listContainer: {
     paddingHorizontal: 20,
     paddingTop: 8,
@@ -231,7 +226,6 @@ const styles = StyleSheet.create({
     color: Palette.textSecondary,
   },
 
-  /* Logout */
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',

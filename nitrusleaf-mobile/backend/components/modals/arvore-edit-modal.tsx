@@ -132,7 +132,6 @@ export function ArvoreEditModal({
                 disabled={saving}
               />
 
-              {/* Divisor com espaçamento reduzido */}
               <View style={styles.divider} />
 
               <Button
@@ -254,7 +253,6 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginLeft: 4,
   },
-  /* Espaçamento compacto entre os botões */
   divider: {
     height: 1,
     backgroundColor: Palette.surfaceGray,

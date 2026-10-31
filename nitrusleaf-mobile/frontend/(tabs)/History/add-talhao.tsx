@@ -39,7 +39,6 @@ export default function AddTalhaoScreen() {
   const [showMapModal, setShowMapModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Estado do CustomAlert (Sucesso, Aviso e Erro)
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -84,7 +83,6 @@ export default function AddTalhaoScreen() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // ── Handlers do Mapa ──────────────────────────────────────────────────────
   const handleMapPress = (event: any) => {
     const { coordinate } = event.nativeEvent;
     if (!coordinate?.latitude || !coordinate?.longitude) return;
@@ -228,7 +226,6 @@ export default function AddTalhaoScreen() {
           />
         </View>
 
-        {/* Demarcação do Polígono do Talhão no Mapa */}
         <Text style={styles.sectionTitle}>Demarcação do Talhão no Mapa</Text>
         <TouchableOpacity
           style={styles.mapBannerBtn}
@@ -289,7 +286,6 @@ export default function AddTalhaoScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal do Mapa de Desenho do Talhão */}
       <Modal
         visible={showMapModal}
         animationType="slide"
@@ -316,7 +312,6 @@ export default function AddTalhaoScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Banner de instrução */}
           <View style={styles.modalInstructionBanner}>
             <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
             <Text style={styles.modalInstructionText}>
@@ -336,7 +331,6 @@ export default function AddTalhaoScreen() {
             onPress={handleMapPress}
             provider={PROVIDER_GOOGLE}
           >
-            {/* Linhas conectando os pontos do talhão */}
             {polygonPoints.length >= 2 && (
               <Polyline
                 coordinates={polygonPoints}
@@ -345,7 +339,6 @@ export default function AddTalhaoScreen() {
               />
             )}
 
-            {/* Polígono do talhão (azul) */}
             {polygonPoints.length >= 3 && (
               <Polygon
                 coordinates={polygonPoints}
@@ -355,7 +348,6 @@ export default function AddTalhaoScreen() {
               />
             )}
 
-            {/* Marcadores numerados dos vértices */}
             {polygonPoints.map((point, idx) => (
               <Marker
                 key={`pt-${idx}`}
@@ -369,7 +361,6 @@ export default function AddTalhaoScreen() {
             ))}
           </MapView>
 
-          {/* Barra Flutuante de Ações */}
           <View style={styles.mapControlsBar}>
             <TouchableOpacity
               style={styles.mapControlBtn}
@@ -398,7 +389,6 @@ export default function AddTalhaoScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Modal CustomAlert integrado para Validações, Sucesso e Erros */}
       <CustomAlert
         visible={alertConfig.visible}
         title={alertConfig.title}
@@ -495,7 +485,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 
-  // Banner de demarcação no mapa
   mapBannerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -525,7 +514,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Modal do Mapa
   modalContainer: {
     flex: 1,
     backgroundColor: Palette.white,

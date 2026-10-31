@@ -7,8 +7,8 @@ import {
   TextInput,
   ScrollView,
   Modal,
-  StatusBar,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,7 +32,6 @@ export default function AddPropertyScreen() {
   const { user } = useAuth();
   const { refreshProperties, selectProperty } = useProperty();
 
-  // Prioriza o retorno na pilha de navegação para a tela anterior exata
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -210,9 +209,8 @@ export default function AddPropertyScreen() {
   return (
     <Background>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor={Palette.white} />
+        <StatusBar style="dark" />
 
-        {/* Cabeçalho */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -230,7 +228,6 @@ export default function AddPropertyScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Informações da Propriedade */}
           <Text style={styles.sectionTitle}>Informações da Propriedade</Text>
 
           <View style={styles.formGroup}>
@@ -244,7 +241,6 @@ export default function AddPropertyScreen() {
             />
           </View>
 
-          {/* Endereço */}
           <Text style={styles.sectionTitle}>Endereço</Text>
 
           <View style={styles.formGroup}>
@@ -316,8 +312,6 @@ export default function AddPropertyScreen() {
             />
           </View>
 
-          {/* Localização */}
-          {/* Demarcação no Mapa */}
           <Text style={styles.sectionTitle}>Demarcação da Fazenda</Text>
           <TouchableOpacity
             style={styles.mapBannerBtn}
@@ -368,7 +362,6 @@ export default function AddPropertyScreen() {
             </View>
           </View>
 
-          {/* Botão Salvar */}
           <View style={styles.saveBtnContainer}>
             <Button
               title={loading ? 'Salvando...' : 'Salvar Propriedade'}
@@ -380,7 +373,6 @@ export default function AddPropertyScreen() {
           </View>
         </ScrollView>
 
-        {/* Modal do Mapa de Demarcação */}
         <Modal
           visible={showMapModal}
           animationType="slide"
@@ -407,7 +399,6 @@ export default function AddPropertyScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Banner de instrução */}
             <View style={styles.modalInstructionBanner}>
               <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
               <Text style={styles.modalInstructionText}>
@@ -427,7 +418,6 @@ export default function AddPropertyScreen() {
               onPress={handleMapPress}
               provider={PROVIDER_GOOGLE}
             >
-              {/* Linhas conectando os pontos */}
               {polygonPoints.length >= 2 && (
                 <Polyline
                   coordinates={polygonPoints}
@@ -436,7 +426,6 @@ export default function AddPropertyScreen() {
                 />
               )}
 
-              {/* Polígono preenchido quando 3+ pontos */}
               {polygonPoints.length >= 3 && (
                 <Polygon
                   coordinates={polygonPoints}
@@ -446,7 +435,6 @@ export default function AddPropertyScreen() {
                 />
               )}
 
-              {/* Marcadores numerados dos vértices */}
               {polygonPoints.map((point, idx) => (
                 <Marker
                   key={`pt-${idx}`}
@@ -460,7 +448,6 @@ export default function AddPropertyScreen() {
               ))}
             </MapView>
 
-            {/* Barra de Controles Inferiores */}
             <View style={styles.mapControlsBar}>
               <TouchableOpacity
                 style={styles.mapControlBtn}
@@ -489,7 +476,6 @@ export default function AddPropertyScreen() {
           </SafeAreaView>
         </Modal>
 
-        {/* Barra de Navegação Inferior */}
         <TabBar />
 
         <CustomAlert
