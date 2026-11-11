@@ -27,6 +27,7 @@ import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { persistAnalysisResult } from "@/services/persistAnalysis";
+import { exportAnalysisPdf } from "@/services/analysisPdf";
 import type { Talhao } from "@/types/talhao";
 import type { Pe } from "@/types/pe";
 import {
@@ -115,6 +116,7 @@ export default function AnalysisSummaryScreen() {
   const [savedRelatorioId, setSavedRelatorioId] = useState<string | undefined>();
   const [status, setStatus] = useState<TreeStatus>("Não informado");
   const [observacoes, setObservacoes] = useState<string>("");
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [talhaoModalVisible, setTalhaoModalVisible] = useState(false);
@@ -294,8 +296,34 @@ export default function AnalysisSummaryScreen() {
     }
   };
 
-  const handleExportPdf = () => {
-    Alert.alert("Exportar PDF", "O relatório em PDF da análise foi gerado com sucesso.");
+  const handleExportPdf = async () => {
+    if (generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      await exportAnalysisPdf({
+        analysisId,
+        formattedId,
+        formattedDate,
+        deficiencyType,
+        probability,
+        authorName,
+        propertyName: selectedProperty?.name,
+        talhaoName: selectedTalhao?.name,
+        peName: selectedPe?.nome,
+        latitude: selectedPe?.latitude ?? selectedProperty?.latitude,
+        longitude: selectedPe?.longitude ?? selectedProperty?.longitude,
+        statusLabel: currentStatusConfig.label,
+        observacoes,
+        imageUri,
+      });
+    } catch (e) {
+      console.error(e);
+      const msg =
+        e instanceof Error ? e.message : "Não foi possível gerar o PDF.";
+      Alert.alert("Erro ao exportar PDF", msg);
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   const gaugeType: DeficiencyType =
@@ -363,6 +391,27 @@ export default function AnalysisSummaryScreen() {
                   size={20}
                   color={Palette.primary}
                 />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.outlinePillButton}
+                activeOpacity={0.85}
+                onPress={() => void handleExportPdf()}
+                disabled={generatingPdf}
+              >
+                {generatingPdf ? (
+                  <ActivityIndicator size="small" color={Palette.primary} />
+                ) : (
+                  <>
+                    <View style={styles.buttonIconSpacer} />
+                    <Text style={styles.outlinePillButtonText}>Exportar como PDF</Text>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color={Palette.primary}
+                    />
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -626,14 +675,21 @@ export default function AnalysisSummaryScreen() {
             <TouchableOpacity
               style={styles.exportPdfPillBtn}
               activeOpacity={0.85}
-              onPress={handleExportPdf}
+              onPress={() => void handleExportPdf()}
+              disabled={generatingPdf}
             >
-              <Ionicons
-                name="document-text-outline"
-                size={18}
-                color={Palette.primary}
-              />
-              <Text style={styles.exportPdfPillText}>Exportar como PDF</Text>
+              {generatingPdf ? (
+                <ActivityIndicator size="small" color={Palette.primary} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color={Palette.primary}
+                  />
+                  <Text style={styles.exportPdfPillText}>Exportar como PDF</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>

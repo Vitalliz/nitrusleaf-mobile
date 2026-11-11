@@ -11,6 +11,12 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.nitrusleaf.mobile",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDummyKeyForBuildValidation12345"
+        }
+      },
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./backend/assets/images/adaptive-icon.png"
@@ -43,6 +49,7 @@
       "expo-web-browser",
       "expo-font",
       "expo-image",
+      "expo-status-bar",
       [
         "expo-image-picker",
         {
@@ -52,8 +59,20 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
+    },
+    "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "router": {
+        "root": "./frontend",
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "6ec2377b-8444-4228-baf9-15907fc27a0b"
+      }
     }
   }
 }

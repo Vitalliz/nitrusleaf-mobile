@@ -1,6 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { decode } from "base64-arraybuffer";
-import { getSupabase } from "@/services/supabase";
+import { getSupabase, getAuthSession } from "@/services/supabase";
 
 export type PickAvatarResult = {
   cancelled: boolean;
@@ -56,6 +56,26 @@ export async function uploadProfileAvatar(
   base64?: string
 ): Promise<string> {
   const supabase = getSupabase();
+
+  const session = await getAuthSession();
+  if (!session?.access_token) {
+    throw new Error(
+      "Sessão expirada. Faça login novamente para alterar sua foto de perfil."
+    );
+  }
+
+  if (session.user?.id !== userId) {
+    throw new Error(
+      "O usuário da sessão não corresponde ao perfil sendo editado."
+    );
+  }
+
+  const { data: refreshData, error: refreshError } =
+    await supabase.auth.refreshSession();
+  if (!refreshError && refreshData.session) {
+    await supabase.auth.setSession(refreshData.session);
+  }
+
   const path = `${userId}/${Date.now()}.jpg`;
 
   let base64Data = base64;
@@ -64,19 +84,6 @@ export async function uploadProfileAvatar(
     const commaIndex = localUri.indexOf(",");
     if (commaIndex !== -1) {
       base64Data = localUri.slice(commaIndex + 1);
-    }
-  }
-
-  if (!base64Data) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const FileSystem = require("expo-file-system");
-      if (FileSystem?.readAsStringAsync) {
-        base64Data = await FileSystem.readAsStringAsync(localUri, {
-          encoding: FileSystem.EncodingType?.Base64 ?? "base64",
-        });
-      }
-    } catch {
     }
   }
 
@@ -116,6 +123,11 @@ export async function uploadProfileAvatar(
     });
 
   if (uploadError) {
+    if (uploadError.message?.includes("row-level security")) {
+      throw new Error(
+        "Permissão negada pelo Supabase (RLS). Certifique-se de que a política RLS do bucket 'avatars' permite INSERT para o usuário autenticado."
+      );
+    }
     throw new Error(`Não foi possível enviar a foto de perfil: ${uploadError.message}`);
   }
 

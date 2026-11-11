@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import NitrusleafLogo from '@/assets/images/nitrusleaf-logo.svg';
 import WaveBgBig from '@/assets/images/wave-bg-big.svg';
 import { Palette } from '@/constants/theme';
+
+const logoSource = require('@/assets/images/nitrusleaf-logo.png');
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -32,7 +33,11 @@ export default function SplashScreen() {
       <StatusBar style="dark" />
 
       <View style={[styles.contentArea, { paddingBottom: waveHeight * 0.35 }]}>
-        <NitrusleafLogo width={logoWidth} height={logoHeight} />
+        <Image
+          source={logoSource}
+          style={{ width: logoWidth, height: logoHeight }}
+          resizeMode="contain"
+        />
       </View>
 
       <View style={[styles.waveContainer, { bottom: -BLEED_OFFSET }]}>
