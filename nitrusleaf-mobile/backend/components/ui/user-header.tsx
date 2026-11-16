@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProperty } from '@/contexts/PropertyContext';
 import { openAddProperty } from '@/utils/navigation';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface HeaderProps {
   userName: string;
@@ -47,6 +49,7 @@ export const Header = ({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
+  const { t } = useLanguage();
 
   const {
     properties: contextProperties = [],
@@ -137,6 +140,10 @@ export const Header = ({
         >
           <Ionicons name="settings-outline" size={26} color={Palette.textPrimary} />
         </TouchableOpacity>
+
+        <View style={styles.langToggleWrapper}>
+          <LanguageToggle compact />
+        </View>
       </View>
 
       <Modal
@@ -160,9 +167,9 @@ export const Header = ({
 
             <View style={styles.sheetHeader}>
               <View style={styles.sheetTitleContainer}>
-                <Text style={styles.sheetTitle}>Trocar Propriedade</Text>
+                <Text style={styles.sheetTitle}>{t("header_switch_property")}</Text>
                 <Text style={styles.sheetSubtitle}>
-                  Selecione a fazenda ativa na aplicação
+                  {t("header_select_active_farm")}
                 </Text>
               </View>
 
@@ -189,7 +196,7 @@ export const Header = ({
                     color={Palette.borderDisabled}
                   />
                   <Text style={styles.emptyText}>
-                    Nenhuma propriedade registada até ao momento.
+                    {t("header_no_properties")}
                   </Text>
                 </View>
               ) : (
@@ -274,7 +281,7 @@ export const Header = ({
                 color={Palette.primary}
               />
               <Text style={styles.addPropertyButtonText}>
-                Registar Nova Propriedade
+                {t("header_add_property")}
               </Text>
             </TouchableOpacity>
           </Pressable>
@@ -348,6 +355,10 @@ const styles = StyleSheet.create({
     padding: 6,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  langToggleWrapper: {
+    marginLeft: 4,
+    justifyContent: 'center',
   },
 
   modalOverlay: {

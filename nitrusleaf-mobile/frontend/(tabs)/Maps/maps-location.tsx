@@ -29,6 +29,8 @@ import { getPesByTalhao } from "@/repositories/peRepository";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import type { Talhao } from "@/types/talhao";
 import type { Pe } from "@/types/pe";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 
 type FilterKey = "todos" | "manganes" | "tratado" | "naoTratado";
@@ -125,6 +127,7 @@ export default function MapsLocationScreen() {
   const router = useRouter();
   const { selectedProperty } = useProperty();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const mapRef = useRef<MapView>(null);
 
   const [dbUser, setDbUser] = useState<any>(null);
@@ -469,6 +472,8 @@ export default function MapsLocationScreen() {
           >
             <Ionicons name="settings-outline" size={22} color="#475569" />
           </TouchableOpacity>
+
+          <LanguageToggle compact />
         </View>
 
         <View style={styles.dateRow}>

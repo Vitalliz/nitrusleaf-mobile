@@ -18,6 +18,12 @@ import { useIsFocused } from 'expo-router/react-navigation';
 import Constants from 'expo-constants';
 
 const getApiUrl = () => {
+  const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (configuredApiUrl) {
+    const base = configuredApiUrl.replace(/\/+$/, "");
+    return base.endsWith("/predict") ? base : `${base}/predict`;
+  }
+
   const hostUri = Constants.expoConfig?.hostUri;
   const hostIp = hostUri ? hostUri.split(':')[0] : null;
 

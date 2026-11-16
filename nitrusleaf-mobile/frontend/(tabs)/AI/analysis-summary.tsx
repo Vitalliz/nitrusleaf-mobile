@@ -38,6 +38,8 @@ import {
   type DeficiencyType,
 } from "@/utils/deficiencyInfo";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 type TreeStatus = "Não informado" | "Não tratado" | "Em tratamento" | "Tratado";
 
@@ -88,6 +90,7 @@ export default function AnalysisSummaryScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { selectedProperty } = useProperty();
+  const { t, isEn } = useLanguage();
   const params = useLocalSearchParams();
 
   const [analysisId] = useState<string>(
@@ -433,8 +436,8 @@ export default function AnalysisSummaryScreen() {
           >
             <Ionicons name="chevron-back" size={26} color="#1A2C3E" />
           </TouchableOpacity>
-          <Text style={styles.summaryHeaderTitle}>Resumo da análise</Text>
-          <View style={{ width: 38 }} />
+          <Text style={styles.summaryHeaderTitle}>{t("summary_title")}</Text>
+          <LanguageToggle compact />
         </View>
 
         <ScrollView

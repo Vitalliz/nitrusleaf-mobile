@@ -32,6 +32,7 @@ import { Header } from "@/components/ui/user-header";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
@@ -108,6 +109,7 @@ function getFormattedCurrentDate(): string {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t, isEn } = useLanguage();
   const {
     selectedProperty,
     showPropertyPicker,
@@ -421,7 +423,7 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Análises Gerais</Text>
+              <Text style={styles.sectionTitle}>{t("home_summary_title")}</Text>
               <View style={styles.dateRow}>
                 <Ionicons name="calendar-outline" size={16} color={Palette.textSecondary} />
                 <Text style={styles.dateText}>{getFormattedCurrentDate()}</Text>
@@ -449,7 +451,7 @@ export default function HomeScreen() {
               <View style={styles.cardsContainer}>
                 <View style={styles.card}>
                   <View style={styles.cardHeaderRow}>
-                    <Text style={styles.cardTitle}>Status Nutricional da Propriedade</Text>
+                    <Text style={styles.cardTitle}>{isEn ? "Property Nutritional Status" : "Status Nutricional da Propriedade"}</Text>
                     <Ionicons name="information-circle-outline" size={18} color={Palette.textPrimary} />
                   </View>
 
@@ -457,7 +459,7 @@ export default function HomeScreen() {
                     <View style={styles.nutritionalCol}>
                       <Text style={styles.nutritionalValue}>{nutritionalPercentages.manganes}%</Text>
                       <View style={[styles.badge, styles.badgeManganes]}>
-                        <Text style={styles.badgeTextManganes}>Manganês</Text>
+                        <Text style={styles.badgeTextManganes}>{isEn ? "Manganese" : "Manganês"}</Text>
                       </View>
                     </View>
 
@@ -466,7 +468,7 @@ export default function HomeScreen() {
                     <View style={styles.nutritionalCol}>
                       <Text style={styles.nutritionalValue}>{nutritionalPercentages.saudavel}%</Text>
                       <View style={[styles.badge, styles.badgeSaudavel]}>
-                        <Text style={styles.badgeTextSaudavel}>Saudável</Text>
+                        <Text style={styles.badgeTextSaudavel}>{isEn ? "Healthy" : "Saudável"}</Text>
                       </View>
                     </View>
 
@@ -475,18 +477,20 @@ export default function HomeScreen() {
                     <View style={styles.nutritionalCol}>
                       <Text style={styles.nutritionalValue}>{nutritionalPercentages.semInfo}%</Text>
                       <View style={[styles.badge, styles.badgeSemInfo]}>
-                        <Text style={styles.badgeTextSemInfo}>S/ Info.</Text>
+                        <Text style={styles.badgeTextSemInfo}>{isEn ? "No Info" : "S/ Info."}</Text>
                       </View>
                     </View>
                   </View>
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Cobertura das análises</Text>
+                  <Text style={styles.cardTitle}>{isEn ? "Analysis Coverage" : "Cobertura das análises"}</Text>
 
                   <View style={styles.coverageValueRow}>
                     <Text style={styles.coverageValueBig}>{analyzedTrees}</Text>
-                    <Text style={styles.coverageValueTotal}>/{totalTrees} árvores analisadas</Text>
+                    <Text style={styles.coverageValueTotal}>
+                      {isEn ? `/${totalTrees} analyzed trees` : `/${totalTrees} árvores analisadas`}
+                    </Text>
                   </View>
 
                   <View style={styles.progressBarTrack}>
@@ -497,7 +501,7 @@ export default function HomeScreen() {
                     <View style={styles.warningRow}>
                       <Ionicons name="warning" size={16} color={Palette.orangePrimary} />
                       <Text style={styles.warningText}>
-                        {notAnalyzedTrees} árvores não analisadas
+                        {isEn ? `${notAnalyzedTrees} unanalyzed trees` : `${notAnalyzedTrees} árvores não analisadas`}
                       </Text>
                     </View>
 
@@ -506,14 +510,16 @@ export default function HomeScreen() {
                       activeOpacity={0.85}
                       onPress={handleEscanearPress}
                     >
-                      <Text style={styles.escanearButtonText}>Escanear</Text>
+                      <Text style={styles.escanearButtonText}>{isEn ? "Scan" : "Escanear"}</Text>
                       <Ionicons name="camera-outline" size={16} color={Palette.white} />
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Evolução da deficiência de manganês (%)</Text>
+                  <Text style={styles.cardTitle}>
+                    {isEn ? "Manganese Deficiency Evolution (%)" : "Evolução da deficiência de manganês (%)"}
+                  </Text>
 
                   <View style={styles.periodRow}>
                     <TouchableOpacity
@@ -530,7 +536,7 @@ export default function HomeScreen() {
                           selectedPeriod === "6months" && styles.periodChipTextActive,
                         ]}
                       >
-                        Últimos 6 meses
+                        {isEn ? "Last 6 months" : "Últimos 6 meses"}
                       </Text>
                     </TouchableOpacity>
 
@@ -548,7 +554,7 @@ export default function HomeScreen() {
                           selectedPeriod === "3months" && styles.periodChipTextActive,
                         ]}
                       >
-                        Últimos 3 meses
+                        {isEn ? "Last 3 months" : "Últimos 3 meses"}
                       </Text>
                     </TouchableOpacity>
 
@@ -566,7 +572,7 @@ export default function HomeScreen() {
                           selectedPeriod === "1month" && styles.periodChipTextActive,
                         ]}
                       >
-                        Último mês
+                        {isEn ? "Last month" : "Último mês"}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -727,12 +733,12 @@ export default function HomeScreen() {
                     activeOpacity={0.8}
                     onPress={handleVerDetalhes}
                   >
-                    <Text style={styles.verDetalhesButtonText}>Ver detalhes</Text>
+                    <Text style={styles.verDetalhesButtonText}>{isEn ? "View details" : "Ver detalhes"}</Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Deficiência por talhão</Text>
+                  <Text style={styles.cardTitle}>{isEn ? "Deficiency by field" : "Deficiência por talhão"}</Text>
 
                   <View style={styles.columnChartWrapper}>
                     {[
@@ -756,7 +762,7 @@ export default function HomeScreen() {
                               style={[
                                 styles.barSaudavel,
                                 {
-                                  height:
+                                   height:
                                     item.saudavel > 0
                                       ? Math.max(12, (item.saudavel / maxTalhaoTreeCount) * 85)
                                       : 4,
@@ -784,11 +790,11 @@ export default function HomeScreen() {
                   <View style={styles.legendRow}>
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: '#A5D6A7' }]} />
-                      <Text style={styles.legendText}>Saudável</Text>
+                      <Text style={styles.legendText}>{isEn ? "Healthy" : "Saudável"}</Text>
                     </View>
                     <View style={styles.legendItem}>
                       <View style={[styles.legendDot, { backgroundColor: Palette.deficiencyManganese }]} />
-                      <Text style={styles.legendText}>Manganês</Text>
+                      <Text style={styles.legendText}>{isEn ? "Manganese" : "Manganês"}</Text>
                     </View>
                   </View>
                 </View>

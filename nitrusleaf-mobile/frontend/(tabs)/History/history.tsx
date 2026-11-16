@@ -22,6 +22,7 @@ import { Header } from "@/components/ui/user-header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProperty } from "@/contexts/PropertyContext";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { getUsuarioDetails } from "@/repositories/profileRepository";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
@@ -40,6 +41,7 @@ function formatDisplayDate(dateStr?: string | Date): string {
 export default function HistoryScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t, isEn } = useLanguage();
   const {
     selectedProperty,
     showPropertyPicker,
@@ -272,7 +274,7 @@ export default function HistoryScreen() {
               <>
                 <View style={styles.titleContainer}>
                   <Text style={styles.sectionHeaderTitle}>
-                    Histórico de Análises
+                    {t("history_title")}
                   </Text>
                   <View style={styles.dateRow}>
                     <Ionicons name="calendar-outline" size={14} color="#888" />
@@ -281,7 +283,7 @@ export default function HistoryScreen() {
                 </View>
 
                 <View style={styles.dadosGeraisCard}>
-                  <Text style={styles.dadosGeraisTitle}>Dados Gerais</Text>
+                  <Text style={styles.dadosGeraisTitle}>{isEn ? "General Overview" : "Dados Gerais"}</Text>
 
                   <View style={styles.statsRow}>
                     <View style={styles.statBox}>
@@ -291,7 +293,7 @@ export default function HistoryScreen() {
                           size={22}
                           color="#2563EB"
                         />
-                        <Text style={styles.statLabel}>Árvores Analisadas</Text>
+                        <Text style={styles.statLabel}>{isEn ? "Analyzed Trees" : "Árvores Analisadas"}</Text>
                       </View>
                       <Text style={styles.statNumberGroup}>
                         <Text style={styles.statNumberBig}>

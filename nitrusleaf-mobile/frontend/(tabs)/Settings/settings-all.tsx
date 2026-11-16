@@ -19,50 +19,52 @@ import { Header } from '@/components/ui/user-header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfileHeader } from '@/hooks/useProfileHeader';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 type MenuItem = {
   icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  subtitle: string;
+  labelKey: string;
+  subtitleKey: string;
   route?: string;
   isAction?: boolean;
 };
 
-const MENU_ITEMS: MenuItem[] = [
+const MENU_ITEMS_DEF: MenuItem[] = [
   {
     icon: 'person-outline',
-    label: 'Meu Perfil',
-    subtitle: 'Meus dados pessoais',
+    labelKey: 'settings_my_profile',
+    subtitleKey: 'settings_my_profile_sub',
     route: '/(tabs)/Settings/profile-edit',
   },
   {
     icon: 'business-outline',
-    label: 'Dados da Propriedade',
-    subtitle: 'Meus dados pessoais',
+    labelKey: 'settings_property_data',
+    subtitleKey: 'settings_property_data_sub',
     route: '/(tabs)/Settings/property-data',
   },
   {
     icon: 'build-outline',
-    label: 'Configurações da Conta',
-    subtitle: 'Alertas e preferências',
+    labelKey: 'settings_account_config',
+    subtitleKey: 'settings_account_config_sub',
     route: '/(tabs)/Settings/account-config',
   },
   {
     icon: 'cube-outline',
-    label: 'Nova Propriedade',
-    subtitle: 'Cadastrar nova propriedade', 
+    labelKey: 'settings_new_property',
+    subtitleKey: 'settings_new_property_sub', 
     isAction: true,
   },
   {
     icon: 'notifications-outline',
-    label: 'Notificações',
-    subtitle: 'Alertas e preferências',
+    labelKey: 'settings_notifications',
+    subtitleKey: 'settings_notifications_sub',
     route: '/(tabs)/Settings/notifications',
   },
   {
     icon: 'help-circle-outline',
-    label: 'Ajuda e Suporte',
-    subtitle: 'Contate nossa Equipe',
+    labelKey: 'settings_help_support',
+    subtitleKey: 'settings_help_support_sub',
     route: '/(tabs)/Settings/help-support',
   },
 ];
@@ -70,6 +72,7 @@ const MENU_ITEMS: MenuItem[] = [
 export default function SettingsAllScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const {
     userName,
     userSubtitle,
@@ -79,10 +82,10 @@ export default function SettingsAllScreen() {
   } = useProfileHeader();
 
   const handleLogout = () => {
-    Alert.alert('Sair da conta', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert(t("settings_logout"), t("settings_logout_confirm"), [
+      { text: t("common_cancel"), style: 'cancel' },
       {
-        text: 'Sair',
+        text: t("common_exit"),
         style: 'destructive',
         onPress: async () => {
           await logout();
@@ -122,14 +125,17 @@ export default function SettingsAllScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.sectionHeader}>
-            <Ionicons name="settings-outline" size={18} color={Palette.textPrimary} />
-            <Text style={styles.sectionTitle}>Configurações</Text>
+            <View style={styles.sectionHeaderLeft}>
+              <Ionicons name="settings-outline" size={18} color={Palette.textPrimary} />
+              <Text style={styles.sectionTitle}>{t("settings_title")}</Text>
+            </View>
+            <LanguageToggle compact />
           </View>
 
           <View style={styles.listContainer}>
-            {MENU_ITEMS.map((item) => (
+            {MENU_ITEMS_DEF.map((item) => (
               <TouchableOpacity
-                key={item.label}
+                key={item.labelKey}
                 style={styles.menuItem}
                 activeOpacity={0.7}
                 onPress={() => handleMenuPress(item)}
@@ -139,8 +145,8 @@ export default function SettingsAllScreen() {
                 </View>
 
                 <View style={styles.menuContent}>
-                  <Text style={styles.menuLabel}>{item.label}</Text>
-                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                  <Text style={styles.menuLabel}>{t(item.labelKey as any)}</Text>
+                  <Text style={styles.menuSubtitle}>{t(item.subtitleKey as any)}</Text>
                 </View>
 
                 <Ionicons
@@ -157,7 +163,7 @@ export default function SettingsAllScreen() {
               onPress={handleLogout}
             >
               <Ionicons name="log-out-outline" size={18} color={Palette.error} />
-              <Text style={styles.logoutText}>Sair da Conta</Text>
+              <Text style={styles.logoutText}>{t("settings_logout")}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -181,12 +187,17 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 14,
     backgroundColor: Palette.surfaceGray,
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sectionTitle: {
     fontSize: FontSizes.base,

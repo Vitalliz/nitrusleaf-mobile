@@ -25,7 +25,12 @@ export function getDeficiencyAccentColor(type: DeficiencyType): string {
   return "#6B7280";
 }
 
-export function getDeficiencyTitle(type: DeficiencyType): string {
+export function getDeficiencyTitle(type: DeficiencyType, isEn = false): string {
+  if (isEn) {
+    if (type === "Saudável") return "Healthy / No deficiency detected";
+    if (type === "Indefinido") return "Inconclusive result";
+    return "Manganese Deficiency";
+  }
   if (type === "Saudável") return "Nenhuma deficiência detectada";
   if (type === "Indefinido") return "Nada identificado com clareza";
   return `Deficiência de ${type}`;
@@ -39,8 +44,55 @@ export type DeficiencyExplanation = {
 };
 
 export function getDeficiencyExplanation(
-  type: DeficiencyType
+  type: DeficiencyType,
+  isEn = false
 ): DeficiencyExplanation {
+  if (isEn) {
+    if (type === "Manganês") {
+      return {
+        title: "Manganese Deficiency",
+        meaning:
+          "The model identified a visual pattern consistent with manganese deficiency on the leaf. In citrus, this commonly appears as interveinal chlorosis on young leaves, with main veins remaining green, reduced tree vigor, and diminished photosynthesis.",
+        recommendations: [
+          "Confirm with foliar and soil laboratory tests before applying chemical corrections.",
+          "Assess soil pH: high alkalinity or excessive lime reduces manganese availability.",
+          "Consider foliar or ground fertilization with manganese sulfate according to agronomist advice.",
+          "Monitor the sector in upcoming weeks and repeat the analysis after intervention.",
+        ],
+        footer:
+          "Basic recommendations. For dosage, commercial product, and timing, always consult a certified citrus agronomist.",
+      };
+    }
+
+    if (type === "Saudável") {
+      return {
+        title: "Healthy Leaf",
+        meaning:
+          "The analyzed image showed visual characteristics typical of a healthy, well-nourished leaf with no significant signs of manganese deficiency.",
+        recommendations: [
+          "Maintain regular visual inspections and proper irrigation scheduling.",
+          "Follow the current nutritional plan established for the property.",
+          "Repeat the scan if visual symptoms or yield declines appear.",
+        ],
+        footer:
+          "If you suspect other issues (pests, diseases, other nutrients), consult a specialized agronomist.",
+      };
+    }
+
+    return {
+      title: "Inconclusive",
+      meaning:
+        "The model could not classify the leaf with sufficient confidence. This may happen due to glare, distance, shadows, or symptoms outside the training dataset.",
+      recommendations: [
+        "Take a new picture with good lighting, leaf centered, and sharp focus.",
+        "Link the analysis to the correct field and tree tag in the summary.",
+        "Seek agronomic assistance if field symptoms persist.",
+      ],
+      footer:
+        "Always consult a qualified professional before applying corrective treatments.",
+    };
+  }
+
   if (type === "Manganês") {
     return {
       title: "Deficiência de Manganês",

@@ -24,11 +24,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getUsuarioDetails, updateUsuarioAvatar } from '@/repositories/profileRepository';
 import { useProperty } from '@/contexts/PropertyContext';
 import { getRelatorioCountByUsuario } from '@/repositories/relatorioRepository';
-import {
-  pickProfileImageFromDevice,
-  uploadProfileAvatar,
-} from '@/services/profileAvatar';
+import { pickProfileImageFromDevice, uploadProfileAvatar } from '@/services/profileAvatar';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 type MenuItem = {
   id: string;
@@ -48,6 +47,7 @@ export default function ProfileScreen() {
   const { selectedProperty, properties = [], selectProperty } = useProperty();
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
   const [totalAnalyses, setTotalAnalyses] = useState<number>(0);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -227,9 +227,9 @@ export default function ProfileScreen() {
                 <Ionicons name="chevron-back" size={22} color={Palette.textPrimary} />
               </TouchableOpacity>
 
-              <Text style={styles.headerTitle}>Meu Perfil</Text>
+              <Text style={styles.headerTitle}>{t("profile_title")}</Text>
 
-              <View style={{ width: 36 }} />
+              <LanguageToggle compact />
             </View>
           </View>
 

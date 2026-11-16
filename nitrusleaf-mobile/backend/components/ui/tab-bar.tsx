@@ -5,20 +5,21 @@ import { StyleSheet, View, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROUTES, switchTab } from '@/utils/navigation';
 import { Palette } from '@/constants/theme';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 type TabItem = {
   route: typeof ROUTES.home | typeof ROUTES.history | typeof ROUTES.scan | typeof ROUTES.maps | typeof ROUTES.profile;
   icon: keyof typeof Ionicons.glyphMap;
-  label: string;
+  labelKey: "tab_home" | "tab_history" | "tab_camera" | "tab_maps" | "tab_profile";
   isCamera?: boolean;
 };
 
 const TABS: TabItem[] = [
-  { route: ROUTES.home, icon: 'home-outline', label: 'Início' },
-  { route: ROUTES.history, icon: 'time-outline', label: 'Histórico' },
-  { route: ROUTES.scan, icon: 'camera-outline', label: 'Câmera', isCamera: true },
-  { route: ROUTES.maps, icon: 'map-outline', label: 'Mapas' },
-  { route: ROUTES.profile, icon: 'person-outline', label: 'Perfil' },
+  { route: ROUTES.home, icon: 'home-outline', labelKey: 'tab_home' },
+  { route: ROUTES.history, icon: 'time-outline', labelKey: 'tab_history' },
+  { route: ROUTES.scan, icon: 'camera-outline', labelKey: 'tab_camera', isCamera: true },
+  { route: ROUTES.maps, icon: 'map-outline', labelKey: 'tab_maps' },
+  { route: ROUTES.profile, icon: 'person-outline', labelKey: 'tab_profile' },
 ];
 
 const TAB_SEGMENTS = ['AI', 'History', 'AI', 'Maps', 'Settings'];
@@ -27,6 +28,7 @@ export default function TabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   const isActive = (route: string, index: number) => {
     const segment = TAB_SEGMENTS[index];
@@ -66,7 +68,7 @@ export default function TabBar() {
             <View key={tab.route} style={styles.cameraWrapper}>
               <Pressable
                 accessibilityRole="tab"
-                accessibilityLabel={tab.label}
+                accessibilityLabel={t(tab.labelKey)}
                 accessibilityState={{ selected: active }}
                 onPress={() => goTo(tab.route)}
                 style={({ pressed }) => [
@@ -89,7 +91,7 @@ export default function TabBar() {
           <Pressable
             key={tab.route}
             accessibilityRole="tab"
-            accessibilityLabel={tab.label}
+            accessibilityLabel={t(tab.labelKey)}
             accessibilityState={{ selected: active }}
             onPress={() => goTo(tab.route)}
             style={styles.tabButton}

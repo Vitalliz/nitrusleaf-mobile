@@ -21,11 +21,14 @@ import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROUTES, safeBack } from "@/utils/navigation";
 import { Palette, FontWeights, FontSizes } from "@/constants/theme";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login, isAuthPending, isSignedIn } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -121,26 +124,29 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.centerSection}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => safeBack(router, ROUTES.welcome)}
-              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-            >
-              <Ionicons name="chevron-back" size={26} color={Palette.textPrimary} />
-            </TouchableOpacity>
+            <View style={styles.topBarRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => safeBack(router, ROUTES.welcome)}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              >
+                <Ionicons name="chevron-back" size={26} color={Palette.textPrimary} />
+              </TouchableOpacity>
+              <LanguageToggle compact />
+            </View>
 
             <View style={styles.header}>
-              <Text style={styles.title}>Bem-vindo!</Text>
-              <Text style={styles.subtitle}>Entre na sua conta</Text>
+              <Text style={styles.title}>{t("login_welcome_back")}</Text>
+              <Text style={styles.subtitle}>{t("login_enter_credentials")}</Text>
             </View>
 
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>E-mail</Text>
+                <Text style={styles.label}>{t("login_email_label")}</Text>
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Digite seu e-mail"
+                    placeholder={t("login_email_placeholder")}
                     placeholderTextColor={Palette.textSecondary}
                     value={email}
                     onChangeText={setEmail}
@@ -151,11 +157,11 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Senha</Text>
+                <Text style={styles.label}>{t("login_password_label")}</Text>
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={[styles.input, { paddingRight: 45 }]}
-                    placeholder="Digite sua senha"
+                    placeholder={t("login_password_placeholder")}
                     placeholderTextColor={Palette.textSecondary}
                     secureTextEntry={!showPassword}
                     value={password}
@@ -194,20 +200,24 @@ export default function LoginScreen() {
                       <Ionicons name="checkmark" size={13} color={Palette.white} />
                     )}
                   </View>
-                  <Text style={styles.rememberText}>Lembre-se de mim</Text>
+                  <Text style={styles.rememberText}>{t("login_remember_me")}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity>
-                  <Text style={styles.forgotPassword}>Esqueci a senha</Text>
+                  <Text style={styles.forgotPassword}>{t("login_forgot_password")}</Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.actionGroup}>
-                <LoginButton onPress={handleLogin} disabled={isAuthPending} />
+                <LoginButton
+                  title={t("login_button")}
+                  onPress={handleLogin}
+                  disabled={isAuthPending}
+                />
 
                 <View style={styles.divider}>
                   <View style={styles.line} />
-                  <Text style={styles.orText}>ou</Text>
+                  <Text style={styles.orText}>{t("login_or_continue_with")}</Text>
                   <View style={styles.line} />
                 </View>
 
@@ -217,9 +227,9 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Não possui uma conta? </Text>
+            <Text style={styles.registerText}>{t("login_no_account")}{" "}</Text>
             <TouchableOpacity onPress={handleRegister}>
-              <Text style={styles.registerLink}>Fazer cadastro</Text>
+              <Text style={styles.registerLink}>{t("login_sign_up")}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -250,9 +260,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
   },
+  topBarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    width: "100%",
+  },
   backButton: {
     alignSelf: "flex-start",
-    marginBottom: 20,
   },
   header: {
     marginBottom: 28,

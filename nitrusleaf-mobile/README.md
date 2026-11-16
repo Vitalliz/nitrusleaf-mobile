@@ -9,13 +9,16 @@ Aplicativo React Native com **Expo Router**, **Supabase** e integração com a A
 ```bash
 # 1. Variáveis de ambiente
 cp .env.example .env
-# Edite SUPABASE_URL e SUPABASE_ANON_KEY
+# Edite SUPABASE_URL e SUPABASE_ANON_KEY.
+# Para usar a API local, deixe EXPO_PUBLIC_API_URL vazio.
 
 # 2. Dependências
 npm install
 
 # 3. Em outro terminal: API de IA (na pasta BeckAI, com venv)
 # cd ../BeckAI && .\.venv\Scripts\Activate.ps1 && python Api.py
+# O celular e o computador devem estar na mesma rede Wi-Fi. Se necessário,
+# configure EXPO_PUBLIC_API_URL=http://<IP-do-computador>:5000 no .env.
 
 # 4. App
 npm run start
