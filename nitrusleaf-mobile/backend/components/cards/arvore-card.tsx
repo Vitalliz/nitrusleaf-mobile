@@ -117,8 +117,6 @@ export const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(({ arvore, onPre
     </TouchableOpacity>
   );
 });
-  );
-});
 
 ArvoreCard.displayName = "ArvoreCard";
 

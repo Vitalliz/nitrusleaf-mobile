@@ -58,12 +58,6 @@ export const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPre
             </Text>
           </View>
         )}
-          <View style={styles.deficientBadge}>
-            <Text style={styles.deficientText}>
-              ⚠️ {talhao.deficientTrees} com deficiência
-            </Text>
-          </View>
-        )}
       </View>
       
       <Ionicons

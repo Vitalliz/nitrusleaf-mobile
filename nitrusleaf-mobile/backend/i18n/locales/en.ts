@@ -31,6 +31,11 @@ export const en: Record<TranslationKeys, string> = {
   common_actions: "Actions",
   common_required_field: "Required field",
   common_select: "Select",
+  common_all: "All",
+  common_name: "Name",
+  common_field: "Field",
+  common_status: "Status",
+  common_notes: "Notes",
 
   // TabBar
   tab_home: "Home",
@@ -178,6 +183,7 @@ export const en: Record<TranslationKeys, string> = {
 
   // Analysis Summary
   summary_title: "Analysis Summary",
+  summary_analysis_title: "Analysis",
   summary_analysis_num: "Analysis #",
   summary_result: "Result",
   summary_diagnosis: "Diagnosis",
@@ -326,6 +332,7 @@ export const en: Record<TranslationKeys, string> = {
   status_in_treatment: "In Treatment",
   status_no_info: "No Information",
   status_not_informed: "Not Informed",
+  status_unknown: "Unknown",
 
   // Modais de Edição
   modal_edit_talhao_title: "Edit Field",
@@ -454,6 +461,7 @@ export const en: Record<TranslationKeys, string> = {
 
   // Deficiency Details & Info
   deficiency_manganese_title: "Manganese Deficiency",
+  deficiency_manganese: "Manganese",
   deficiency_manganese_meaning:
     "The AI model identified visual patterns typical of manganese deficiency on the leaf. In citrus, this commonly causes interveinal chlorosis on young leaves while main veins remain dark green, reducing overall vigor and photosynthetic activity.",
   deficiency_manganese_rec1: "Confirm with foliar and soil laboratory analysis before applying corrective treatments.",

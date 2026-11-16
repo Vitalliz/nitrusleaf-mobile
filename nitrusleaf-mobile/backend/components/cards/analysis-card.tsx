@@ -61,9 +61,6 @@ const StatusBadge = ({ status }: { status: string }) => {
     </View>
   );
 };
-    </View>
-  );
-};
 
 const AnalysisCard = React.memo(
   ({

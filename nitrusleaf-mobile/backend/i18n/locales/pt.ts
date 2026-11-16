@@ -29,6 +29,11 @@ export const pt = {
   common_actions: "Ações",
   common_required_field: "Campo obrigatório",
   common_select: "Selecione",
+  common_all: "Todos",
+  common_name: "Nome",
+  common_field: "Talhão",
+  common_status: "Status",
+  common_notes: "Observações",
 
   // TabBar
   tab_home: "Início",
@@ -176,6 +181,7 @@ export const pt = {
 
   // Analysis Summary
   summary_title: "Resumo da Análise",
+  summary_analysis_title: "Análise",
   summary_analysis_num: "Análise #",
   summary_result: "Resultado",
   summary_diagnosis: "Diagnóstico",
@@ -324,6 +330,7 @@ export const pt = {
   status_in_treatment: "Em tratamento",
   status_no_info: "Sem informações",
   status_not_informed: "Não informado",
+  status_unknown: "Desconhecido",
 
   // Modais de Edição
   modal_edit_talhao_title: "Editar Talhão",
@@ -452,6 +459,7 @@ export const pt = {
 
   // Deficiency Details & Info
   deficiency_manganese_title: "Deficiência de Manganês",
+  deficiency_manganese: "Manganês",
   deficiency_manganese_meaning:
     "O modelo identificou padrão visual compatível com deficiência de manganês na folha. Em citros, isso costuma aparecer como clorose internerval nas folhas novas, com nervuras ainda verdes, redução do vigor e menor fotossíntese.",
   deficiency_manganese_rec1: "Confirmar com análise foliar e de solo antes de qualquer correção.",
