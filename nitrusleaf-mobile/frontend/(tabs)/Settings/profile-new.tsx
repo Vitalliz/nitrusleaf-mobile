@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -47,7 +47,7 @@ export default function ProfileScreen() {
   const { selectedProperty, properties = [], selectProperty } = useProperty();
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
+  const { t, isEn } = useLanguage();
   const [totalAnalyses, setTotalAnalyses] = useState<number>(0);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -120,31 +120,43 @@ export default function ProfileScreen() {
       const storedUrl = await uploadProfileAvatar(user.id, picked.localUri, picked.base64);
       await updateUsuarioAvatar(user.id, storedUrl);
       setAvatarUri(storedUrl);
-      showAlert('Foto de perfil atualizada com sucesso.', 'Sucesso', 'success');
+      showAlert(
+        isEn ? 'Profile photo updated successfully.' : 'Foto de perfil atualizada com sucesso.',
+        isEn ? 'Success' : 'Sucesso',
+        'success'
+      );
     } catch (error: unknown) {
       console.error('Erro ao alterar foto:', error);
       const msg =
         error instanceof Error
           ? error.message
-          : 'Não foi possível atualizar a foto de perfil.';
-      showAlert(msg, 'Erro', 'error');
+          : isEn
+            ? 'Could not update profile photo.'
+            : 'Não foi possível atualizar a foto de perfil.';
+      showAlert(msg, isEn ? 'Error' : 'Erro', 'error');
     } finally {
       setUploadingAvatar(false);
     }
   };
 
   const handleChangePhoto = () => {
-    Alert.alert('Foto de perfil', 'Escolha de onde enviar a imagem', [
-      { text: 'Galeria', onPress: () => void applyPickedAvatar(false) },
-      { text: 'Câmera', onPress: () => void applyPickedAvatar(true) },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    Alert.alert(
+      isEn ? 'Profile photo' : 'Foto de perfil',
+      isEn ? 'Choose image source' : 'Escolha de onde enviar a imagem',
+      [
+        { text: isEn ? 'Gallery' : 'Galeria', onPress: () => void applyPickedAvatar(false) },
+        { text: isEn ? 'Camera' : 'Câmera', onPress: () => void applyPickedAvatar(true) },
+        { text: isEn ? 'Cancel' : 'Cancelar', style: 'cancel' },
+      ]
+    );
   };
 
   const handleLogout = () => {
     showAlert(
-      'Tem a certeza de que pretende sair da sua conta?',
-      'Sair da Conta',
+      isEn
+        ? 'Are you sure you want to sign out of your account?'
+        : 'Tem a certeza de que pretende sair da sua conta?',
+      isEn ? 'Sign Out' : 'Sair da Conta',
       'warning',
       async () => {
         await logout();
@@ -153,22 +165,29 @@ export default function ProfileScreen() {
     );
   };
 
-  const menuItems: MenuItem[] = [
-    {
-      id: 'settings',
-      icon: 'settings-outline',
-      label: 'Configurações',
-      subtitle: 'Alertas e preferências da conta',
-      route: '/(tabs)/Settings/settings-all',
-    },
-    {
-      id: 'new_prop',
-      icon: 'cube-outline',
-      label: 'Nova Propriedade',
-      subtitle: 'Registar nova propriedade',
-      action: 'add_property',
-    },
-  ];
+  const menuItems: MenuItem[] = useMemo(
+    () => [
+      {
+        id: 'settings',
+        icon: 'settings-outline',
+        label: isEn ? 'Settings' : 'Configurações',
+        subtitle: isEn
+          ? 'Account alerts and preferences'
+          : 'Alertas e preferências da conta',
+        route: '/(tabs)/Settings/settings-all',
+      },
+      {
+        id: 'new_prop',
+        icon: 'cube-outline',
+        label: isEn ? 'New Property' : 'Nova Propriedade',
+        subtitle: isEn
+          ? 'Register new farm'
+          : 'Registar nova propriedade',
+        action: 'add_property',
+      },
+    ],
+    [isEn]
+  );
 
   const handleMenuPress = (item: MenuItem) => {
     if (item.action === 'add_property') {
@@ -260,7 +279,11 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <Text style={styles.userName}>
-              {loading ? 'A carregar...' : dbUser?.fullName || user?.name || 'Utilizador'}
+              {loading
+                ? isEn
+                  ? 'Loading...'
+                  : 'Carregando...'
+                : dbUser?.fullName || user?.name || (isEn ? 'User' : 'Usuário')}
             </Text>
             <Text style={styles.userEmail}>
               {loading ? '' : dbUser?.email || user?.email || ''}
@@ -273,13 +296,19 @@ export default function ProfileScreen() {
             >
               <Ionicons name="business" size={14} color={Palette.primaryPressed} />
               <Text style={styles.propertyButtonText} numberOfLines={1}>
-                {loading ? 'A carregar...' : selectedProperty?.name || 'Sem Propriedade'}
+                {loading
+                  ? isEn
+                    ? 'Loading...'
+                    : 'Carregando...'
+                  : selectedProperty?.name || (isEn ? 'No Property' : 'Sem Propriedade')}
               </Text>
               <Ionicons name="chevron-down" size={14} color={Palette.primaryPressed} />
             </TouchableOpacity>
 
             <View style={styles.analysesCard}>
-              <Text style={styles.analysesLabel}>Total de Análises Realizadas</Text>
+              <Text style={styles.analysesLabel}>
+                {isEn ? 'Total Analyses Performed' : 'Total de Análises Realizadas'}
+              </Text>
               <View style={styles.analysesBadge}>
                 <Text style={styles.analysesValue}>{totalAnalyses}</Text>
               </View>
@@ -287,7 +316,7 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Menu</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'Menu' : 'Menu'}</Text>
           </View>
 
           <View style={styles.menuCard}>
@@ -323,7 +352,9 @@ export default function ProfileScreen() {
             onPress={() => router.push('/(tabs)/Settings/profile-edit')}
           >
             <Ionicons name="pencil-outline" size={18} color={Palette.white} />
-            <Text style={styles.editButtonText}>Editar Perfil</Text>
+            <Text style={styles.editButtonText}>
+              {isEn ? 'Edit Profile' : 'Editar Perfil'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -332,7 +363,9 @@ export default function ProfileScreen() {
             onPress={handleLogout}
           >
             <Ionicons name="exit-outline" size={18} color={Palette.error} />
-            <Text style={styles.logoutText}>Sair da Conta</Text>
+            <Text style={styles.logoutText}>
+              {isEn ? 'Sign Out' : 'Sair da Conta'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
 
@@ -359,9 +392,13 @@ export default function ProfileScreen() {
 
               <View style={styles.sheetHeader}>
                 <View style={styles.sheetTitleContainer}>
-                  <Text style={styles.sheetTitle}>Trocar Propriedade</Text>
+                  <Text style={styles.sheetTitle}>
+                    {isEn ? 'Switch Property' : 'Trocar Propriedade'}
+                  </Text>
                   <Text style={styles.sheetSubtitle}>
-                    Selecione a fazenda ativa na aplicação
+                    {isEn
+                      ? 'Select the active farm in the application'
+                      : 'Selecione a fazenda ativa na aplicação'}
                   </Text>
                 </View>
 
@@ -388,7 +425,9 @@ export default function ProfileScreen() {
                       color={Palette.borderDisabled}
                     />
                     <Text style={styles.emptyText}>
-                      Nenhuma propriedade registada até ao momento.
+                      {isEn
+                        ? 'No properties registered yet.'
+                        : 'Nenhuma propriedade cadastrada até o momento.'}
                     </Text>
                   </View>
                 ) : (
@@ -439,7 +478,7 @@ export default function ProfileScreen() {
                             {item.name}
                           </Text>
                           <Text style={styles.propertyLocation} numberOfLines={1}>
-                            {locationText || 'Propriedade rural'}
+                            {locationText || (isEn ? 'Rural property' : 'Propriedade rural')}
                           </Text>
                         </View>
 
@@ -473,7 +512,7 @@ export default function ProfileScreen() {
                   color={Palette.primary}
                 />
                 <Text style={styles.addPropertyButtonText}>
-                  Registar Nova Propriedade
+                  {isEn ? 'Register New Property' : 'Cadastrar Nova Propriedade'}
                 </Text>
               </TouchableOpacity>
             </Pressable>
