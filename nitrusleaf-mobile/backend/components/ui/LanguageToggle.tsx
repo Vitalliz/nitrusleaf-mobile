@@ -8,7 +8,7 @@ interface LanguageToggleProps {
 }
 
 export const LanguageToggle = ({ compact = false }: LanguageToggleProps) => {
-  const { language, setLanguage, toggleLanguage } = useLanguage();
+  const { language, toggleLanguage } = useLanguage();
   const isEn = language === "en";
 
   return (

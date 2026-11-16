@@ -200,7 +200,7 @@ export default function HistoryTreeScreen() {
     safeBack(router, ROUTES.history);
   }, [treeId, router]);
 
-  const renderStatusBadge = (status?: string) => {
+  const renderStatusBadge = useCallback((status?: string) => {
     const s = status?.toLowerCase() || "";
 
     if (s.includes("tratamento") || s.includes("andamento")) {
@@ -236,7 +236,7 @@ export default function HistoryTreeScreen() {
         <Text style={styles.badgeTextGray}>{t("status_unknown")}</Text>
       </View>
     );
-  };
+  }, [t]);
 
   const renderAnalysisCard = useCallback(
     ({ item }: { item: any }) => {
@@ -269,7 +269,7 @@ export default function HistoryTreeScreen() {
         </TouchableOpacity>
       );
     },
-    [arvore?.situacao, handleViewAnalysis, isEn, t]
+    [arvore?.situacao, handleViewAnalysis, isEn, renderStatusBadge, t]
   );
 
   const treeName =

@@ -134,7 +134,7 @@ export default function TalhaoDetailScreen() {
       return () => {
         isActive = false;
       };
-    }, [user?.id, talhaoId])
+    }, [user?.id, talhaoId, isEn])
   );
 
   const filteredArvores = useMemo(() => {
@@ -204,7 +204,7 @@ export default function TalhaoDetailScreen() {
     return filter;
   };
 
-  const renderStatusBadge = (status: string) => {
+  const renderStatusBadge = useCallback((status: string) => {
     if (status === "Tratado") {
       return (
         <View style={[styles.badge, styles.badgeTratado]}>
@@ -229,7 +229,7 @@ export default function TalhaoDetailScreen() {
         <Text style={styles.badgeTextGray}>{t("status_unknown")}</Text>
       </View>
     );
-  };
+  }, [t]);
 
   const renderArvoreItem = useCallback(
     ({ item }: { item: any }) => (
@@ -272,7 +272,7 @@ export default function TalhaoDetailScreen() {
         <Ionicons name="chevron-forward" size={18} color="#374151" />
       </TouchableOpacity>
     ),
-    [handleArvorePress, isEn]
+    [handleArvorePress, isEn, renderStatusBadge]
   );
 
   return (

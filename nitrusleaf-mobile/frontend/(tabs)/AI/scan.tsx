@@ -17,7 +17,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused } from 'expo-router/react-navigation';
 import Constants from 'expo-constants';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 const getApiUrl = () => {
   const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();

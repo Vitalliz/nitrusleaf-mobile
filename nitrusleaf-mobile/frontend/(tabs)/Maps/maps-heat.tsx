@@ -24,7 +24,7 @@ import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 export default function HeatMapScreen() {
   const router = useRouter();
-  const { t, isEn } = useLanguage();
+  const { isEn } = useLanguage();
   const { selectedProperty, properties, selectProperty } = useProperty();
 
   const [heatData, setHeatData] = useState<any[]>([]);

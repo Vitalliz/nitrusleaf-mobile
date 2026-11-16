@@ -27,36 +27,9 @@ interface NotificationItem {
   read: boolean;
 }
 
-const RECENT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'Análise Concluída',
-    description: 'A análise foliar do Talhão 1 foi processada com sucesso.',
-    time: 'Há 2 horas',
-    icon: 'checkmark-circle-outline',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Alerta de Manganês',
-    description: 'Identificada deficiência nutricional em 3 árvores analisadas.',
-    time: 'Ontem',
-    icon: 'warning-outline',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Sincronização Finalizada',
-    description: 'Os dados da propriedade foram atualizados na nuvem.',
-    time: '2 dias atrás',
-    icon: 'cloud-done-outline',
-    read: true,
-  },
-];
-
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { t, isEn } = useLanguage();
+  const { isEn } = useLanguage();
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [analysisAlerts, setAnalysisAlerts] = useState(true);

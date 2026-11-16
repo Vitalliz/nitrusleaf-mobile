@@ -30,7 +30,7 @@ export function TalhaoSelectModal({
     onAddNew,
     onClose,
 }: TalhaoSelectModalProps) {
-    const { t, isEn } = useLanguage();
+    const { isEn } = useLanguage();
 
     return (
         <Modal

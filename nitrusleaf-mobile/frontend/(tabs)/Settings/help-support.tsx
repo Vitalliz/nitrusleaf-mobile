@@ -24,30 +24,9 @@ interface FaqItem {
   answer: string;
 }
 
-const FAQS: FaqItem[] = [
-  {
-    id: '1',
-    question: 'Como cadastrar um novo talhão?',
-    answer:
-      'Acesse a tela inicial ou o menu de gerenciamento da fazenda e selecione a opção de cadastrar talhão para delimitar a área e registrar as árvores.',
-  },
-  {
-    id: '2',
-    question: 'Como funciona a análise foliar por imagem?',
-    answer:
-      'Utilize o botão central da câmera para fotografar uma folha com sintomas ou em boa iluminação. O modelo de inteligência artificial identificará deficiências nutricionais como manganês.',
-  },
-  {
-    id: '3',
-    question: 'Como atualizar os dados da minha propriedade?',
-    answer:
-      'No menu Configurações, selecione "Dados da Propriedade" para editar endereço, nome e localização no mapa.',
-  },
-];
-
 export default function HelpSupportScreen() {
   const router = useRouter();
-  const { t, isEn } = useLanguage();
+  const { isEn } = useLanguage();
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
 
   const faqs: FaqItem[] = [
