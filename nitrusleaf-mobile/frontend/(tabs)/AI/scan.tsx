@@ -16,6 +16,8 @@ import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused } from 'expo-router/react-navigation';
 import Constants from 'expo-constants';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 const getApiUrl = () => {
   const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
@@ -38,6 +40,7 @@ const getApiUrl = () => {
 
 export default function RealCameraScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const cameraRef = useRef<CameraView>(null);
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
@@ -84,20 +87,20 @@ export default function RealCameraScreen() {
             return;
           }
 
-          Alert.alert('Erro', resultado.mensagem || 'Erro ao analisar imagem');
+          Alert.alert(t("scan_error_title"), resultado.mensagem || t("scan_invalid_response"));
           setIsProcessing(false);
           resolve();
         } catch {
-          reject(new Error('Resposta inválida do servidor'));
+          reject(new Error(t("scan_invalid_response")));
         }
       };
 
       xhr.onerror = () => {
-        reject(new Error('Falha na conexão com o servidor'));
+        reject(new Error(t("scan_connection_error")));
       };
 
       xhr.ontimeout = () => {
-        reject(new Error('Tempo de conexão esgotado'));
+        reject(new Error(t("scan_timeout")));
       };
 
       xhr.timeout = 30000;
@@ -107,7 +110,7 @@ export default function RealCameraScreen() {
 
   const handleCapture = async () => {
     if (!cameraRef.current || !isCameraReady || isProcessing) {
-      Alert.alert('Aguarde', 'A câmera ainda não está pronta.');
+      Alert.alert(t("scan_wait"), t("scan_not_ready"));
       return;
     }
 
@@ -120,7 +123,7 @@ export default function RealCameraScreen() {
       });
 
       if (!photo?.uri) {
-        Alert.alert('Erro', 'Não foi possível capturar a foto.');
+        Alert.alert(t("scan_error_title"), t("scan_failed_capture"));
         setIsProcessing(false);
         return;
       }
@@ -128,7 +131,7 @@ export default function RealCameraScreen() {
       await sendImageToApi(photo.uri);
     } catch (error) {
       console.error('Erro ao capturar/enviar foto:', error);
-      Alert.alert('Erro', 'Não foi possível processar a foto. Verifique sua conexão.');
+      Alert.alert(t("scan_error_title"), t("scan_connection_error"));
       setIsProcessing(false);
     }
   };
@@ -140,8 +143,10 @@ export default function RealCameraScreen() {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          'Permissão necessária',
-          'Precisamos acessar suas fotos para escolher uma imagem da galeria.'
+          isEn ? 'Permission needed' : 'Permissão necessária',
+          isEn
+            ? 'We need access to your photos to choose an image from the gallery.'
+            : 'Precisamos acessar suas fotos para escolher uma imagem da galeria.'
         );
         return;
       }
@@ -157,7 +162,7 @@ export default function RealCameraScreen() {
       await sendImageToApi(result.assets[0].uri);
     } catch (error) {
       console.error('Erro ao selecionar/enviar imagem:', error);
-      Alert.alert('Erro', 'Não foi possível processar a imagem. Verifique sua conexão.');
+      Alert.alert(t("scan_error_title"), t("scan_connection_error"));
       setIsProcessing(false);
     }
   };
@@ -174,7 +179,7 @@ export default function RealCameraScreen() {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#6BC24A" />
-        <Text style={styles.loadingText}>Carregando câmera...</Text>
+        <Text style={styles.loadingText}>{t("scan_loading_camera")}</Text>
       </View>
     );
   }
@@ -184,13 +189,13 @@ export default function RealCameraScreen() {
       <View style={styles.container}>
         <Ionicons name="camera-outline" size={64} color="#FFFFFF" />
         <Text style={styles.permissionText}>
-          Precisamos de permissão para acessar a câmera
+          {t("scan_permission_title")}
         </Text>
         <Text style={styles.permissionSubtext}>
-          Isso é necessário para escanear as folhas e detectar deficiências
+          {t("scan_permission_desc")}
         </Text>
         <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.permissionButtonText}>Conceder Permissão</Text>
+          <Text style={styles.permissionButtonText}>{t("scan_grant_permission")}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -216,20 +221,20 @@ export default function RealCameraScreen() {
             </View>
           </View><View style={styles.topBadgeContainer}>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>ESCANEANDO</Text>
+              <Text style={styles.badgeText}>{t("scan_scanning_badge")}</Text>
               <ActivityIndicator color="#FFFFFF" size="small" style={styles.badgeIndicator} />
             </View>
           </View><TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
             <Ionicons name="camera-reverse-outline" size={28} color="#FFFFFF" />
           </TouchableOpacity><View style={styles.instructionContainer}>
             <Text style={styles.instructionText}>
-              Centralize a folha no centro da grade
+              {t("scan_instructions")}
             </Text>
           </View>{isProcessing && (
             <View style={styles.processingOverlay}>
               <View style={styles.processingCard}>
                 <ActivityIndicator size="large" color="#6BC24A" />
-                <Text style={styles.processingText}>Processando imagem...</Text>
+                <Text style={styles.processingText}>{t("scan_processing")}</Text>
               </View>
             </View>
           )}<View style={[styles.bottomControls, { bottom: insets.bottom + 5 }]}>

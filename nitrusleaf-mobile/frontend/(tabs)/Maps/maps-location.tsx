@@ -127,7 +127,7 @@ export default function MapsLocationScreen() {
   const router = useRouter();
   const { selectedProperty } = useProperty();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, isEn } = useLanguage();
   const mapRef = useRef<MapView>(null);
 
   const [dbUser, setDbUser] = useState<any>(null);
@@ -271,8 +271,8 @@ export default function MapsLocationScreen() {
   const formattedSelectedDate = useMemo(() => {
     if (!selectedDateStr) return null;
     const d = new Date(selectedDateStr + "T12:00:00");
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-  }, [selectedDateStr]);
+    return d.toLocaleDateString(isEn ? "en-US" : "pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  }, [selectedDateStr, isEn]);
 
   const availableDates = useMemo(() => {
     const datesSet = new Set<string>();
@@ -291,10 +291,10 @@ export default function MapsLocationScreen() {
   };
 
   const filterOptions: { key: FilterKey; label: string }[] = [
-    { key: "todos", label: "Todos" },
-    { key: "manganes", label: "Manganês" },
-    { key: "tratado", label: "Tratado" },
-    { key: "naoTratado", label: "Não Tratado" },
+    { key: "todos", label: t("common_all") },
+    { key: "manganes", label: t("deficiency_manganese") },
+    { key: "tratado", label: t("status_treated") },
+    { key: "naoTratado", label: t("status_untreated") },
   ];
 
   return (
@@ -423,8 +423,14 @@ export default function MapsLocationScreen() {
                 title={pe.nome}
                 description={
                   pe.deficienciaManganes
-                    ? "Deficiência de Manganês"
-                    : `Situação: ${pe.situacao}`
+                    ? (isEn ? "Manganese Deficiency" : "Deficiência de Manganês")
+                    : `${isEn ? "Status: " : "Situação: "}${
+                        pe.situacao === "Tratado"
+                          ? t("status_treated")
+                          : pe.situacao === "Não-Tratado"
+                          ? t("status_untreated")
+                          : t("status_unknown")
+                      }`
                 }
               >
                 <View style={styles.pinWrapper}>
@@ -454,12 +460,12 @@ export default function MapsLocationScreen() {
             )}
             <View style={styles.headerUserInfo}>
               <Text style={styles.headerName} numberOfLines={1}>
-                {dbUser?.nome ?? user?.email?.split("@")[0] ?? "Usuário"}
+                {dbUser?.nome ?? user?.email?.split("@")[0] ?? (isEn ? "User" : "Usuário")}
               </Text>
               <View style={styles.headerPropertyRow}>
                 <Ionicons name="home-outline" size={13} color="#6B7280" />
                 <Text style={styles.headerProperty} numberOfLines={1}>
-                  {selectedProperty?.name ?? "Nenhuma propriedade selecionada"}
+                  {selectedProperty?.name ?? (isEn ? "No property selected" : "Nenhuma propriedade selecionada")}
                 </Text>
               </View>
             </View>
@@ -483,9 +489,9 @@ export default function MapsLocationScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.datePillLabel}>
-              <Text style={styles.dateBold}>Data: </Text>
+              <Text style={styles.dateBold}>{isEn ? "Date: " : "Data: "}</Text>
               {formattedSelectedDate ??
-                new Date().toLocaleDateString("pt-BR", {
+                new Date().toLocaleDateString(isEn ? "en-US" : "pt-BR", {
                   day: "2-digit",
                   month: "short",
                   year: "numeric",
@@ -516,7 +522,7 @@ export default function MapsLocationScreen() {
                 !selectedDateStr && styles.dateRightTextActive,
               ]}
             >
-              Hoje
+              {isEn ? "Today" : "Hoje"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -618,7 +624,7 @@ export default function MapsLocationScreen() {
             <View style={styles.sheetHeaderRow}>
               <View style={styles.sheetTitleGroup}>
                 <Ionicons name="location-sharp" size={20} color="#16A34A" />
-                <Text style={styles.sheetTitle}>Informações da Área</Text>
+                <Text style={styles.sheetTitle}>{isEn ? "Area Information" : "Informações da Área"}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setActiveSheet("none")}
@@ -631,33 +637,33 @@ export default function MapsLocationScreen() {
             <View style={styles.sheetDivider} />
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Nome</Text>
+              <Text style={styles.infoLabel}>{t("common_name")}</Text>
               <Text style={styles.infoValue}>
-                {selectedProperty?.name ?? "Não cadastrado"}
+                {selectedProperty?.name ?? (isEn ? "Not registered" : "Não cadastrado")}
               </Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Área Cadastrada</Text>
+              <Text style={styles.infoLabel}>{isEn ? "Registered Area" : "Área Cadastrada"}</Text>
               <Text style={styles.infoValue}>{totalHectares} ha</Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Município/UF</Text>
+              <Text style={styles.infoLabel}>{isEn ? "City/State" : "Município/UF"}</Text>
               <Text style={styles.infoValue}>
                 {selectedProperty?.cidade
                   ? `${selectedProperty.cidade}/${selectedProperty?.regiao ?? "SP"}`
-                  : "Não informado"}
+                  : (isEn ? "Not informed" : "Não informado")}
               </Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Talhões Cadastrados</Text>
+              <Text style={styles.infoLabel}>{isEn ? "Registered Fields" : "Talhões Cadastrados"}</Text>
               <Text style={styles.infoValue}>{talhoes.length}</Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Árvores Mapeadas</Text>
+              <Text style={styles.infoLabel}>{isEn ? "Mapped Trees" : "Árvores Mapeadas"}</Text>
               <Text style={styles.infoValue}>
                 {allPes.filter((p) => p.latitude && p.longitude).length}
               </Text>
@@ -674,7 +680,7 @@ export default function MapsLocationScreen() {
             <View style={styles.sheetHeaderRow}>
               <View style={styles.sheetTitleGroup}>
                 <Ionicons name="grid" size={20} color="#16A34A" />
-                <Text style={styles.sheetTitle}>Camadas do Mapa</Text>
+                <Text style={styles.sheetTitle}>{isEn ? "Map Layers" : "Camadas do Mapa"}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setActiveSheet("none")}
@@ -699,7 +705,7 @@ export default function MapsLocationScreen() {
                   <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                 )}
               </View>
-              <Text style={styles.checkboxLabel}>Demarcação da propriedade</Text>
+              <Text style={styles.checkboxLabel}>{isEn ? "Property boundary" : "Demarcação da propriedade"}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -717,7 +723,7 @@ export default function MapsLocationScreen() {
                   <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                 )}
               </View>
-              <Text style={styles.checkboxLabel}>Talhões</Text>
+              <Text style={styles.checkboxLabel}>{isEn ? "Fields" : "Talhões"}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -735,30 +741,30 @@ export default function MapsLocationScreen() {
                   <Ionicons name="checkmark" size={16} color="#FFFFFF" />
                 )}
               </View>
-              <Text style={styles.checkboxLabel}>Árvores de cultivo</Text>
+              <Text style={styles.checkboxLabel}>{isEn ? "Crop trees" : "Árvores de cultivo"}</Text>
             </TouchableOpacity>
 
             <View style={styles.legendRow}>
-              <Text style={styles.legendTitle}>Legenda:</Text>
+              <Text style={styles.legendTitle}>{isEn ? "Legend:" : "Legenda:"}</Text>
 
               <View style={styles.legendItem}>
                 <View style={[styles.miniDot, { backgroundColor: "#EAB308" }]} />
-                <Text style={styles.legendText}>Manganês</Text>
+                <Text style={styles.legendText}>{t("deficiency_manganese")}</Text>
               </View>
 
               <View style={styles.legendItem}>
                 <View style={[styles.miniDot, { backgroundColor: "#16A34A" }]} />
-                <Text style={styles.legendText}>Tratado / Saudável</Text>
+                <Text style={styles.legendText}>{isEn ? "Treated / Healthy" : "Tratado / Saudável"}</Text>
               </View>
 
               <View style={styles.legendItem}>
                 <View style={[styles.miniDot, { backgroundColor: "#EF4444" }]} />
-                <Text style={styles.legendText}>Não Tratado</Text>
+                <Text style={styles.legendText}>{t("status_untreated")}</Text>
               </View>
 
               <View style={styles.legendItem}>
                 <View style={[styles.miniDot, { backgroundColor: "#64748B" }]} />
-                <Text style={styles.legendText}>Sem info</Text>
+                <Text style={styles.legendText}>{isEn ? "No info" : "Sem info"}</Text>
               </View>
             </View>
           </View>
@@ -773,7 +779,7 @@ export default function MapsLocationScreen() {
             <View style={styles.sheetHeaderRow}>
               <View style={styles.sheetTitleGroup}>
                 <Ionicons name="layers" size={20} color="#16A34A" />
-                <Text style={styles.sheetTitle}>Modos de Visualização</Text>
+                <Text style={styles.sheetTitle}>{isEn ? "Viewing Modes" : "Modos de Visualização"}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setActiveSheet("none")}
@@ -798,9 +804,11 @@ export default function MapsLocationScreen() {
                 <Ionicons name="earth" size={22} color="#16A34A" />
               </View>
               <View style={styles.modeTextGroup}>
-                <Text style={styles.modeTitle}>Mapa de Satélite</Text>
+                <Text style={styles.modeTitle}>{isEn ? "Satellite Map" : "Mapa de Satélite"}</Text>
                 <Text style={styles.modeSubtitle}>
-                  Imagem orbital de alta resolução da fazenda
+                  {isEn
+                    ? "High-resolution orbital imagery of the farm"
+                    : "Imagem orbital de alta resolução da fazenda"}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
@@ -821,9 +829,11 @@ export default function MapsLocationScreen() {
                 <Ionicons name="flame" size={22} color="#EA580C" />
               </View>
               <View style={styles.modeTextGroup}>
-                <Text style={styles.modeTitle}>Mapa de Calor</Text>
+                <Text style={styles.modeTitle}>{isEn ? "Heat Map" : "Mapa de Calor"}</Text>
                 <Text style={styles.modeSubtitle}>
-                  Áreas térmicas: vermelho/amarelo para Manganês e verde para saudável
+                  {isEn
+                    ? "Thermal areas: red/yellow for Manganese and green for healthy"
+                    : "Áreas térmicas: vermelho/amarelo para Manganês e verde para saudável"}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
@@ -840,7 +850,7 @@ export default function MapsLocationScreen() {
             <View style={styles.sheetHeaderRow}>
               <View style={styles.sheetTitleGroup}>
                 <Ionicons name="calendar" size={20} color="#16A34A" />
-                <Text style={styles.sheetTitle}>Selecionar Data</Text>
+                <Text style={styles.sheetTitle}>{isEn ? "Select Date" : "Selecionar Data"}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setActiveSheet("none")}
@@ -872,7 +882,7 @@ export default function MapsLocationScreen() {
                   !selectedDateStr && styles.dateOptionTextActive,
                 ]}
               >
-                Todas as análises
+                {isEn ? "All analyses" : "Todas as análises"}
               </Text>
               {!selectedDateStr && (
                 <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
@@ -881,7 +891,7 @@ export default function MapsLocationScreen() {
 
             {availableDates.length === 0 ? (
               <Text style={styles.dateEmptyText}>
-                Nenhuma data de análise encontrada.
+                {isEn ? "No analysis dates found." : "Nenhuma data de análise encontrada."}
               </Text>
             ) : (
               <ScrollView
@@ -890,7 +900,7 @@ export default function MapsLocationScreen() {
               >
                 {availableDates.map((d) => {
                   const isActive = selectedDateStr === d;
-                  const displayDate = new Date(d + "T12:00:00").toLocaleDateString("pt-BR", {
+                  const displayDate = new Date(d + "T12:00:00").toLocaleDateString(isEn ? "en-US" : "pt-BR", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",

@@ -29,12 +29,13 @@ import {
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { TalhaoEditModal } from "@/components/modals/talhao-edit-modal";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-function formatDisplayDate(dateStr?: string | Date): string {
+function formatDisplayDate(dateStr?: string | Date, isEn = false): string {
   const d = dateStr ? new Date(dateStr) : new Date();
-  if (isNaN(d.getTime())) return "Sem data";
+  if (isNaN(d.getTime())) return isEn ? "No date" : "Sem data";
   const day = String(d.getDate()).padStart(2, "0");
-  const monthNames = [
+  const monthNamesPt = [
     "Jan",
     "Fev",
     "Mar",
@@ -48,13 +49,28 @@ function formatDisplayDate(dateStr?: string | Date): string {
     "Nov",
     "Dez",
   ];
-  const month = monthNames[d.getMonth()];
+  const monthNamesEn = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = isEn ? monthNamesEn[d.getMonth()] : monthNamesPt[d.getMonth()];
   const year = d.getFullYear();
-  return `${day} ${month}, ${year}`;
+  return isEn ? `${month} ${day}, ${year}` : `${day} ${month}, ${year}`;
 }
 
 export default function TalhaoDetailScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const { talhaoId } = useLocalSearchParams<{ talhaoId?: string }>();
   const { user } = useAuth();
   const {
@@ -102,7 +118,7 @@ export default function TalhaoDetailScreen() {
               name: tree.nome,
               deficiency: defs.length > 0 ? defs[0] : null,
               status: tree.situacao || "Sem-informações",
-              date: formatDisplayDate(tree.createdAt),
+              date: formatDisplayDate(tree.createdAt, isEn),
             };
           });
           if (isActive) setArvores(mapped);
@@ -181,12 +197,19 @@ export default function TalhaoDetailScreen() {
     safeBack(router, ROUTES.history);
   }, [talhaoId, router]);
 
+  const getFilterLabel = (filter: string) => {
+    if (filter === "Todos") return isEn ? "All" : "Todos";
+    if (filter === "Manganês") return isEn ? "Manganese" : "Manganês";
+    if (filter === "Adversos") return isEn ? "Adverse" : "Adversos";
+    return filter;
+  };
+
   const renderStatusBadge = (status: string) => {
     if (status === "Tratado") {
       return (
         <View style={[styles.badge, styles.badgeTratado]}>
           <Ionicons name="checkmark" size={12} color={Palette.white} />
-          <Text style={styles.badgeTextWhite}>Tratado</Text>
+          <Text style={styles.badgeTextWhite}>{t("status_treated")}</Text>
         </View>
       );
     }
@@ -195,7 +218,7 @@ export default function TalhaoDetailScreen() {
       return (
         <View style={[styles.badge, styles.badgeNaoTratado]}>
           <Ionicons name="remove-circle-outline" size={12} color={Palette.white} />
-          <Text style={styles.badgeTextWhite}>Não tratado</Text>
+          <Text style={styles.badgeTextWhite}>{t("status_untreated")}</Text>
         </View>
       );
     }
@@ -203,7 +226,7 @@ export default function TalhaoDetailScreen() {
     return (
       <View style={[styles.badge, styles.badgeSemInfo]}>
         <Ionicons name="remove-outline" size={12} color={Palette.textSecondary} />
-        <Text style={styles.badgeTextGray}>Não informado</Text>
+        <Text style={styles.badgeTextGray}>{t("status_unknown")}</Text>
       </View>
     );
   };
@@ -228,7 +251,11 @@ export default function TalhaoDetailScreen() {
                     : styles.badgeAdverso,
                 ]}
               >
-                <Text style={styles.badgeTextWhite}>{item.deficiency}</Text>
+                <Text style={styles.badgeTextWhite}>
+                  {item.deficiency === "Manganês"
+                    ? (isEn ? "Manganese" : "Manganês")
+                    : (isEn ? "Adverse" : "Adversos")}
+                </Text>
               </View>
             )}
 
@@ -236,7 +263,7 @@ export default function TalhaoDetailScreen() {
           </View>
 
           <View style={styles.dateRow}>
-            <Text style={styles.dateLabel}>Criado em: </Text>
+            <Text style={styles.dateLabel}>{isEn ? "Created at: " : "Criado em: "}</Text>
             <Ionicons name="calendar-outline" size={12} color="#888" />
             <Text style={styles.dateValue}> {item.date}</Text>
           </View>
@@ -245,7 +272,7 @@ export default function TalhaoDetailScreen() {
         <Ionicons name="chevron-forward" size={18} color="#374151" />
       </TouchableOpacity>
     ),
-    [handleArvorePress]
+    [handleArvorePress, isEn]
   );
 
   return (
@@ -294,7 +321,7 @@ export default function TalhaoDetailScreen() {
                   </TouchableOpacity>
 
                   <Text style={styles.talhaoTitle} numberOfLines={1}>
-                    {talhao?.name || "Talhão"}
+                    {talhao?.name || (isEn ? "Field" : "Talhão")}
                   </Text>
 
                   <TouchableOpacity
@@ -312,7 +339,7 @@ export default function TalhaoDetailScreen() {
 
                 <View style={styles.searchContainer}>
                   <TextInput
-                    placeholder="Buscar árvore"
+                    placeholder={t("field_search_trees")}
                     placeholderTextColor={Palette.textSecondary}
                     value={searchText}
                     onChangeText={setSearchText}
@@ -332,11 +359,11 @@ export default function TalhaoDetailScreen() {
                   onPress={handleAddArvore}
                 >
                   <Ionicons name="add" size={20} color={Palette.white} />
-                  <Text style={styles.cadastrarButtonText}>Cadastrar Árvore</Text>
+                  <Text style={styles.cadastrarButtonText}>{t("field_add_tree")}</Text>
                 </TouchableOpacity>
 
                 <View style={styles.filtersSection}>
-                  <Text style={styles.filtersTitle}>Filtros:</Text>
+                  <Text style={styles.filtersTitle}>{isEn ? "Filters:" : "Filtros:"}</Text>
                   <View style={styles.filtersDivider} />
                   <View style={styles.filtersRow}>
                     {filters.map((filter) => {
@@ -359,7 +386,7 @@ export default function TalhaoDetailScreen() {
                               active && styles.filterChipTextActive,
                             ]}
                           >
-                            {filter}
+                            {getFilterLabel(filter)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -369,7 +396,14 @@ export default function TalhaoDetailScreen() {
 
                 <View style={styles.listSubHeader}>
                   <Text style={styles.listCount}>
-                    {filteredArvores.length} Árvores cadastradas
+                    {filteredArvores.length}{" "}
+                    {filteredArvores.length === 1
+                      ? isEn
+                        ? "Registered tree"
+                        : "Árvore cadastrada"
+                      : isEn
+                        ? "Registered trees"
+                        : "Árvores cadastradas"}
                   </Text>
 
                   <TouchableOpacity
@@ -382,7 +416,7 @@ export default function TalhaoDetailScreen() {
                       size={18}
                       color="#374151"
                     />
-                    <Text style={styles.sortText}>Ordenar</Text>
+                    <Text style={styles.sortText}>{t("history_sort")}</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -392,16 +426,18 @@ export default function TalhaoDetailScreen() {
                 selectedFilter !== "Todos" || searchText.trim().length > 0;
 
               const emptyTitle = !isFiltered
-                ? "Você ainda não cadastrou nenhuma árvore."
+                ? (isEn ? "You haven't registered any trees yet." : "Você ainda não cadastrou nenhuma árvore.")
                 : selectedFilter === "Manganês"
-                ? "Nenhuma árvore com deficiência de Manganês"
+                ? (isEn ? "No trees with Manganese deficiency" : "Nenhuma árvore com deficiência de Manganês")
                 : selectedFilter === "Adversos"
-                ? "Nenhuma árvore com adversos encontrada"
-                : "Nenhuma árvore encontrada";
+                ? (isEn ? "No trees with adverse conditions found" : "Nenhuma árvore com adversos encontrada")
+                : (isEn ? "No trees found" : "Nenhuma árvore encontrada");
 
               const emptySubtitle = !isFiltered
-                ? "Cadastre sua primeira árvore para começar a analisar!"
-                : `Não há árvores com ${selectedFilter.toLowerCase()} registradas neste talhão.`;
+                ? (isEn ? "Register your first tree to start analyzing!" : "Cadastre sua primeira árvore para começar a analisar!")
+                : (isEn
+                    ? `No trees with ${getFilterLabel(selectedFilter).toLowerCase()} registered in this field.`
+                    : `Não há árvores com ${selectedFilter.toLowerCase()} registradas neste talhão.`);
 
               return (
                 <View style={styles.emptyContainer}>

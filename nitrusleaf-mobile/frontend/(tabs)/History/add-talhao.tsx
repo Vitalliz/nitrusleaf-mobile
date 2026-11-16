@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CustomAlert, AlertType } from '@/components/ui/alert';
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from '@/i18n/LanguageContext';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 interface LatLng {
   latitude: number;
@@ -22,6 +24,7 @@ interface LatLng {
 
 export default function AddTalhaoScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const { propertyId, propertyName } = useLocalSearchParams<{
     propertyId?: string;
     propertyName?: string;
@@ -51,14 +54,14 @@ export default function AddTalhaoScreen() {
     title: '',
     message: '',
     type: 'error',
-    buttonText: 'Entendido',
+    buttonText: isEn ? 'Understood' : 'Entendido',
   });
 
   const showAlert = (
     title: string,
     message: string,
     type: AlertType = 'error',
-    buttonText: string = 'Entendido',
+    buttonText: string = isEn ? 'Understood' : 'Entendido',
     onCloseAction?: () => void
   ) => {
     setAlertConfig({
@@ -130,15 +133,30 @@ export default function AddTalhaoScreen() {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      showAlert('Atenção', 'O nome do talhão é obrigatório.', 'warning');
+      showAlert(
+        isEn ? 'Warning' : 'Atenção',
+        isEn ? 'Field name is required.' : 'O nome do talhão é obrigatório.',
+        'warning',
+        isEn ? 'Understood' : 'Entendido'
+      );
       return false;
     }
     if (!formData.especieFruta.trim()) {
-      showAlert('Atenção', 'A espécie da fruta é obrigatória.', 'warning');
+      showAlert(
+        isEn ? 'Warning' : 'Atenção',
+        isEn ? 'Fruit species is required.' : 'A espécie da fruta é obrigatória.',
+        'warning',
+        isEn ? 'Understood' : 'Entendido'
+      );
       return false;
     }
     if (!propertyId) {
-      showAlert('Erro', 'Propriedade não identificada. Volte e selecione uma propriedade.', 'error');
+      showAlert(
+        isEn ? 'Error' : 'Erro',
+        isEn ? 'Property not identified. Go back and select a property.' : 'Propriedade não identificada. Volte e selecione uma propriedade.',
+        'error',
+        isEn ? 'Understood' : 'Entendido'
+      );
       return false;
     }
     return true;
@@ -161,17 +179,26 @@ export default function AddTalhaoScreen() {
       await createTalhao(talhaoData);
 
       showAlert(
-        'Sucesso!',
-        'Talhão cadastrado com sucesso!',
+        isEn ? 'Success!' : 'Sucesso!',
+        isEn ? 'Field registered successfully!' : 'Talhão cadastrado com sucesso!',
         'success',
-        'Continuar',
+        isEn ? 'Continue' : 'Continuar',
         () => router.replace(ROUTES.history)
       );
     } catch (error) {
       console.error('Erro ao salvar talhão:', error);
       const msg =
-        error instanceof Error ? error.message : 'Não foi possível salvar o talhão. Tente novamente.';
-      showAlert('Falha ao cadastrar', msg, 'error');
+        error instanceof Error
+          ? error.message
+          : isEn
+            ? 'Could not save the field. Please try again.'
+            : 'Não foi possível salvar o talhão. Tente novamente.';
+      showAlert(
+        isEn ? 'Failed to register' : 'Falha ao cadastrar',
+        msg,
+        'error',
+        isEn ? 'Understood' : 'Entendido'
+      );
     } finally {
       setLoading(false);
     }
@@ -183,8 +210,8 @@ export default function AddTalhaoScreen() {
         <TouchableOpacity onPress={() => safeBack(router, ROUTES.history)} style={styles.backBtn} hitSlop={15}>
           <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cadastrar Talhão</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>{t("add_talhao_title")}</Text>
+        <LanguageToggle compact />
       </View>
 
       <ScrollView
@@ -192,41 +219,45 @@ export default function AddTalhaoScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Informações do Talhão</Text>
+        <Text style={styles.sectionTitle}>
+          {isEn ? "Field Information" : "Informações do Talhão"}
+        </Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Propriedade</Text>
+          <Text style={styles.label}>{t("add_talhao_property")}</Text>
           <View style={styles.propertyBadge}>
             <Ionicons name="business-outline" size={14} color={Palette.primary} />
             <Text style={styles.propertyText}>
-              {loading ? "..." : propertyName || "Sem propriedade"}
+              {loading ? "..." : propertyName || t("common_no_property")}
             </Text>
           </View>
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Nome do Talhão *</Text>
+          <Text style={styles.label}>{t("add_talhao_name")} *</Text>
           <Input
             value={formData.name}
             onChangeText={(value) => handleInputChange("name", value)}
-            placeholder="Ex: Talhão Norte"
+            placeholder={t("add_talhao_name_placeholder")}
             size="full"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Espécie da Fruta *</Text>
+          <Text style={styles.label}>{t("add_talhao_species")} *</Text>
           <Input
             value={formData.especieFruta}
             onChangeText={(value) =>
               handleInputChange("especieFruta", value)
             }
-            placeholder="Ex: Murcote, Ponkan"
+            placeholder={t("add_talhao_species_placeholder")}
             size="full"
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Demarcação do Talhão no Mapa</Text>
+        <Text style={styles.sectionTitle}>
+          {isEn ? "Field Perimeter on Map" : "Demarcação do Talhão no Mapa"}
+        </Text>
         <TouchableOpacity
           style={styles.mapBannerBtn}
           onPress={() => setShowMapModal(true)}
@@ -238,13 +269,15 @@ export default function AddTalhaoScreen() {
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.mapBannerTitle}>
               {polygonPoints.length >= 3
-                ? `Talhão Demarcado (${polygonPoints.length} vértices)`
-                : 'Desenhar Talhão no Mapa'}
+                ? (isEn
+                    ? `Perimeter Marked (${polygonPoints.length} points)`
+                    : `Talhão Demarcado (${polygonPoints.length} vértices)`)
+                : (isEn ? "Draw Field on Map" : "Desenhar Talhão no Mapa")}
             </Text>
             <Text style={styles.mapBannerSubtitle}>
               {polygonPoints.length >= 3
-                ? 'Toque para visualizar ou ajustar os vértices azuis'
-                : 'Toque para marcar os pontos no mapa e fechar a forma do talhão'}
+                ? (isEn ? "Tap to view or adjust boundary points" : "Toque para visualizar ou ajustar os vértices azuis")
+                : (isEn ? "Tap to place boundary points and close the field area" : "Toque para marcar os pontos no mapa e fechar a forma do talhão")}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={Palette.textSecondary} />
@@ -252,7 +285,7 @@ export default function AddTalhaoScreen() {
 
         <View style={styles.row}>
           <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.label}>Latitude Central</Text>
+            <Text style={styles.label}>{isEn ? "Central Latitude" : "Latitude Central"}</Text>
             <TextInput
               value={formData.latitude}
               onChangeText={(value) => handleInputChange("latitude", value)}
@@ -263,7 +296,7 @@ export default function AddTalhaoScreen() {
             />
           </View>
           <View style={[styles.formGroup, { flex: 1 }]}>
-            <Text style={styles.label}>Longitude Central</Text>
+            <Text style={styles.label}>{isEn ? "Central Longitude" : "Longitude Central"}</Text>
             <TextInput
               value={formData.longitude}
               onChangeText={(value) => handleInputChange("longitude", value)}
@@ -277,7 +310,7 @@ export default function AddTalhaoScreen() {
 
         <View style={styles.buttonContainer}>
           <Button
-            title={loading ? "Salvando..." : "Salvar Talhão"}
+            title={loading ? t("common_saving") : t("add_talhao_btn")}
             variant="primary"
             size="full"
             onPress={handleSave}
@@ -300,14 +333,14 @@ export default function AddTalhaoScreen() {
             >
               <Ionicons name="close" size={24} color={Palette.textPrimary} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Desenhar Talhão</Text>
+            <Text style={styles.modalTitle}>{t("add_talhao_map_modal_title")}</Text>
             <TouchableOpacity
               onPress={handleConfirmPolygon}
               style={styles.modalConfirmBtn}
               activeOpacity={0.85}
             >
               <Text style={styles.modalConfirmText}>
-                Confirmar ({polygonPoints.length})
+                {t("common_confirm")} ({polygonPoints.length})
               </Text>
             </TouchableOpacity>
           </View>
@@ -315,7 +348,7 @@ export default function AddTalhaoScreen() {
           <View style={styles.modalInstructionBanner}>
             <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
             <Text style={styles.modalInstructionText}>
-              Toque no mapa para marcar os vértices do talhão. A partir de 3 pontos o polígono azul será formado.
+              {t("add_talhao_map_instructions")}
             </Text>
           </View>
 
@@ -368,7 +401,7 @@ export default function AddTalhaoScreen() {
               disabled={polygonPoints.length === 0}
             >
               <Ionicons name="arrow-undo-outline" size={18} color="#1E293B" />
-              <Text style={styles.mapControlBtnText}>Desfazer</Text>
+              <Text style={styles.mapControlBtnText}>{isEn ? "Undo" : "Desfazer"}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -377,12 +410,19 @@ export default function AddTalhaoScreen() {
               disabled={polygonPoints.length === 0}
             >
               <Ionicons name="trash-outline" size={18} color="#EF4444" />
-              <Text style={[styles.mapControlBtnText, { color: '#EF4444' }]}>Limpar</Text>
+              <Text style={[styles.mapControlBtnText, { color: '#EF4444' }]}>{isEn ? "Clear" : "Limpar"}</Text>
             </TouchableOpacity>
 
             <View style={styles.pointsCounterBadge}>
               <Text style={styles.pointsCounterText}>
-                {polygonPoints.length} {polygonPoints.length === 1 ? 'vértice' : 'vértices'}
+                {polygonPoints.length}{" "}
+                {polygonPoints.length === 1
+                  ? isEn
+                    ? "vertex"
+                    : "vértice"
+                  : isEn
+                    ? "vertices"
+                    : "vértices"}
               </Text>
             </View>
           </View>

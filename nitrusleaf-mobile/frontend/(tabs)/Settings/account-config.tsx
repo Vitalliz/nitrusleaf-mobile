@@ -24,10 +24,13 @@ import { Background } from "@/components/ui/background";
 import { Button } from "@/components/ui/button";
 import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 export default function AccountConfigScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { t, isEn } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -82,27 +85,47 @@ export default function AccountConfigScreen() {
   const handleSave = async () => {
     if (!user?.id) return;
     if (!currentPassword.trim()) {
-      showAlert("Informe sua senha atual.", "Atenção", "warning");
+      showAlert(
+        isEn ? "Please enter your current password." : "Informe sua senha atual.",
+        isEn ? "Warning" : "Atenção",
+        "warning"
+      );
       return;
     }
     if (!newPassword.trim()) {
-      showAlert("Informe a nova senha.", "Atenção", "warning");
+      showAlert(
+        isEn ? "Please enter the new password." : "Informe a nova senha.",
+        isEn ? "Warning" : "Atenção",
+        "warning"
+      );
       return;
     }
     if (newPassword.length < 6) {
-      showAlert("A nova senha deve ter ao menos 6 caracteres.", "Atenção", "warning");
+      showAlert(
+        isEn ? "New password must be at least 6 characters." : "A nova senha deve ter ao menos 6 caracteres.",
+        isEn ? "Warning" : "Atenção",
+        "warning"
+      );
       return;
     }
 
     setSaving(true);
     try {
       await updateUsuarioPassword(user.id, currentPassword, newPassword);
-      showAlert("Senha atualizada com sucesso!", "Sucesso", "success");
+      showAlert(
+        isEn ? "Password updated successfully!" : "Senha atualizada com sucesso!",
+        isEn ? "Success" : "Sucesso",
+        "success"
+      );
       setCurrentPassword("");
       setNewPassword("");
     } catch (error: any) {
       console.error("Erro ao atualizar senha:", error);
-      showAlert(error.message || "Não foi possível atualizar a senha.", "Erro", "error");
+      showAlert(
+        error.message || (isEn ? "Could not update password." : "Não foi possível atualizar a senha."),
+        isEn ? "Error" : "Erro",
+        "error"
+      );
     } finally {
       setSaving(false);
     }
@@ -110,8 +133,10 @@ export default function AccountConfigScreen() {
 
   const handleDeleteAccount = () => {
     showAlert(
-      "Tem certeza que deseja excluir sua conta permanentemente? Essa ação é irreversível e apagará todos os seus registros.",
-      "Excluir Conta",
+      isEn
+        ? "Are you sure you want to permanently delete your account? This action is irreversible and will erase all your records."
+        : "Tem certeza que deseja excluir sua conta permanentemente? Essa ação é irreversível e apagará todos os seus registros.",
+      isEn ? "Delete Account" : "Excluir Conta",
       "warning",
       async () => {
         if (!user?.id) return;
@@ -123,8 +148,11 @@ export default function AccountConfigScreen() {
         } catch (error: any) {
           console.error("Erro ao excluir conta:", error);
           showAlert(
-            error.message || "Não foi possível excluir a conta. Entre em contato com o suporte.",
-            "Erro",
+            error.message ||
+              (isEn
+                ? "Could not delete account. Please contact support."
+                : "Não foi possível excluir a conta. Entre em contato com o suporte."),
+            isEn ? "Error" : "Erro",
             "error"
           );
         } finally {
@@ -147,8 +175,8 @@ export default function AccountConfigScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Configurações da Conta</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Account Settings" : "Configurações da Conta"}</Text>
+          <LanguageToggle compact />
         </View>
 
         {loading ? (
@@ -161,10 +189,14 @@ export default function AccountConfigScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.sectionTitle}>Credenciais de Acesso</Text>
+            <Text style={styles.sectionTitle}>
+              {isEn ? "Access Credentials" : "Credenciais de Acesso"}
+            </Text>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>E-mail (Não editável)</Text>
+              <Text style={styles.label}>
+                {isEn ? "Email (Non-editable)" : "E-mail (Não editável)"}
+              </Text>
               <TextInput
                 style={[styles.input, styles.inputDisabled]}
                 value={email}
@@ -174,13 +206,13 @@ export default function AccountConfigScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Senha Atual</Text>
+              <Text style={styles.label}>{isEn ? "Current Password" : "Senha Atual"}</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.inputWithIcon}
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
-                  placeholder="Digite sua senha atual"
+                  placeholder={isEn ? "Enter current password" : "Digite sua senha atual"}
                   placeholderTextColor={Palette.textSecondary}
                   secureTextEntry={!showCurrent}
                   autoCapitalize="none"
@@ -200,13 +232,13 @@ export default function AccountConfigScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Nova Senha</Text>
+              <Text style={styles.label}>{isEn ? "New Password" : "Nova Senha"}</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.inputWithIcon}
                   value={newPassword}
                   onChangeText={setNewPassword}
-                  placeholder="Digite a nova senha"
+                  placeholder={isEn ? "Enter new password" : "Digite a nova senha"}
                   placeholderTextColor={Palette.textSecondary}
                   secureTextEntry={!showNew}
                   autoCapitalize="none"
@@ -227,7 +259,7 @@ export default function AccountConfigScreen() {
 
             <View style={styles.saveButtonContainer}>
               <Button
-                title={saving ? "Salvando..." : "Confirmar Alterações"}
+                title={saving ? t("common_saving") : (isEn ? "Confirm Changes" : "Confirmar Alterações")}
                 variant="primary"
                 size="full"
                 onPress={handleSave}
@@ -236,9 +268,11 @@ export default function AccountConfigScreen() {
             </View>
 
             <View style={styles.dangerZone}>
-              <Text style={styles.dangerTitle}>Zona de Risco</Text>
+              <Text style={styles.dangerTitle}>{isEn ? "Danger Zone" : "Zona de Risco"}</Text>
               <Text style={styles.dangerDesc}>
-                A exclusão da conta apagará permanentemente todos os seus dados pessoais, históricos e análises cadastradas.
+                {isEn
+                  ? "Deleting your account will permanently erase all your personal data, history, and registered analyses."
+                  : "A exclusão da conta apagará permanentemente todos os seus dados pessoais, históricos e análises cadastradas."}
               </Text>
 
               <TouchableOpacity
@@ -248,7 +282,9 @@ export default function AccountConfigScreen() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="trash-outline" size={18} color={Palette.error} />
-                <Text style={styles.deleteButtonText}>Excluir Minha Conta</Text>
+                <Text style={styles.deleteButtonText}>
+                  {isEn ? "Delete My Account" : "Excluir Minha Conta"}
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

@@ -22,11 +22,14 @@ import { useProperty } from "@/contexts/PropertyContext";
 import { updateProperty } from "@/repositories/propertyRepository";
 import type { Property } from "@/types/property";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 export default function PropertyDataScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { selectedProperty, refreshProperties } = useProperty();
+  const { t, isEn } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,13 +89,17 @@ export default function PropertyDataScreen() {
         }
       } catch (error) {
         console.error("Erro ao carregar dados da propriedade:", error);
-        showAlert("Não foi possível carregar os dados da propriedade.", "Erro", "error");
+        showAlert(
+          isEn ? "Could not load property details." : "Não foi possível carregar os dados da propriedade.",
+          isEn ? "Error" : "Erro",
+          "error"
+        );
       } finally {
         setLoading(false);
       }
     }
     void loadData();
-  }, [user?.id, selectedProperty, showAlert]);
+  }, [user?.id, selectedProperty, showAlert, isEn]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -100,11 +107,19 @@ export default function PropertyDataScreen() {
 
   const handleSave = async () => {
     if (!property?.id) {
-      showAlert("Nenhuma propriedade selecionada para atualizar.", "Atenção", "warning");
+      showAlert(
+        isEn ? "No property selected to update." : "Nenhuma propriedade selecionada para atualizar.",
+        isEn ? "Warning" : "Atenção",
+        "warning"
+      );
       return;
     }
     if (!formData.name.trim()) {
-      showAlert("O nome da propriedade é obrigatório.", "Atenção", "warning");
+      showAlert(
+        isEn ? "Property name is required." : "O nome da propriedade é obrigatório.",
+        isEn ? "Warning" : "Atenção",
+        "warning"
+      );
       return;
     }
 
@@ -119,12 +134,21 @@ export default function PropertyDataScreen() {
         cidade: formData.cidade.trim(),
       });
       await refreshProperties();
-      showAlert("Propriedade atualizada com sucesso!", "Sucesso", "success", () => {
-        safeBack(router, ROUTES.profile);
-      });
+      showAlert(
+        isEn ? "Property updated successfully!" : "Propriedade atualizada com sucesso!",
+        isEn ? "Success" : "Sucesso",
+        "success",
+        () => {
+          safeBack(router, ROUTES.profile);
+        }
+      );
     } catch (error: any) {
       console.error("Erro ao salvar propriedade:", error);
-      showAlert(error.message || "Não foi possível salvar as alterações.", "Erro", "error");
+      showAlert(
+        error.message || (isEn ? "Could not save changes." : "Não foi possível salvar as alterações."),
+        isEn ? "Error" : "Erro",
+        "error"
+      );
     } finally {
       setSaving(false);
     }
@@ -143,8 +167,8 @@ export default function PropertyDataScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Dados da Propriedade</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Property Details" : "Dados da Propriedade"}</Text>
+          <LanguageToggle compact />
         </View>
 
         {loading ? (
@@ -155,11 +179,13 @@ export default function PropertyDataScreen() {
           <View style={styles.emptyContainer}>
             <Ionicons name="business-outline" size={54} color={Palette.borderDisabled} />
             <Text style={styles.emptyText}>
-              Você ainda não possui propriedade cadastrada.
+              {isEn
+                ? "You don't have a registered property yet."
+                : "Você ainda não possui propriedade cadastrada."}
             </Text>
             <View style={styles.addPropertyBtnWrapper}>
               <Button
-                title="Cadastrar propriedade"
+                title={isEn ? "Register property" : "Cadastrar propriedade"}
                 variant="primary"
                 size="full"
                 onPress={() => openAddProperty(router, ROUTES.profile)}
@@ -172,21 +198,23 @@ export default function PropertyDataScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.sectionTitle}>Informações da Propriedade</Text>
+            <Text style={styles.sectionTitle}>
+              {isEn ? "Property Information" : "Informações da Propriedade"}
+            </Text>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Nome da Propriedade *</Text>
+              <Text style={styles.label}>{isEn ? "Property Name *" : "Nome da Propriedade *"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.name}
                 onChangeText={(text) => handleInputChange("name", text)}
-                placeholder="Ex: Fazenda Santa Maria"
+                placeholder={isEn ? "e.g., Green Valley Farm" : "Ex: Fazenda Santa Maria"}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>CEP</Text>
+              <Text style={styles.label}>{isEn ? "ZIP Code / CEP" : "CEP"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.cep}
@@ -198,53 +226,53 @@ export default function PropertyDataScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Logradouro</Text>
+              <Text style={styles.label}>{isEn ? "Street / Address" : "Logradouro"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.logradouro}
                 onChangeText={(text) => handleInputChange("logradouro", text)}
-                placeholder="Rua, rodovia, km, etc."
+                placeholder={isEn ? "Street, road, highway, etc." : "Rua, rodovia, km, etc."}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Número</Text>
+              <Text style={styles.label}>{isEn ? "Number" : "Número"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.numero}
                 onChangeText={(text) => handleInputChange("numero", text)}
-                placeholder="Ex: 123 ou S/N"
+                placeholder={isEn ? "e.g., 123 or N/A" : "Ex: 123 ou S/N"}
                 placeholderTextColor={Palette.textSecondary}
                 keyboardType="numeric"
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Bairro</Text>
+              <Text style={styles.label}>{isEn ? "Neighborhood / District" : "Bairro"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.bairro}
                 onChangeText={(text) => handleInputChange("bairro", text)}
-                placeholder="Digite o bairro ou zona rural"
+                placeholder={isEn ? "Enter neighborhood or rural area" : "Digite o bairro ou zona rural"}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Cidade</Text>
+              <Text style={styles.label}>{isEn ? "City" : "Cidade"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.cidade}
                 onChangeText={(text) => handleInputChange("cidade", text)}
-                placeholder="Digite a cidade"
+                placeholder={isEn ? "Enter city" : "Digite a cidade"}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={styles.saveButtonContainer}>
               <Button
-                title={saving ? "Salvando..." : "Salvar Alterações"}
+                title={saving ? t("common_saving") : (isEn ? "Save Changes" : "Salvar Alterações")}
                 variant="primary"
                 size="full"
                 onPress={handleSave}

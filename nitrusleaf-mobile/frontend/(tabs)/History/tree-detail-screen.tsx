@@ -25,12 +25,13 @@ import { getRelatoriosByPe } from "@/repositories/relatorioRepository";
 import { ArvoreEditModal } from "@/components/modals/arvore-edit-modal";
 import { mapRelatorioToAnalysisData } from "@/utils/relatorioDisplay";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-function formatDisplayDate(dateStr?: string | Date): string {
+function formatDisplayDate(dateStr?: string | Date, isEn = false): string {
   const d = dateStr ? new Date(dateStr) : new Date();
-  if (isNaN(d.getTime())) return "Sem data";
+  if (isNaN(d.getTime())) return isEn ? "No date" : "Sem data";
   const day = String(d.getDate()).padStart(2, "0");
-  const monthNames = [
+  const monthNamesPt = [
     "Jan",
     "Fev",
     "Mar",
@@ -44,14 +45,29 @@ function formatDisplayDate(dateStr?: string | Date): string {
     "Nov",
     "Dez",
   ];
-  const month = monthNames[d.getMonth()];
+  const monthNamesEn = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = isEn ? monthNamesEn[d.getMonth()] : monthNamesPt[d.getMonth()];
   const year = d.getFullYear();
-  return `${day} ${month}, ${year}`;
+  return isEn ? `${month} ${day}, ${year}` : `${day} ${month}, ${year}`;
 }
 
 export default function HistoryTreeScreen() {
   const { treeId } = useLocalSearchParams<{ treeId: string }>();
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const { user } = useAuth();
   const {
     selectedProperty,
@@ -109,7 +125,7 @@ export default function HistoryTreeScreen() {
         return {
           ...itemData,
           rawDate: r.createdAt || r.data,
-          displayDate: formatDisplayDate(r.createdAt || r.data),
+          displayDate: formatDisplayDate(r.createdAt || r.data, isEn),
         };
       });
       setAnalyses(mapped);
@@ -118,7 +134,7 @@ export default function HistoryTreeScreen() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, treeId]);
+  }, [user?.id, treeId, isEn]);
 
   useFocusEffect(
     useCallback(() => {
@@ -169,9 +185,13 @@ export default function HistoryTreeScreen() {
       if (!treeId) return;
       await updatePe(treeId, { nome: newName });
       setArvore((prev: any) => ({ ...prev, nome: newName }));
-      showAlert("Sucesso", "O nome da árvore foi alterado.", "success");
+      showAlert(
+        isEn ? "Success" : "Sucesso",
+        isEn ? "The tree name was updated." : "O nome da árvore foi alterado.",
+        "success"
+      );
     },
-    [treeId, showAlert]
+    [treeId, showAlert, isEn]
   );
 
   const handleDeleteArvore = useCallback(async () => {
@@ -187,7 +207,7 @@ export default function HistoryTreeScreen() {
       return (
         <View style={[styles.badge, styles.badgeEmTratamento]}>
           <Ionicons name="time-outline" size={13} color={Palette.white} />
-          <Text style={styles.badgeTextWhite}>Em tratamento</Text>
+          <Text style={styles.badgeTextWhite}>{t("status_in_treatment")}</Text>
         </View>
       );
     }
@@ -196,7 +216,7 @@ export default function HistoryTreeScreen() {
       return (
         <View style={[styles.badge, styles.badgeTratado]}>
           <Ionicons name="checkmark" size={13} color={Palette.white} />
-          <Text style={styles.badgeTextWhite}>Tratado</Text>
+          <Text style={styles.badgeTextWhite}>{t("status_treated")}</Text>
         </View>
       );
     }
@@ -205,7 +225,7 @@ export default function HistoryTreeScreen() {
       return (
         <View style={[styles.badge, styles.badgeNaoTratado]}>
           <Ionicons name="remove-circle-outline" size={13} color={Palette.white} />
-          <Text style={styles.badgeTextWhite}>Não tratado</Text>
+          <Text style={styles.badgeTextWhite}>{t("status_untreated")}</Text>
         </View>
       );
     }
@@ -213,7 +233,7 @@ export default function HistoryTreeScreen() {
     return (
       <View style={[styles.badge, styles.badgeSemInfo]}>
         <Ionicons name="remove-outline" size={13} color={Palette.textSecondary} />
-        <Text style={styles.badgeTextGray}>Não informado</Text>
+        <Text style={styles.badgeTextGray}>{t("status_unknown")}</Text>
       </View>
     );
   };
@@ -222,8 +242,8 @@ export default function HistoryTreeScreen() {
     ({ item }: { item: any }) => {
       const numId = parseInt(item.id, 10);
       const title = !isNaN(numId)
-        ? `Análise #${String(numId).padStart(2, "0")}`
-        : item.title || `Análise #${item.id}`;
+        ? `${t("summary_analysis_title")} #${String(numId).padStart(2, "0")}`
+        : item.title || `${t("summary_analysis_title")} #${item.id}`;
 
       return (
         <TouchableOpacity
@@ -239,7 +259,7 @@ export default function HistoryTreeScreen() {
             </View>
 
             <View style={styles.dateRow}>
-              <Text style={styles.dateLabel}>Criado em: </Text>
+              <Text style={styles.dateLabel}>{isEn ? "Created at: " : "Criado em: "}</Text>
               <Ionicons name="calendar-outline" size={12} color="#888" />
               <Text style={styles.dateValue}> {item.displayDate}</Text>
             </View>
@@ -249,10 +269,14 @@ export default function HistoryTreeScreen() {
         </TouchableOpacity>
       );
     },
-    [arvore?.situacao, handleViewAnalysis]
+    [arvore?.situacao, handleViewAnalysis, isEn, t]
   );
 
-  const treeName = arvore?.nome || `Árvore #${String(treeId).padStart(2, "0")}`;
+  const treeName =
+    arvore?.nome ||
+    (isEn
+      ? `Tree #${String(treeId).padStart(2, "0")}`
+      : `Árvore #${String(treeId).padStart(2, "0")}`);
 
   return (
     <Background>
@@ -262,13 +286,13 @@ export default function HistoryTreeScreen() {
         <Header
           userName={
             loading || propertyContextLoading
-              ? "Carregando..."
+              ? "..."
               : dbUser?.fullName || user?.name || "Usuário"
           }
           userSubtitle={
             loading || propertyContextLoading
-              ? "Carregando..."
-              : selectedProperty?.name || "Sem propriedade"
+              ? "..."
+              : selectedProperty?.name || t("common_no_property")
           }
           userAvatar={dbUser?.avatarUrl}
           subtitleIcon="location-outline"
@@ -318,7 +342,14 @@ export default function HistoryTreeScreen() {
 
                 <View style={styles.listSubHeader}>
                   <Text style={styles.listCount}>
-                    {sortedAnalyses.length} Análises realizadas
+                    {sortedAnalyses.length}{" "}
+                    {sortedAnalyses.length === 1
+                      ? isEn
+                        ? "Analysis performed"
+                        : "Análise realizada"
+                      : isEn
+                        ? "Analyses performed"
+                        : "Análises realizadas"}
                   </Text>
 
                   <TouchableOpacity
@@ -331,7 +362,7 @@ export default function HistoryTreeScreen() {
                       size={18}
                       color="#374151"
                     />
-                    <Text style={styles.sortText}>Ordenar</Text>
+                    <Text style={styles.sortText}>{t("history_sort")}</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -340,10 +371,14 @@ export default function HistoryTreeScreen() {
               <View style={styles.emptyContainer}>
                 <Ionicons name="leaf-outline" size={48} color={Palette.borderDisabled} />
                 <Text style={styles.emptyTitle}>
-                  Nenhuma análise salva para esta árvore.
+                  {isEn
+                    ? "No analysis saved for this tree."
+                    : "Nenhuma análise salva para esta árvore."}
                 </Text>
                 <Text style={styles.emptyText}>
-                  Use a Câmera na aba inferior para fotografar e iniciar uma nova análise.
+                  {isEn
+                    ? "Use the Camera tab below to photograph and start a new analysis."
+                    : "Use a Câmera na aba inferior para fotografar e iniciar uma nova análise."}
                 </Text>
               </View>
             }

@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface ArvoreEditModalProps {
   visible: boolean;
@@ -30,6 +31,7 @@ export function ArvoreEditModal({
   onSave,
   onDelete,
 }: ArvoreEditModalProps) {
+  const { t, isEn } = useLanguage();
   const [step, setStep] = useState<Step>("edit");
   const [name, setName] = useState(arvoreName);
   const [saving, setSaving] = useState(false);
@@ -46,7 +48,7 @@ export function ArvoreEditModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("O nome da árvore não pode estar vazio.");
+      setError(isEn ? "Tree name cannot be empty." : "O nome da árvore não pode estar vazio.");
       return;
     }
     try {
@@ -55,7 +57,7 @@ export function ArvoreEditModal({
       await onSave(name.trim());
       onClose();
     } catch {
-      setError("Falha ao salvar. Tente novamente.");
+      setError(isEn ? "Failed to save. Please try again." : "Falha ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -67,7 +69,7 @@ export function ArvoreEditModal({
       await onDelete();
       onClose();
     } catch {
-      setError("Falha ao excluir a árvore.");
+      setError(isEn ? "Failed to delete tree." : "Falha ao excluir a árvore.");
       setStep("edit");
     } finally {
       setDeleting(false);
@@ -98,7 +100,7 @@ export function ArvoreEditModal({
           {step === "edit" && (
             <>
               <View style={styles.header}>
-                <Text style={styles.headerTitle}>Editar Árvore</Text>
+                <Text style={styles.headerTitle}>{isEn ? "Edit Tree" : "Editar Árvore"}</Text>
                 <TouchableOpacity
                   onPress={onClose}
                   style={styles.closeButton}
@@ -110,9 +112,9 @@ export function ArvoreEditModal({
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nome da árvore</Text>
+                <Text style={styles.label}>{isEn ? "Tree name" : "Nome da árvore"}</Text>
                 <Input
-                  placeholder="Ex: Árvore Norte 02"
+                  placeholder={isEn ? "e.g., Tree 02" : "Ex: Árvore Norte 02"}
                   value={name}
                   onChangeText={(v) => {
                     setName(v);
@@ -125,7 +127,7 @@ export function ArvoreEditModal({
               </View>
 
               <Button
-                title={saving ? "Salvando..." : "Salvar alterações"}
+                title={saving ? t("common_saving") : (isEn ? "Save changes" : "Salvar alterações")}
                 variant="primary"
                 size="full"
                 onPress={handleSave}
@@ -135,7 +137,7 @@ export function ArvoreEditModal({
               <View style={styles.divider} />
 
               <Button
-                title="Excluir árvore"
+                title={isEn ? "Delete tree" : "Excluir árvore"}
                 variant="danger"
                 size="full"
                 icon="trash-outline"
@@ -152,17 +154,19 @@ export function ArvoreEditModal({
                 </View>
               </View>
 
-              <Text style={styles.confirmTitle}>Excluir árvore?</Text>
+              <Text style={styles.confirmTitle}>{isEn ? "Delete tree?" : "Excluir árvore?"}</Text>
               <Text style={styles.confirmText}>
-                Tem certeza que deseja excluir{" "}
+                {isEn ? "Are you sure you want to delete " : "Tem certeza que deseja excluir "}
                 <Text style={styles.confirmBold}>&quot;{arvoreName}&quot;</Text>?{"\n"}
-                Todas as análises e histórico foliar vinculados a ela serão perdidos.
+                {isEn
+                  ? "All analyses and leaf history linked to it will be lost."
+                  : "Todas as análises e histórico foliar vinculados a ela serão perdidos."}
               </Text>
 
               {error ? <Text style={styles.errorTextCentered}>{error}</Text> : null}
 
               <Button
-                title={deleting ? "Excluindo..." : "Sim, excluir árvore"}
+                title={deleting ? (isEn ? "Deleting..." : "Excluindo...") : (isEn ? "Yes, delete tree" : "Sim, excluir árvore")}
                 variant="danger"
                 size="full"
                 icon="trash"
@@ -173,7 +177,7 @@ export function ArvoreEditModal({
               <View style={styles.cancelSpacing} />
 
               <Button
-                title="Voltar e cancelar"
+                title={isEn ? "Cancel and return" : "Voltar e cancelar"}
                 variant="outline"
                 size="full"
                 onPress={() => {

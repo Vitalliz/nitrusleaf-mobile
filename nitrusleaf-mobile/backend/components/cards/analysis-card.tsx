@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export interface AnalysisData {
   id: string;
@@ -42,12 +43,24 @@ const statusConfig: Record<string, { bg: string; text: string; icon: keyof typeo
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
+  const { isEn } = useLanguage();
   const current = statusConfig[status] ?? statusConfig["Sem-informações"];
+
+  const getTranslatedStatus = (st: string) => {
+    if (!isEn) return st;
+    if (st === "Tratado") return "Treated";
+    if (st === "Não-Tratado" || st === "Não tratado") return "Untreated";
+    if (st === "Em tratamento") return "In Treatment";
+    return "No Info";
+  };
 
   return (
     <View style={[styles.statusBadge, { backgroundColor: current.bg }]}>
       <Ionicons name={current.icon} size={13} color={current.text} />
-      <Text style={[styles.statusText, { color: current.text }]}>{status}</Text>
+      <Text style={[styles.statusText, { color: current.text }]}>{getTranslatedStatus(status)}</Text>
+    </View>
+  );
+};
     </View>
   );
 };

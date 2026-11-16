@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 const situacaoColors: Record<SituacaoPe, { bg: string; border: string; text: string }> = {
   "Tratado":         { bg: "#E8F5E0", border: Palette.primary, text: "#2D5016" },
@@ -45,6 +47,7 @@ function parsePolygonCoords(raw?: string): { latitude: number; longitude: number
 
 export default function AddTreeScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const { talhaoId, talhaoName } = useLocalSearchParams<{
     talhaoId?: string;
     talhaoName?: string;
@@ -75,14 +78,14 @@ export default function AddTreeScreen() {
     title: "",
     message: "",
     type: "error",
-    buttonText: "Entendido",
+    buttonText: isEn ? "Understood" : "Entendido",
   });
 
   const showAlert = (
     title: string,
     message: string,
     type: AlertType = "error",
-    buttonText: string = "Entendido",
+    buttonText: string = isEn ? "Understood" : "Entendido",
     onCloseAction?: () => void
   ) => {
     setAlertConfig({
@@ -101,6 +104,12 @@ export default function AddTreeScreen() {
     if (callback) {
       callback();
     }
+  };
+
+  const getSituacaoLabel = (s: SituacaoPe) => {
+    if (s === "Tratado") return t("status_treated");
+    if (s === "Não-Tratado") return t("status_untreated");
+    return t("status_unknown");
   };
 
   useEffect(() => {
@@ -154,11 +163,21 @@ export default function AddTreeScreen() {
 
   const handleSave = async () => {
     if (!talhaoId) {
-      showAlert("Atenção", "Talhão não informado. Volte e tente novamente.", "warning");
+      showAlert(
+        isEn ? "Warning" : "Atenção",
+        isEn ? "Field not provided. Go back and try again." : "Talhão não informado. Volte e tente novamente.",
+        "warning",
+        isEn ? "Understood" : "Entendido"
+      );
       return;
     }
     if (!nome.trim()) {
-      showAlert("Atenção", "O nome da árvore é obrigatório.", "warning");
+      showAlert(
+        isEn ? "Warning" : "Atenção",
+        isEn ? "Tree name is required." : "O nome da árvore é obrigatório.",
+        "warning",
+        isEn ? "Understood" : "Entendido"
+      );
       return;
     }
 
@@ -181,10 +200,10 @@ export default function AddTreeScreen() {
       }
 
       showAlert(
-        "Sucesso!",
-        "Árvore cadastrada com sucesso com sua localização.",
+        isEn ? "Success!" : "Sucesso!",
+        isEn ? "Tree registered successfully with its location." : "Árvore cadastrada com sucesso com sua localização.",
         "success",
-        "Continuar",
+        isEn ? "Continue" : "Continuar",
         () => {
           router.replace({
             pathname: "/(tabs)/History/field-detail-screen",
@@ -195,8 +214,17 @@ export default function AddTreeScreen() {
     } catch (error) {
       console.error("Erro ao salvar árvore:", error);
       const msg =
-        error instanceof Error ? error.message : "Não foi possível salvar a árvore.";
-      showAlert("Falha no cadastro", msg, "error");
+        error instanceof Error
+          ? error.message
+          : isEn
+            ? "Could not save tree."
+            : "Não foi possível salvar a árvore.";
+      showAlert(
+        isEn ? "Failed to register" : "Falha no cadastro",
+        msg,
+        "error",
+        isEn ? "Understood" : "Entendido"
+      );
     } finally {
       setLoading(false);
     }
@@ -213,15 +241,17 @@ export default function AddTreeScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Cadastrar árvore</Text>
-          <View style={{ width: 24 }} />
+          <Text style={styles.headerTitle}>{t("add_tree_title")}</Text>
+          <LanguageToggle compact />
         </View>
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>
-            Talhão não encontrado. Abra a lista de árvores a partir de um talhão.
+            {isEn
+              ? "Field not found. Open the tree list from a field."
+              : "Talhão não encontrado. Abra a lista de árvores a partir de um talhão."}
           </Text>
           <Button
-            title="Voltar"
+            title={t("common_back")}
             variant="primary"
             size="full"
             onPress={() => safeBack(router, ROUTES.history)}
@@ -247,8 +277,8 @@ export default function AddTreeScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cadastrar árvore</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>{t("add_tree_title")}</Text>
+        <LanguageToggle compact />
       </View>
 
       <ScrollView
@@ -257,10 +287,10 @@ export default function AddTreeScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Identificação</Text>
+        <Text style={styles.sectionTitle}>{isEn ? "Identification" : "Identificação"}</Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Talhão</Text>
+          <Text style={styles.label}>{t("common_field")}</Text>
           <View style={styles.propertyBadge}>
             <Ionicons name="leaf-outline" size={14} color={Palette.primary} />
             <Text style={styles.propertyText}>{talhaoLabel || "—"}</Text>
@@ -268,17 +298,17 @@ export default function AddTreeScreen() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Nome da árvore *</Text>
+          <Text style={styles.label}>{t("add_tree_name")} *</Text>
           <Input
             value={nome}
             onChangeText={setNome}
-            placeholder="Ex: Árvore 12"
+            placeholder={isEn ? "e.g., Tree 12" : "Ex: Árvore 12"}
             size="full"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Situação</Text>
+          <Text style={styles.label}>{t("common_status")}</Text>
           <View style={styles.situacaoRow}>
             {SITUACOES_PE.map((opt) => {
               const active = situacao === opt;
@@ -301,7 +331,7 @@ export default function AddTreeScreen() {
                       active && { color: colors.text, fontWeight: FontWeights.semiBold },
                     ]}
                   >
-                    {opt}
+                    {getSituacaoLabel(opt)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -309,7 +339,9 @@ export default function AddTreeScreen() {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Localização da Árvore no Mapa</Text>
+        <Text style={styles.sectionTitle}>
+          {isEn ? "Tree Location on Map" : "Localização da Árvore no Mapa"}
+        </Text>
         <TouchableOpacity
           style={styles.mapBannerBtn}
           onPress={handleOpenMap}
@@ -321,31 +353,33 @@ export default function AddTreeScreen() {
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.mapBannerTitle}>
               {latitude !== undefined && longitude !== undefined
-                ? "Posição da Árvore Marcada"
-                : "Marcar Posição da Árvore no Mapa"}
+                ? (isEn ? "Tree Position Marked" : "Posição da Árvore Marcada")
+                : (isEn ? "Mark Tree Position on Map" : "Marcar Posição da Árvore no Mapa")}
             </Text>
             <Text style={styles.mapBannerSubtitle}>
               {latitude !== undefined && longitude !== undefined
                 ? `Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`
-                : "Toque para abrir o mapa do talhão e posicionar o pé"}
+                : (isEn
+                    ? "Tap to open field map and position the tree"
+                    : "Toque para abrir o mapa do talhão e posicionar o pé")}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={Palette.textSecondary} />
         </TouchableOpacity>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Observações</Text>
+          <Text style={styles.label}>{t("common_notes")}</Text>
           <Input
             value={observacoes}
             onChangeText={setObservacoes}
-            placeholder="Opcional"
+            placeholder={isEn ? "Optional" : "Opcional"}
             size="full"
           />
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
-            title={loading ? "Salvando..." : "Salvar árvore"}
+            title={loading ? t("common_saving") : t("add_tree_btn")}
             variant="primary"
             size="full"
             onPress={() => void handleSave()}
@@ -368,20 +402,22 @@ export default function AddTreeScreen() {
             >
               <Ionicons name="close" size={24} color={Palette.textPrimary} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Localizar Árvore</Text>
+            <Text style={styles.modalTitle}>{isEn ? "Locate Tree" : "Localizar Árvore"}</Text>
             <TouchableOpacity
               onPress={handleConfirmLocation}
               style={styles.modalConfirmBtn}
               activeOpacity={0.85}
             >
-              <Text style={styles.modalConfirmText}>Confirmar</Text>
+              <Text style={styles.modalConfirmText}>{t("common_confirm")}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.modalInstructionBanner}>
             <Ionicons name="information-circle-outline" size={18} color="#16A34A" />
             <Text style={styles.modalInstructionText}>
-              Toque no mapa para posicionar a árvore dentro da área demarcada do talhão.
+              {isEn
+                ? "Tap the map to position the tree inside the field boundary."
+                : "Toque no mapa para posicionar a árvore dentro da área demarcada do talhão."}
             </Text>
           </View>
 
@@ -409,7 +445,7 @@ export default function AddTreeScreen() {
               <Marker
                 coordinate={tempLocation}
                 anchor={{ x: 0.5, y: 1.0 }}
-                title="Posição da Árvore"
+                title={isEn ? "Tree Position" : "Posição da Árvore"}
               >
                 <View style={styles.pinWrapper}>
                   <View style={styles.treePinDrop}>
@@ -424,8 +460,8 @@ export default function AddTreeScreen() {
           <View style={styles.mapFooter}>
             <Text style={styles.mapFooterText}>
               {tempLocation
-                ? `Local selecionado: ${tempLocation.latitude.toFixed(6)}, ${tempLocation.longitude.toFixed(6)}`
-                : "Toque no mapa para posicionar a árvore"}
+                ? `${isEn ? "Selected location" : "Local selecionado"}: ${tempLocation.latitude.toFixed(6)}, ${tempLocation.longitude.toFixed(6)}`
+                : (isEn ? "Tap on map to position tree" : "Toque no mapa para posicionar a árvore")}
             </Text>
           </View>
         </SafeAreaView>

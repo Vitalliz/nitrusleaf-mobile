@@ -19,9 +19,12 @@ import { useProperty } from "@/contexts/PropertyContext";
 import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 export default function HeatMapScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const { selectedProperty, properties, selectProperty } = useProperty();
 
   const [heatData, setHeatData] = useState<any[]>([]);
@@ -114,13 +117,13 @@ export default function HeatMapScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Mapa de Calor</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Heat Map" : "Mapa de Calor"}</Text>
+          <LanguageToggle compact />
         </View>
 
         <View style={styles.subtitleContainer}>
           <Text style={styles.subtitle}>
-            Zonas com maior concentração de deficiências
+            {isEn ? "Zones with highest concentration of deficiencies" : "Zonas com maior concentração de deficiências"}
           </Text>
         </View>
 
@@ -187,7 +190,7 @@ export default function HeatMapScreen() {
                   longitude: selectedProperty.longitude || -47.85112,
                 }}
                 title={selectedProperty.name}
-                description="Centro da propriedade"
+                description={isEn ? "Property center" : "Centro da propriedade"}
               />
             </MapView>
           )}
@@ -195,13 +198,15 @@ export default function HeatMapScreen() {
           {loading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color={Palette.primary} />
-              <Text style={styles.loadingText}>Carregando mapa de calor...</Text>
+              <Text style={styles.loadingText}>
+                {isEn ? "Loading heat map..." : "Carregando mapa de calor..."}
+              </Text>
             </View>
           )}
         </View>
 
         <View style={styles.legendCard}>
-          <Text style={styles.legendTitle}>Legenda de Incidência</Text>
+          <Text style={styles.legendTitle}>{isEn ? "Incidence Legend" : "Legenda de Incidência"}</Text>
           <View style={styles.legendGrid}>
             <View style={styles.legendItem}>
               <View
@@ -210,7 +215,7 @@ export default function HeatMapScreen() {
                   { backgroundColor: "rgba(34, 197, 94, 0.7)" },
                 ]}
               />
-              <Text style={styles.legendText}>Poucas deficiências</Text>
+              <Text style={styles.legendText}>{isEn ? "Few deficiencies" : "Poucas deficiências"}</Text>
             </View>
             <View style={styles.legendItem}>
               <View
@@ -219,7 +224,7 @@ export default function HeatMapScreen() {
                   { backgroundColor: "rgba(245, 158, 11, 0.7)" },
                 ]}
               />
-              <Text style={styles.legendText}>Algumas deficiências</Text>
+              <Text style={styles.legendText}>{isEn ? "Some deficiencies" : "Algumas deficiências"}</Text>
             </View>
             <View style={styles.legendItem}>
               <View
@@ -228,7 +233,7 @@ export default function HeatMapScreen() {
                   { backgroundColor: "rgba(234, 88, 12, 0.7)" },
                 ]}
               />
-              <Text style={styles.legendText}>Alta incidência</Text>
+              <Text style={styles.legendText}>{isEn ? "High incidence" : "Alta incidência"}</Text>
             </View>
             <View style={styles.legendItem}>
               <View
@@ -237,7 +242,7 @@ export default function HeatMapScreen() {
                   { backgroundColor: "rgba(220, 38, 38, 0.7)" },
                 ]}
               />
-              <Text style={styles.legendText}>Deficiência severa</Text>
+              <Text style={styles.legendText}>{isEn ? "Severe deficiency" : "Deficiência severa"}</Text>
             </View>
           </View>
         </View>

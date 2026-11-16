@@ -15,6 +15,8 @@ import { useRouter } from 'expo-router';
 import { Background } from '@/components/ui/background';
 import TabBar from '@/components/ui/tab-bar';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 interface NotificationItem {
   id: string;
@@ -54,10 +56,44 @@ const RECENT_NOTIFICATIONS: NotificationItem[] = [
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [analysisAlerts, setAnalysisAlerts] = useState(true);
   const [weeklyReport, setWeeklyReport] = useState(false);
+
+  const notificationsList: NotificationItem[] = [
+    {
+      id: '1',
+      title: isEn ? 'Analysis Completed' : 'Análise Concluída',
+      description: isEn
+        ? 'Leaf analysis for Field 1 processed successfully.'
+        : 'A análise foliar do Talhão 1 foi processada com sucesso.',
+      time: isEn ? '2 hours ago' : 'Há 2 horas',
+      icon: 'checkmark-circle-outline',
+      read: false,
+    },
+    {
+      id: '2',
+      title: isEn ? 'Manganese Alert' : 'Alerta de Manganês',
+      description: isEn
+        ? 'Nutritional deficiency identified in 3 analyzed trees.'
+        : 'Identificada deficiência nutricional em 3 árvores analisadas.',
+      time: isEn ? 'Yesterday' : 'Ontem',
+      icon: 'warning-outline',
+      read: false,
+    },
+    {
+      id: '3',
+      title: isEn ? 'Sync Completed' : 'Sincronização Finalizada',
+      description: isEn
+        ? 'Property data updated in the cloud.'
+        : 'Os dados da propriedade foram atualizados na nuvem.',
+      time: isEn ? '2 days ago' : '2 dias atrás',
+      icon: 'cloud-done-outline',
+      read: true,
+    },
+  ];
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -80,8 +116,8 @@ export default function NotificationsScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notificações</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Notifications" : "Notificações"}</Text>
+          <LanguageToggle compact />
         </View>
 
         <ScrollView
@@ -89,14 +125,20 @@ export default function NotificationsScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.sectionTitle}>Preferências de Alerta</Text>
+          <Text style={styles.sectionTitle}>
+            {isEn ? "Alert Preferences" : "Preferências de Alerta"}
+          </Text>
 
           <View style={styles.settingsGroup}>
             <View style={styles.settingRow}>
               <View style={styles.settingTextContainer}>
-                <Text style={styles.settingLabel}>Notificações Push</Text>
+                <Text style={styles.settingLabel}>
+                  {isEn ? "Push Notifications" : "Notificações Push"}
+                </Text>
                 <Text style={styles.settingSubtitle}>
-                  Receber alertas importantes no dispositivo
+                  {isEn
+                    ? "Receive important alerts on your device"
+                    : "Receber alertas importantes no dispositivo"}
                 </Text>
               </View>
               <Switch
@@ -111,9 +153,13 @@ export default function NotificationsScreen() {
 
             <View style={styles.settingRow}>
               <View style={styles.settingTextContainer}>
-                <Text style={styles.settingLabel}>Alertas de Análises</Text>
+                <Text style={styles.settingLabel}>
+                  {isEn ? "Analysis Alerts" : "Alertas de Análises"}
+                </Text>
                 <Text style={styles.settingSubtitle}>
-                  Avisar quando novas análises forem processadas
+                  {isEn
+                    ? "Notify when new analyses are processed"
+                    : "Avisar quando novas análises forem processadas"}
                 </Text>
               </View>
               <Switch
@@ -128,9 +174,13 @@ export default function NotificationsScreen() {
 
             <View style={styles.settingRow}>
               <View style={styles.settingTextContainer}>
-                <Text style={styles.settingLabel}>Resumo Semanal</Text>
+                <Text style={styles.settingLabel}>
+                  {isEn ? "Weekly Summary" : "Resumo Semanal"}
+                </Text>
                 <Text style={styles.settingSubtitle}>
-                  Relatório do status nutricional da fazenda
+                  {isEn
+                    ? "Report on farm nutritional status"
+                    : "Relatório do status nutricional da fazenda"}
                 </Text>
               </View>
               <Switch
@@ -142,10 +192,10 @@ export default function NotificationsScreen() {
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>Recentes</Text>
+          <Text style={styles.sectionTitle}>{isEn ? "Recent" : "Recentes"}</Text>
 
           <View style={styles.notificationsList}>
-            {RECENT_NOTIFICATIONS.map((item) => (
+            {notificationsList.map((item) => (
               <View
                 key={item.id}
                 style={[styles.notificationCard, !item.read && styles.notificationCardUnread]}

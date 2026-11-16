@@ -129,8 +129,8 @@ export default function AnalysisSummaryScreen() {
 
   const accentColor = getDeficiencyAccentColor(deficiencyType);
   const explanation = useMemo(
-    () => getDeficiencyExplanation(deficiencyType),
-    [deficiencyType]
+    () => getDeficiencyExplanation(deficiencyType, isEn),
+    [deficiencyType, isEn]
   );
 
   const selectedTalhao = talhoes.find((t) => t.id === selectedTalhaoId);
@@ -219,20 +219,22 @@ export default function AnalysisSummaryScreen() {
       [
         explanation.meaning,
         "",
-        "O que pode ser feito:",
+        isEn ? "What can be done:" : "O que pode ser feito:",
         ...explanation.recommendations.map((r, i) => `${i + 1}. ${r}`),
         "",
         explanation.footer,
       ].join("\n"),
-      [{ text: "Entendi" }]
+      [{ text: isEn ? "Got it" : "Entendi" }]
     );
   };
 
   const openTalhaoPicker = () => {
     if (talhoes.length === 0) {
       Alert.alert(
-        "Sem talhões",
-        "Cadastre um talhão em Histórico para vincular esta análise."
+        isEn ? "No fields" : "Sem talhões",
+        isEn
+          ? "Register a field in History to link this analysis."
+          : "Cadastre um talhão em Histórico para vincular esta análise."
       );
       return;
     }
@@ -241,13 +243,18 @@ export default function AnalysisSummaryScreen() {
 
   const openPePicker = () => {
     if (!selectedTalhaoId) {
-      Alert.alert("Talhão", "Selecione o talhão antes do pé.");
+      Alert.alert(
+        isEn ? "Field" : "Talhão",
+        isEn ? "Select a field before selecting a tree." : "Selecione o talhão antes do pé."
+      );
       return;
     }
     if (pes.length === 0) {
       Alert.alert(
-        "Sem árvores",
-        "Cadastre uma árvore neste talhão para salvar a análise no histórico."
+        isEn ? "No trees" : "Sem árvores",
+        isEn
+          ? "Register a tree in this field to save the analysis to history."
+          : "Cadastre uma árvore neste talhão para salvar a análise no histórico."
       );
       return;
     }
@@ -257,15 +264,19 @@ export default function AnalysisSummaryScreen() {
   const handleFinish = async () => {
     if (!selectedPeId) {
       Alert.alert(
-        "Vincular amostra",
-        "Selecione o talhão e o pé analisados para salvar no banco e atualizar os gráficos da home."
+        isEn ? "Link sample" : "Vincular amostra",
+        isEn
+          ? "Select the field and tree analyzed to save to database and update home charts."
+          : "Selecione o talhão e o pé analisados para salvar no banco e atualizar os gráficos da home."
       );
       return;
     }
     if (!imageUri) {
       Alert.alert(
-        "Imagem",
-        "URI da imagem não encontrada. Refaça a análise pela câmera."
+        isEn ? "Image" : "Imagem",
+        isEn
+          ? "Image URI not found. Retake the photo with the camera."
+          : "URI da imagem não encontrada. Refaça a análise pela câmera."
       );
       return;
     }
@@ -285,15 +296,21 @@ export default function AnalysisSummaryScreen() {
       setSavedToDb(true);
       setSavedRelatorioId(result.relatorioId);
       Alert.alert(
-        "Salvo",
-        "Análise registrada. Os gráficos da home serão atualizados.",
+        isEn ? "Saved" : "Salvo",
+        isEn
+          ? "Analysis recorded. Home charts will be updated."
+          : "Análise registrada. Os gráficos da home serão atualizados.",
         [{ text: "OK", onPress: () => exitAnalysisFlow(router) }]
       );
     } catch (e) {
       console.error(e);
       const msg =
-        e instanceof Error ? e.message : "Não foi possível salvar a análise.";
-      Alert.alert("Erro ao salvar", msg);
+        e instanceof Error
+          ? e.message
+          : isEn
+            ? "Could not save analysis."
+            : "Não foi possível salvar a análise.";
+      Alert.alert(isEn ? "Error saving" : "Erro ao salvar", msg);
     } finally {
       setSaving(false);
     }
@@ -322,8 +339,12 @@ export default function AnalysisSummaryScreen() {
     } catch (e) {
       console.error(e);
       const msg =
-        e instanceof Error ? e.message : "Não foi possível gerar o PDF.";
-      Alert.alert("Erro ao exportar PDF", msg);
+        e instanceof Error
+          ? e.message
+          : isEn
+            ? "Could not generate PDF."
+            : "Não foi possível gerar o PDF.";
+      Alert.alert(isEn ? "Error exporting PDF" : "Erro ao exportar PDF", msg);
     } finally {
       setGeneratingPdf(false);
     }
@@ -352,16 +373,24 @@ export default function AnalysisSummaryScreen() {
             bounces={false}
           >
             <View style={styles.resultCard}>
-              <Text style={styles.resultCardTitle}>Resultado da análise</Text>
-              <Text style={styles.resultCardSubtitle}>Análise #{formattedId}</Text>
+              <Text style={styles.resultCardTitle}>
+                {isEn ? "Analysis Result" : "Resultado da análise"}
+              </Text>
+              <Text style={styles.resultCardSubtitle}>
+                {t("summary_analysis_title")} #{formattedId}
+              </Text>
 
               <View style={styles.cardDivider} />
 
-              <Text style={styles.detectedLabel}>DEFICIÊNCIA DETECTADA</Text>
-              <Text style={[styles.deficiencyLargeTitle, { color: accentColor }]}>
-                {getDeficiencyTitle(deficiencyType)}
+              <Text style={styles.detectedLabel}>
+                {isEn ? "DEFICIENCY DETECTED" : "DEFICIÊNCIA DETECTADA"}
               </Text>
-              <Text style={styles.probEstimateSubtitle}>Probabilidade estimada</Text>
+              <Text style={[styles.deficiencyLargeTitle, { color: accentColor }]}>
+                {getDeficiencyTitle(deficiencyType, isEn)}
+              </Text>
+              <Text style={styles.probEstimateSubtitle}>
+                {isEn ? "Estimated probability" : "Probabilidade estimada"}
+              </Text>
 
               <View style={styles.gaugeWrapper}>
                 <GaugeChart
@@ -378,17 +407,21 @@ export default function AnalysisSummaryScreen() {
                 onPress={() => setView("summary")}
               >
                 <View style={styles.buttonIconSpacer} />
-                <Text style={styles.primaryPillButtonText}>Ver resumo técnico</Text>
+                <Text style={styles.primaryPillButtonText}>
+                  {isEn ? "View technical summary" : "Ver resumo técnico"}
+                </Text>
                 <Ionicons name="chevron-forward" size={18} color={Palette.white} />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.outlinePillButton}
+                style={[styles.outlinePillButton, { marginBottom: 10 }]}
                 activeOpacity={0.85}
                 onPress={handleInfoPress}
               >
                 <View style={styles.buttonIconSpacer} />
-                <Text style={styles.outlinePillButtonText}>Entenda o resultado</Text>
+                <Text style={styles.outlinePillButtonText}>
+                  {isEn ? "Understand the result" : "Entenda o resultado"}
+                </Text>
                 <Ionicons
                   name="information-circle-outline"
                   size={20}
@@ -407,7 +440,7 @@ export default function AnalysisSummaryScreen() {
                 ) : (
                   <>
                     <View style={styles.buttonIconSpacer} />
-                    <Text style={styles.outlinePillButtonText}>Exportar como PDF</Text>
+                    <Text style={styles.outlinePillButtonText}>{t("summary_export_pdf")}</Text>
                     <Ionicons
                       name="document-text-outline"
                       size={20}
@@ -446,7 +479,7 @@ export default function AnalysisSummaryScreen() {
         >
           <View style={styles.blockContainer}>
             <View style={styles.rowSpaced}>
-              <Text style={styles.summaryAnalysisId}>Análise #{formattedId}</Text>
+              <Text style={styles.summaryAnalysisId}>{t("summary_analysis_num")}{formattedId}</Text>
               <View style={styles.dateRow}>
                 <Ionicons name="calendar-outline" size={14} color="#888" />
                 <Text style={styles.dateText}>{formattedDate}</Text>
@@ -455,7 +488,7 @@ export default function AnalysisSummaryScreen() {
 
             <View style={styles.cardDivider} />
 
-            <Text style={styles.fieldLabel}>Resultado</Text>
+            <Text style={styles.fieldLabel}>{t("summary_result")}</Text>
             <View style={styles.resultStatusRow}>
               <Ionicons
                 name="warning"
@@ -464,13 +497,13 @@ export default function AnalysisSummaryScreen() {
                 style={{ marginRight: 8 }}
               />
               <Text style={[styles.resultDeficiencyText, { color: accentColor }]}>
-                {deficiencyType === "Indefinido"
-                  ? "Sem deficiência identificada"
-                  : `Deficiência de ${getDeficiencyTitle(deficiencyType)}`}
+                {getDeficiencyTitle(deficiencyType, isEn)}
               </Text>
             </View>
 
-            <Text style={[styles.fieldLabel, { marginTop: 18 }]}>Confiança da IA</Text>
+            <Text style={[styles.fieldLabel, { marginTop: 18 }]}>
+              {isEn ? "AI Confidence" : "Confiança da IA"}
+            </Text>
             <Text style={[styles.confidenceValueText, { color: accentColor }]}>
               {probability}%
             </Text>
@@ -487,7 +520,9 @@ export default function AnalysisSummaryScreen() {
           <View style={styles.sectionSeparator} />
 
           <View style={styles.blockContainer}>
-            <Text style={styles.sectionHeading}>Localização da amostra</Text>
+            <Text style={styles.sectionHeading}>
+              {isEn ? "Sample Location" : "Localização da amostra"}
+            </Text>
 
             <View style={styles.mapThumbnailContainer}>
               <MapView
@@ -554,7 +589,7 @@ export default function AnalysisSummaryScreen() {
                 >
                   <Ionicons name="map-outline" size={14} color={Palette.primary} />
                   <Text style={styles.selectionChipText} numberOfLines={1}>
-                    {selectedTalhao?.name || "Talhão"}
+                    {selectedTalhao?.name || t("summary_field_label")}
                   </Text>
                   <Ionicons name="chevron-down" size={13} color="#888" />
                 </TouchableOpacity>
@@ -566,7 +601,7 @@ export default function AnalysisSummaryScreen() {
                 >
                   <Ionicons name="leaf-outline" size={14} color={Palette.primary} />
                   <Text style={styles.selectionChipText} numberOfLines={1}>
-                    {selectedPe?.nome || "Pé"}
+                    {selectedPe?.nome || (isEn ? "Tree" : "Pé")}
                   </Text>
                   <Ionicons name="chevron-down" size={13} color="#888" />
                 </TouchableOpacity>
@@ -576,7 +611,9 @@ export default function AnalysisSummaryScreen() {
                 onPress={() => router.push("/(tabs)/Maps/maps-location")}
                 activeOpacity={0.7}
               >
-                <Text style={styles.viewFullMapLink}>Ver mapa completo &gt;</Text>
+                <Text style={styles.viewFullMapLink}>
+                  {isEn ? "View full map >" : "Ver mapa completo >"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -584,10 +621,12 @@ export default function AnalysisSummaryScreen() {
           <View style={styles.sectionSeparator} />
 
           <View style={styles.blockContainer}>
-            <Text style={styles.sectionHeading}>Informações</Text>
+            <Text style={styles.sectionHeading}>
+              {isEn ? "Information" : "Informações"}
+            </Text>
 
             <View style={styles.infoTableRow}>
-              <Text style={styles.infoRowTitle}>Autor :</Text>
+              <Text style={styles.infoRowTitle}>{isEn ? "Author:" : "Autor :"}</Text>
               <View style={styles.authorBadge}>
                 {authorAvatar ? (
                   <Image source={{ uri: authorAvatar }} style={styles.authorImg} />
@@ -597,7 +636,7 @@ export default function AnalysisSummaryScreen() {
                   </View>
                 )}
                 <Text style={styles.authorNameText}>
-                  {loadingContext ? "Carregando..." : authorName}
+                  {loadingContext ? t("common_loading") : authorName}
                 </Text>
               </View>
             </View>
@@ -623,7 +662,15 @@ export default function AnalysisSummaryScreen() {
                     { color: currentStatusConfig.textColor },
                   ]}
                 >
-                  {currentStatusConfig.label}
+                  {isEn
+                    ? (currentStatusConfig.id === "Tratado"
+                        ? "Treated"
+                        : currentStatusConfig.id === "Em tratamento"
+                        ? "In treatment"
+                        : currentStatusConfig.id === "Não tratado"
+                        ? "Untreated"
+                        : "Not informed")
+                    : currentStatusConfig.label}
                 </Text>
                 <Ionicons
                   name="chevron-down"
@@ -634,7 +681,9 @@ export default function AnalysisSummaryScreen() {
             </View>
 
             <View style={styles.infoTableRow}>
-              <Text style={styles.infoRowTitle}>ID da análise:</Text>
+              <Text style={styles.infoRowTitle}>
+                {isEn ? "Analysis ID:" : "ID da análise:"}
+              </Text>
               <Text style={styles.analysisIdText}>#{formattedId}</Text>
             </View>
           </View>
@@ -642,10 +691,12 @@ export default function AnalysisSummaryScreen() {
           <View style={styles.sectionSeparator} />
 
           <View style={styles.blockContainer}>
-            <Text style={styles.sectionHeading}>Relatório</Text>
+            <Text style={styles.sectionHeading}>
+              {isEn ? "Report & Notes" : "Relatório"}
+            </Text>
             <TextInput
               style={styles.reportTextInput}
-              placeholder="Adicione suas observações..."
+              placeholder={isEn ? "Add your field notes..." : "Adicione suas observações..."}
               placeholderTextColor="#9CA3AF"
               multiline
               numberOfLines={3}
@@ -669,7 +720,9 @@ export default function AnalysisSummaryScreen() {
                 <>
                   <Ionicons name="save-outline" size={18} color={Palette.white} />
                   <Text style={styles.saveHistoryPillText}>
-                    {savedToDb ? "Salvo no histórico" : "Salvar no histórico"}
+                    {savedToDb
+                      ? (isEn ? "Saved to history" : "Salvo no histórico")
+                      : (isEn ? "Save to history" : "Salvar no histórico")}
                   </Text>
                 </>
               )}
@@ -690,7 +743,9 @@ export default function AnalysisSummaryScreen() {
                     size={18}
                     color={Palette.primary}
                   />
-                  <Text style={styles.exportPdfPillText}>Exportar como PDF</Text>
+                  <Text style={styles.exportPdfPillText}>
+                    {t("summary_export_pdf")}
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
@@ -720,9 +775,9 @@ export default function AnalysisSummaryScreen() {
                     <Ionicons name="swap-horizontal" size={22} color={Palette.primary} />
                   </View>
 
-                  <Text style={styles.modalTitle}>Alterar Status</Text>
+                  <Text style={styles.modalTitle}>{isEn ? "Change Status" : "Alterar Status"}</Text>
                   <Text style={styles.modalSubtitle}>
-                    Selecione a situação atual da amostra analisada:
+                    {isEn ? "Select the current condition of the analyzed sample:" : "Selecione a situação atual da amostra analisada:"}
                   </Text>
 
                   <View style={styles.statusOptionsList}>
@@ -755,7 +810,15 @@ export default function AnalysisSummaryScreen() {
                               { color: item.textColor },
                             ]}
                           >
-                            {item.label}
+                            {isEn
+                              ? (item.id === "Tratado"
+                                  ? "Treated"
+                                  : item.id === "Em tratamento"
+                                  ? "In treatment"
+                                  : item.id === "Não tratado"
+                                  ? "Untreated"
+                                  : "Not informed")
+                              : item.label}
                           </Text>
                           {isSelected && (
                             <View style={styles.statusCheckIndicator}>
@@ -799,9 +862,9 @@ export default function AnalysisSummaryScreen() {
                     <Ionicons name="map-outline" size={22} color={Palette.primary} />
                   </View>
 
-                  <Text style={styles.modalTitle}>Selecionar Talhão</Text>
+                  <Text style={styles.modalTitle}>{isEn ? "Select Field" : "Selecionar Talhão"}</Text>
                   <Text style={styles.modalSubtitle}>
-                    Escolha o talhão da amostra analisada:
+                    {isEn ? "Choose the field of the analyzed sample:" : "Escolha o talhão da amostra analisada:"}
                   </Text>
 
                   <ScrollView
@@ -881,9 +944,9 @@ export default function AnalysisSummaryScreen() {
                     <Ionicons name="leaf-outline" size={22} color={Palette.primary} />
                   </View>
 
-                  <Text style={styles.modalTitle}>Selecionar Árvore (Pé)</Text>
+                  <Text style={styles.modalTitle}>{isEn ? "Select Tree" : "Selecionar Árvore (Pé)"}</Text>
                   <Text style={styles.modalSubtitle}>
-                    Escolha a árvore que foi analisada:
+                    {isEn ? "Choose the tree that was analyzed:" : "Escolha a árvore que foi analisada:"}
                   </Text>
 
                   <ScrollView

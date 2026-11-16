@@ -28,14 +28,15 @@ import { getTalhoesByProperty } from "@/repositories/talhaoRepository";
 import { getPesByTalhao } from "@/repositories/peRepository";
 import { computeTalhaoPeStats } from "@/utils/peStats";
 
-function formatDisplayDate(dateStr?: string | Date): string {
+function formatDisplayDate(dateStr?: string | Date, isEn = false): string {
   const d = dateStr ? new Date(dateStr) : new Date();
-  if (isNaN(d.getTime())) return "Sem data";
+  if (isNaN(d.getTime())) return isEn ? "No date" : "Sem data";
   const day = String(d.getDate()).padStart(2, "0");
-  const monthNames = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez",];
-  const month = monthNames[d.getMonth()];
+  const monthNamesPt = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const monthNamesEn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const month = isEn ? monthNamesEn[d.getMonth()] : monthNamesPt[d.getMonth()];
   const year = d.getFullYear();
-  return `${day} ${month}, ${year}`;
+  return isEn ? `${month} ${day}, ${year}` : `${day} ${month}, ${year}`;
 }
 
 export default function HistoryScreen() {
@@ -102,7 +103,7 @@ export default function HistoryScreen() {
                 name: t.name,
                 analyzed: stats.analyzed,
                 total: stats.total,
-                date: formatDisplayDate(t.createdAt),
+                date: formatDisplayDate(t.createdAt, isEn),
                 deficientTrees: stats.deficient,
               };
             })
@@ -121,7 +122,7 @@ export default function HistoryScreen() {
       return () => {
         isActive = false;
       };
-    }, [selectedProperty?.id])
+    }, [selectedProperty?.id, isEn])
   );
 
   const filteredTalhoes = useMemo(() => {
@@ -170,11 +171,13 @@ export default function HistoryScreen() {
       });
     } else {
       Alert.alert(
-        "Aviso",
-        "Cadastre uma propriedade primeiro nas configurações."
+        isEn ? "Notice" : "Aviso",
+        isEn
+          ? "Please register a property first in settings."
+          : "Cadastre uma propriedade primeiro nas configurações."
       );
     }
-  }, [selectedProperty, router]);
+  }, [selectedProperty, router, isEn]);
 
   const handleSortToggle = useCallback(() => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -193,10 +196,10 @@ export default function HistoryScreen() {
             <Text style={styles.talhaoStatsBold}>
               {item.analyzed}/{item.total}
             </Text>{" "}
-            árvores analisadas
+            {isEn ? "trees analyzed" : "árvores analisadas"}
           </Text>
           <View style={styles.talhaoDateRow}>
-            <Text style={styles.talhaoDateLabel}>Criado em: </Text>
+            <Text style={styles.talhaoDateLabel}>{isEn ? "Created at: " : "Criado em: "}</Text>
             <Ionicons name="calendar-outline" size={12} color="#888" />
             <Text style={styles.talhaoDateValue}> {item.date}</Text>
           </View>
@@ -205,7 +208,7 @@ export default function HistoryScreen() {
         <Ionicons name="chevron-forward" size={18} color="#374151" />
       </TouchableOpacity>
     ),
-    [handleTalhaoPress]
+    [handleTalhaoPress, isEn]
   );
 
   const keyExtractor = useCallback((item: TalhaoData) => item.id, []);
@@ -218,10 +221,14 @@ export default function HistoryScreen() {
         resizeMode="contain"
       />
       <Text style={styles.emptyTitle}>
-        Você ainda não cadastrou nenhum talhão.
+        {isEn
+          ? "You haven't registered any fields yet."
+          : "Você ainda não cadastrou nenhum talhão."}
       </Text>
       <Text style={styles.emptyText}>
-        Cadastre seu primeiro talhão para começar a analisar suas árvores!
+        {isEn
+          ? "Register your first field to start analyzing your trees!"
+          : "Cadastre seu primeiro talhão para começar a analisar suas árvores!"}
       </Text>
       <TouchableOpacity
         style={styles.cadastrarButton}
@@ -229,7 +236,7 @@ export default function HistoryScreen() {
         onPress={handleAddTalhao}
       >
         <Ionicons name="add" size={20} color={Palette.white} />
-        <Text style={styles.cadastrarButtonText}>Cadastrar Talhão</Text>
+        <Text style={styles.cadastrarButtonText}>{t("history_add_talhao")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -278,7 +285,7 @@ export default function HistoryScreen() {
                   </Text>
                   <View style={styles.dateRow}>
                     <Ionicons name="calendar-outline" size={14} color="#888" />
-                    <Text style={styles.dateText}>{formatDisplayDate()}</Text>
+                    <Text style={styles.dateText}>{formatDisplayDate(new Date(), isEn)}</Text>
                   </View>
                 </View>
 
@@ -313,7 +320,7 @@ export default function HistoryScreen() {
                           color="#22C55E"
                         />
                         <Text style={styles.statLabel}>
-                          Árvores com deficiência detectada
+                          {isEn ? "Trees with deficiency" : "Árvores com deficiência"}
                         </Text>
                       </View>
                       <Text style={styles.statNumberBig}>
@@ -324,11 +331,11 @@ export default function HistoryScreen() {
                 </View>
 
                 <View style={styles.talhoesSection}>
-                  <Text style={styles.talhoesTitle}>Talhões</Text>
+                  <Text style={styles.talhoesTitle}>{isEn ? "Fields" : "Talhões"}</Text>
 
                   <View style={styles.searchContainer}>
                     <TextInput
-                      placeholder="Buscar talhão"
+                      placeholder={t("history_search_talhao")}
                       placeholderTextColor={Palette.textSecondary}
                       value={searchText}
                       onChangeText={setSearchText}
@@ -349,13 +356,20 @@ export default function HistoryScreen() {
                   >
                     <Ionicons name="add" size={20} color={Palette.white} />
                     <Text style={styles.cadastrarButtonText}>
-                      Cadastrar Talhão
+                      {t("history_add_talhao")}
                     </Text>
                   </TouchableOpacity>
 
                   <View style={styles.listSubHeader}>
                     <Text style={styles.listCount}>
-                      {filteredTalhoes.length} Talhões cadastrados
+                      {filteredTalhoes.length}{" "}
+                      {filteredTalhoes.length === 1
+                        ? isEn
+                          ? "Registered field"
+                          : "Talhão cadastrado"
+                        : isEn
+                          ? "Registered fields"
+                          : "Talhões cadastrados"}
                     </Text>
 
                     <TouchableOpacity
@@ -368,7 +382,7 @@ export default function HistoryScreen() {
                         size={18}
                         color="#374151"
                       />
-                      <Text style={styles.sortText}>Ordenar</Text>
+                      <Text style={styles.sortText}>{t("history_sort")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

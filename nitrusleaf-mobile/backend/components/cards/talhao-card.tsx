@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export interface TalhaoData {
   id: string;
@@ -22,7 +23,9 @@ interface TalhaoCardProps {
   onPress: () => void;
 }
 
-const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) => {
+export const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) => {
+  const { t, isEn } = useLanguage();
+
   return (
     <TouchableOpacity 
       style={styles.container}
@@ -38,16 +41,23 @@ const TalhaoCard: React.FC<TalhaoCardProps> = React.memo(({ talhao, onPress }) =
           <Text style={styles.statsBold}>
             {talhao.analyzed}/{talhao.total}
           </Text>{" "}
-          árvores analisadas
+          {t("history_trees_analyzed_suffix")}
         </Text>
         
         <View style={styles.dateContainer}>
-          <Text style={styles.dateLabel}>Criado em: </Text>
+          <Text style={styles.dateLabel}>{t("common_date_label")} </Text>
           <Ionicons name="calendar-outline" size={12} color={Palette.textSecondary} />
           <Text style={styles.date}> {talhao.date}</Text>
         </View>
 
         {talhao.deficientTrees > 0 && (
+          <View style={styles.deficientBadge}>
+            <Ionicons name="alert-circle" size={13} color="#E04842" />
+            <Text style={styles.deficientText}>
+              {talhao.deficientTrees} {isEn ? "trees with alert" : "árvores com alerta"}
+            </Text>
+          </View>
+        )}
           <View style={styles.deficientBadge}>
             <Text style={styles.deficientText}>
               ⚠️ {talhao.deficientTrees} com deficiência

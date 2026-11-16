@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export interface ArvoreData {
   id: string;
@@ -49,8 +50,25 @@ const statusConfig: Record<string, { bg: string; text: string; icon: keyof typeo
   },
 };
 
-const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(({ arvore, onPress }) => {
+export const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(({ arvore, onPress }) => {
+  const { t, isEn } = useLanguage();
   const currentStatus = statusConfig[arvore.status] ?? statusConfig["Sem-informações"];
+
+  const getTranslatedStatus = (status: string) => {
+    if (!isEn) return status === "Sem-informações" ? "Não informado" : status;
+    if (status === "Tratado") return "Treated";
+    if (status === "Não-Tratado" || status === "Não tratado") return "Untreated";
+    if (status === "Em tratamento") return "In Treatment";
+    return "Not Informed";
+  };
+
+  const getTranslatedDeficiency = (def: string | null) => {
+    if (!def) return null;
+    if (!isEn) return def;
+    if (def.includes("Manganês") || def.includes("Manganes")) return "Manganese";
+    if (def.includes("Saudável") || def.includes("Saudavel")) return "Healthy";
+    return def;
+  };
 
   return (
     <TouchableOpacity
@@ -71,20 +89,20 @@ const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(({ arvore, onPress }) =
                   : styles.badgeAdverso,
               ]}
             >
-              <Text style={styles.badgeTextWhite}>{arvore.deficiency}</Text>
+              <Text style={styles.badgeTextWhite}>{getTranslatedDeficiency(arvore.deficiency)}</Text>
             </View>
           )}
 
           <View style={[styles.badge, { backgroundColor: currentStatus.bg }]}>
             <Ionicons name={currentStatus.icon} size={12} color={currentStatus.text} />
             <Text style={[styles.badgeText, { color: currentStatus.text }]}>
-              {arvore.status === "Sem-informações" ? "Não informado" : arvore.status}
+              {getTranslatedStatus(arvore.status)}
             </Text>
           </View>
         </View>
 
         <View style={styles.dateContainer}>
-          <Text style={styles.dateLabel}>Criado em: </Text>
+          <Text style={styles.dateLabel}>{t("common_date_label")} </Text>
           <Ionicons name="calendar-outline" size={12} color={Palette.textSecondary} />
           <Text style={styles.date}> {arvore.date}</Text>
         </View>
@@ -97,6 +115,8 @@ const ArvoreCard: React.FC<ArvoreCardProps> = React.memo(({ arvore, onPress }) =
         style={styles.chevron}
       />
     </TouchableOpacity>
+  );
+});
   );
 });
 

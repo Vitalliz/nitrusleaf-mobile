@@ -31,10 +31,13 @@ import { Background } from "@/components/ui/background";
 import { Button } from "@/components/ui/button";
 import { CustomAlert, AlertType } from "@/components/ui/alert";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 
 export default function ProfileEditScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t, isEn } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,7 +106,11 @@ export default function ProfileEditScreen() {
   const handleSave = async () => {
     if (!user?.id) return;
     if (!formData.name.trim()) {
-      showAlert("O nome completo é obrigatório.", "Atenção", "warning");
+      showAlert(
+        isEn ? "Full name is required." : "O nome completo é obrigatório.",
+        isEn ? "Warning" : "Atenção",
+        "warning"
+      );
       return;
     }
 
@@ -117,12 +124,21 @@ export default function ProfileEditScreen() {
         birthDate: formData.birthDate.trim() || undefined,
       });
 
-      showAlert("Perfil atualizado com sucesso!", "Sucesso", "success", () => {
-        safeBack(router, ROUTES.profile);
-      });
+      showAlert(
+        isEn ? "Profile updated successfully!" : "Perfil atualizado com sucesso!",
+        isEn ? "Success" : "Sucesso",
+        "success",
+        () => {
+          safeBack(router, ROUTES.profile);
+        }
+      );
     } catch (error: any) {
       console.error("Erro ao atualizar perfil:", error);
-      showAlert(error.message || "Não foi possível atualizar o perfil.", "Erro", "error");
+      showAlert(
+        error.message || (isEn ? "Could not update profile." : "Não foi possível atualizar o perfil."),
+        isEn ? "Error" : "Erro",
+        "error"
+      );
     } finally {
       setSaving(false);
     }
@@ -140,25 +156,35 @@ export default function ProfileEditScreen() {
       const storedUrl = await uploadProfileAvatar(user.id, picked.localUri, picked.base64);
       await updateUsuarioAvatar(user.id, storedUrl);
       setAvatarUri(storedUrl);
-      showAlert("Foto de perfil atualizada com sucesso.", "Sucesso", "success");
+      showAlert(
+        isEn ? "Profile photo updated successfully." : "Foto de perfil atualizada com sucesso.",
+        isEn ? "Success" : "Sucesso",
+        "success"
+      );
     } catch (error: unknown) {
       console.error("Erro ao alterar foto:", error);
       const msg =
         error instanceof Error
           ? error.message
-          : "Não foi possível atualizar a foto de perfil.";
-      showAlert(msg, "Erro", "error");
+          : isEn
+            ? "Could not update profile photo."
+            : "Não foi possível atualizar a foto de perfil.";
+      showAlert(msg, isEn ? "Error" : "Erro", "error");
     } finally {
       setUploadingAvatar(false);
     }
   };
 
   const handleChangePhoto = () => {
-    Alert.alert("Foto de perfil", "Escolha de onde enviar a imagem", [
-      { text: "Galeria", onPress: () => void applyPickedAvatar(false) },
-      { text: "Câmera", onPress: () => void applyPickedAvatar(true) },
-      { text: "Cancelar", style: "cancel" },
-    ]);
+    Alert.alert(
+      isEn ? "Profile photo" : "Foto de perfil",
+      isEn ? "Choose where to upload the photo from" : "Escolha de onde enviar a imagem",
+      [
+        { text: isEn ? "Gallery" : "Galeria", onPress: () => void applyPickedAvatar(false) },
+        { text: isEn ? "Camera" : "Câmera", onPress: () => void applyPickedAvatar(true) },
+        { text: t("common_cancel"), style: "cancel" },
+      ]
+    );
   };
 
   return (
@@ -175,8 +201,8 @@ export default function ProfileEditScreen() {
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Editar Perfil</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Edit Profile" : "Editar Perfil"}</Text>
+          <LanguageToggle compact />
         </View>
 
         {loading ? (
@@ -223,37 +249,43 @@ export default function ProfileEditScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.avatarText}>
-                  {uploadingAvatar ? "Enviando foto..." : "Alterar foto de perfil"}
+                  {uploadingAvatar
+                    ? (isEn ? "Uploading photo..." : "Enviando foto...")
+                    : (isEn ? "Change profile photo" : "Alterar foto de perfil")}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+            <Text style={styles.sectionTitle}>
+              {isEn ? "Personal Information" : "Informações Pessoais"}
+            </Text>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Nome Completo *</Text>
+              <Text style={styles.label}>{isEn ? "Full Name *" : "Nome Completo *"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.name}
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
-                placeholder="Seu nome completo"
+                placeholder={isEn ? "Your full name" : "Seu nome completo"}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>E-mail (Não editável)</Text>
+              <Text style={styles.label}>
+                {isEn ? "Email (Non-editable)" : "E-mail (Não editável)"}
+              </Text>
               <TextInput
                 style={[styles.input, styles.inputDisabled]}
                 value={formData.email}
                 editable={false}
-                placeholder="Seu e-mail"
+                placeholder={isEn ? "Your email" : "Seu e-mail"}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Telefone</Text>
+              <Text style={styles.label}>{isEn ? "Phone" : "Telefone"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.phone}
@@ -277,12 +309,12 @@ export default function ProfileEditScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Data de Nascimento</Text>
+              <Text style={styles.label}>{isEn ? "Birth Date" : "Data de Nascimento"}</Text>
               <TextInput
                 style={styles.input}
                 value={formData.birthDate}
                 onChangeText={(text) => setFormData({ ...formData, birthDate: text })}
-                placeholder="AAAA-MM-DD"
+                placeholder={isEn ? "YYYY-MM-DD" : "AAAA-MM-DD"}
                 placeholderTextColor={Palette.textSecondary}
                 keyboardType="numeric"
               />
@@ -290,7 +322,7 @@ export default function ProfileEditScreen() {
 
             <View style={styles.saveButtonContainer}>
               <Button
-                title={saving ? "Salvando..." : "Salvar Alterações"}
+                title={saving ? t("common_saving") : (isEn ? "Save Changes" : "Salvar Alterações")}
                 variant="primary"
                 size="full"
                 onPress={handleSave}

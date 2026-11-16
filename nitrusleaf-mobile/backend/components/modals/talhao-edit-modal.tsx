@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface TalhaoEditModalProps {
   visible: boolean;
@@ -30,6 +31,7 @@ export function TalhaoEditModal({
   onSave,
   onDelete,
 }: TalhaoEditModalProps) {
+  const { t, isEn } = useLanguage();
   const [step, setStep] = useState<Step>("edit");
   const [name, setName] = useState(talhaoName);
   const [saving, setSaving] = useState(false);
@@ -46,7 +48,7 @@ export function TalhaoEditModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("O nome do talhão não pode estar vazio.");
+      setError(isEn ? "Field name cannot be empty." : "O nome do talhão não pode estar vazio.");
       return;
     }
     try {
@@ -55,7 +57,7 @@ export function TalhaoEditModal({
       await onSave(name.trim());
       onClose();
     } catch {
-      setError("Falha ao salvar. Tente novamente.");
+      setError(isEn ? "Failed to save. Please try again." : "Falha ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
@@ -67,7 +69,7 @@ export function TalhaoEditModal({
       await onDelete();
       onClose();
     } catch {
-      setError("Falha ao excluir o talhão.");
+      setError(isEn ? "Failed to delete field." : "Falha ao excluir o talhão.");
       setStep("edit");
     } finally {
       setDeleting(false);
@@ -98,7 +100,7 @@ export function TalhaoEditModal({
           {step === "edit" && (
             <>
               <View style={styles.header}>
-                <Text style={styles.headerTitle}>Editar Talhão</Text>
+                <Text style={styles.headerTitle}>{isEn ? "Edit Field" : "Editar Talhão"}</Text>
                 <TouchableOpacity
                   onPress={onClose}
                   style={styles.closeButton}
@@ -110,9 +112,9 @@ export function TalhaoEditModal({
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nome do talhão</Text>
+                <Text style={styles.label}>{isEn ? "Field name" : "Nome do talhão"}</Text>
                 <Input
-                  placeholder="Ex: Talhão Norte 01"
+                  placeholder={isEn ? "e.g., North Sector 01" : "Ex: Talhão Norte 01"}
                   value={name}
                   onChangeText={(v) => {
                     setName(v);
@@ -125,7 +127,7 @@ export function TalhaoEditModal({
               </View>
 
               <Button
-                title={saving ? "Salvando..." : "Salvar alterações"}
+                title={saving ? t("common_saving") : (isEn ? "Save changes" : "Salvar alterações")}
                 variant="primary"
                 size="full"
                 onPress={handleSave}
@@ -135,7 +137,7 @@ export function TalhaoEditModal({
               <View style={styles.divider} />
 
               <Button
-                title="Excluir talhão"
+                title={isEn ? "Delete field" : "Excluir talhão"}
                 variant="danger"
                 size="full"
                 icon="trash-outline"
@@ -152,17 +154,19 @@ export function TalhaoEditModal({
                 </View>
               </View>
 
-              <Text style={styles.confirmTitle}>Excluir talhão?</Text>
+              <Text style={styles.confirmTitle}>{isEn ? "Delete field?" : "Excluir talhão?"}</Text>
               <Text style={styles.confirmText}>
-                Tem certeza que deseja excluir{" "}
+                {isEn ? "Are you sure you want to delete " : "Tem certeza que deseja excluir "}
                 <Text style={styles.confirmBold}>&quot;{talhaoName}&quot;</Text>?{"\n"}
-                Todas as árvores cadastradas nele e seus respectivos relatórios serão removidos. Essa ação é irreversível.
+                {isEn
+                  ? "All trees registered in it and their reports will be removed. This action is irreversible."
+                  : "Todas as árvores cadastradas nele e seus respectivos relatórios serão removidos. Essa ação é irreversível."}
               </Text>
 
               {error ? <Text style={styles.errorTextCentered}>{error}</Text> : null}
 
               <Button
-                title={deleting ? "Excluindo..." : "Sim, excluir talhão"}
+                title={deleting ? (isEn ? "Deleting..." : "Excluindo...") : (isEn ? "Yes, delete field" : "Sim, excluir talhão")}
                 variant="danger"
                 size="full"
                 icon="trash"
@@ -173,7 +177,7 @@ export function TalhaoEditModal({
               <View style={styles.cancelSpacing} />
 
               <Button
-                title="Voltar e cancelar"
+                title={isEn ? "Cancel and return" : "Voltar e cancelar"}
                 variant="outline"
                 size="full"
                 onPress={() => {

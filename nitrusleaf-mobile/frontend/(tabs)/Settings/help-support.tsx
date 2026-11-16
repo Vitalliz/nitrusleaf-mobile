@@ -15,6 +15,8 @@ import { useRouter } from 'expo-router';
 import { Background } from '@/components/ui/background';
 import TabBar from '@/components/ui/tab-bar';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 interface FaqItem {
   id: string;
@@ -45,7 +47,38 @@ const FAQS: FaqItem[] = [
 
 export default function HelpSupportScreen() {
   const router = useRouter();
+  const { t, isEn } = useLanguage();
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>(null);
+
+  const faqs: FaqItem[] = [
+    {
+      id: '1',
+      question: isEn
+        ? 'How do I register a new field?'
+        : 'Como cadastrar um novo talhão?',
+      answer: isEn
+        ? 'Access the home screen or the farm management menu and select the option to register a field to demarcate the perimeter and add trees.'
+        : 'Acesse a tela inicial ou o menu de gerenciamento da fazenda e selecione a opção de cadastrar talhão para delimitar a área e registrar as árvores.',
+    },
+    {
+      id: '2',
+      question: isEn
+        ? 'How does image leaf analysis work?'
+        : 'Como funciona a análise foliar por imagem?',
+      answer: isEn
+        ? 'Use the center camera button to photograph a leaf with symptoms in good lighting. The artificial intelligence model will identify nutritional deficiencies like manganese.'
+        : 'Utilize o botão central da câmera para fotografar uma folha com sintomas ou em boa iluminação. O modelo de inteligência artificial identificará deficiências nutricionais como manganês.',
+    },
+    {
+      id: '3',
+      question: isEn
+        ? 'How do I update my property details?'
+        : 'Como atualizar os dados da minha propriedade?',
+      answer: isEn
+        ? 'In the Settings menu, select "Property Details" to edit address, name, and location on the map.'
+        : 'No menu Configurações, selecione "Dados da Propriedade" para editar endereço, nome e localização no mapa.',
+    },
+  ];
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -80,8 +113,8 @@ export default function HelpSupportScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Ajuda e Suporte</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Help & Support" : "Ajuda e Suporte"}</Text>
+          <LanguageToggle compact />
         </View>
 
         <ScrollView
@@ -89,7 +122,9 @@ export default function HelpSupportScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.sectionTitle}>Canais de Atendimento</Text>
+          <Text style={styles.sectionTitle}>
+            {isEn ? "Contact Channels" : "Canais de Atendimento"}
+          </Text>
 
           <View style={styles.contactCardsRow}>
             <TouchableOpacity
@@ -101,7 +136,9 @@ export default function HelpSupportScreen() {
                 <Ionicons name="logo-whatsapp" size={22} color={Palette.primary} />
               </View>
               <Text style={styles.contactLabel}>WhatsApp</Text>
-              <Text style={styles.contactSub}>Atendimento rápido</Text>
+              <Text style={styles.contactSub}>
+                {isEn ? "Fast support" : "Atendimento rápido"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -112,15 +149,17 @@ export default function HelpSupportScreen() {
               <View style={styles.contactIconBox}>
                 <Ionicons name="mail-outline" size={22} color={Palette.primary} />
               </View>
-              <Text style={styles.contactLabel}>E-mail</Text>
+              <Text style={styles.contactLabel}>{isEn ? "Email" : "E-mail"}</Text>
               <Text style={styles.contactSub}>suporte@app.com</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.sectionTitle}>Perguntas Frequentes</Text>
+          <Text style={styles.sectionTitle}>
+            {isEn ? "Frequently Asked Questions" : "Perguntas Frequentes"}
+          </Text>
 
           <View style={styles.faqList}>
-            {FAQS.map((faq) => {
+            {faqs.map((faq) => {
               const isExpanded = expandedFaqId === faq.id;
               return (
                 <View key={faq.id} style={styles.faqCard}>

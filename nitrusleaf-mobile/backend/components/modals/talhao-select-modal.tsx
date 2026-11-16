@@ -11,6 +11,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
 import type { Talhao } from "@/types/talhao";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface TalhaoSelectModalProps {
     visible: boolean;
@@ -29,6 +30,8 @@ export function TalhaoSelectModal({
     onAddNew,
     onClose,
 }: TalhaoSelectModalProps) {
+    const { t, isEn } = useLanguage();
+
     return (
         <Modal
         visible={visible}
@@ -53,9 +56,9 @@ export function TalhaoSelectModal({
                     <Ionicons name="map-outline" size={22} color={Palette.primary} />
                 </View>
 
-                <Text style={styles.title}>Selecionar Talhão</Text>
+                <Text style={styles.title}>{isEn ? "Select Field" : "Selecionar Talhão"}</Text>
                 <Text style={styles.subtitle}>
-                    Escolha o talhão correspondente à amostra analisada:
+                    {isEn ? "Choose the field corresponding to the analyzed sample:" : "Escolha o talhão correspondente à amostra analisada:"}
                 </Text>
 
                 <ScrollView
@@ -71,7 +74,7 @@ export function TalhaoSelectModal({
                         color={Palette.textSecondary}
                         />
                         <Text style={styles.emptyText}>
-                        Nenhum talhão encontrado para esta propriedade.
+                        {isEn ? "No fields found for this property." : "Nenhum talhão encontrado para esta propriedade."}
                         </Text>
                     </View>
                     ) : (
@@ -133,7 +136,7 @@ export function TalhaoSelectModal({
                     }}
                     >
                     <Ionicons name="add" size={18} color={Palette.primary} />
-                    <Text style={styles.addNewText}>Cadastrar novo talhão</Text>
+                    <Text style={styles.addNewText}>{isEn ? "Register new field" : "Cadastrar novo talhão"}</Text>
                     </TouchableOpacity>
                 )}
                 </View>

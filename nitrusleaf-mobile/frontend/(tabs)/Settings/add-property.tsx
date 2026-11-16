@@ -25,12 +25,15 @@ import { useProperty } from '@/contexts/PropertyContext';
 import { createProperty } from '@/repositories/propertyRepository';
 import type { CreatePropertyRequest } from '@/types/property';
 import { Palette, FontSizes, FontWeights } from '@/constants/theme';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
 
 export default function AddPropertyScreen() {
   const router = useRouter();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { user } = useAuth();
   const { refreshProperties, selectProperty } = useProperty();
+  const { t, isEn } = useLanguage();
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -136,27 +139,51 @@ export default function AddPropertyScreen() {
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      showAlert('Nome da propriedade é obrigatório.', 'Atenção', 'warning');
+      showAlert(
+        isEn ? 'Property name is required.' : 'Nome da propriedade é obrigatório.',
+        isEn ? 'Warning' : 'Atenção',
+        'warning'
+      );
       return false;
     }
     if (!formData.cep.trim()) {
-      showAlert('CEP é obrigatório.', 'Atenção', 'warning');
+      showAlert(
+        isEn ? 'ZIP Code is required.' : 'CEP é obrigatório.',
+        isEn ? 'Warning' : 'Atenção',
+        'warning'
+      );
       return false;
     }
     if (!formData.logradouro.trim()) {
-      showAlert('Logradouro é obrigatório.', 'Atenção', 'warning');
+      showAlert(
+        isEn ? 'Address is required.' : 'Logradouro é obrigatório.',
+        isEn ? 'Warning' : 'Atenção',
+        'warning'
+      );
       return false;
     }
     if (!formData.numero.trim()) {
-      showAlert('Número é obrigatório.', 'Atenção', 'warning');
+      showAlert(
+        isEn ? 'Number is required.' : 'Número é obrigatório.',
+        isEn ? 'Warning' : 'Atenção',
+        'warning'
+      );
       return false;
     }
     if (!formData.bairro.trim()) {
-      showAlert('Bairro é obrigatório.', 'Atenção', 'warning');
+      showAlert(
+        isEn ? 'Neighborhood is required.' : 'Bairro é obrigatório.',
+        isEn ? 'Warning' : 'Atenção',
+        'warning'
+      );
       return false;
     }
     if (!formData.cidade.trim()) {
-      showAlert('Cidade é obrigatória.', 'Atenção', 'warning');
+      showAlert(
+        isEn ? 'City is required.' : 'Cidade é obrigatória.',
+        isEn ? 'Warning' : 'Atenção',
+        'warning'
+      );
       return false;
     }
     return true;
@@ -187,20 +214,29 @@ export default function AddPropertyScreen() {
       await refreshProperties();
       await selectProperty(created.id);
 
-      showAlert('Propriedade cadastrada com sucesso!', 'Sucesso', 'success', () => {
-        if (router.canGoBack()) {
-          router.back();
-        } else {
-          router.replace(
-            returnTo && String(returnTo).startsWith('/')
-              ? (returnTo as typeof ROUTES.profile)
-              : ROUTES.profile
-          );
+      showAlert(
+        isEn ? 'Property registered successfully!' : 'Propriedade cadastrada com sucesso!',
+        isEn ? 'Success' : 'Sucesso',
+        'success',
+        () => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace(
+              returnTo && String(returnTo).startsWith('/')
+                ? (returnTo as typeof ROUTES.profile)
+                : ROUTES.profile
+            );
+          }
         }
-      });
+      );
     } catch (error) {
       console.error('Erro ao salvar propriedade:', error);
-      showAlert('Não foi possível salvar a propriedade. Tente novamente.', 'Erro', 'error');
+      showAlert(
+        isEn ? 'Could not save property. Please try again.' : 'Não foi possível salvar a propriedade. Tente novamente.',
+        isEn ? 'Error' : 'Erro',
+        'error'
+      );
     } finally {
       setLoading(false);
     }
@@ -219,8 +255,8 @@ export default function AddPropertyScreen() {
           >
             <Ionicons name="arrow-back" size={24} color={Palette.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Cadastrar Propriedade</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>{isEn ? "Register Property" : "Cadastrar Propriedade"}</Text>
+          <LanguageToggle compact />
         </View>
 
         <ScrollView
@@ -228,23 +264,25 @@ export default function AddPropertyScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.sectionTitle}>Informações da Propriedade</Text>
+          <Text style={styles.sectionTitle}>
+            {isEn ? "Property Information" : "Informações da Propriedade"}
+          </Text>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Nome da Propriedade *</Text>
+            <Text style={styles.label}>{isEn ? "Property Name *" : "Nome da Propriedade *"}</Text>
             <TextInput
               value={formData.name}
               onChangeText={(value) => handleInputChange('name', value)}
               style={styles.input}
-              placeholder="Ex: Fazenda São João"
+              placeholder={isEn ? "e.g., St. John Farm" : "Ex: Fazenda São João"}
               placeholderTextColor={Palette.textSecondary}
             />
           </View>
 
-          <Text style={styles.sectionTitle}>Endereço</Text>
+          <Text style={styles.sectionTitle}>{isEn ? "Address" : "Endereço"}</Text>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>CEP *</Text>
+            <Text style={styles.label}>{isEn ? "ZIP Code / CEP *" : "CEP *"}</Text>
             <TextInput
               value={formData.cep}
               onChangeText={(value) => handleInputChange('cep', value)}
@@ -256,63 +294,63 @@ export default function AddPropertyScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Logradouro *</Text>
+            <Text style={styles.label}>{isEn ? "Street / Highway *" : "Logradouro *"}</Text>
             <TextInput
               value={formData.logradouro}
               onChangeText={(value) => handleInputChange('logradouro', value)}
               style={styles.input}
-              placeholder="Rua, Avenida, Rodovia, etc."
+              placeholder={isEn ? "Street, Avenue, Highway, etc." : "Rua, Avenida, Rodovia, etc."}
               placeholderTextColor={Palette.textSecondary}
             />
           </View>
 
           <View style={styles.row}>
             <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-              <Text style={styles.label}>Número *</Text>
+              <Text style={styles.label}>{isEn ? "Number *" : "Número *"}</Text>
               <TextInput
                 value={formData.numero}
                 onChangeText={(value) => handleInputChange('numero', value)}
                 style={styles.input}
-                placeholder="123 ou S/N"
+                placeholder={isEn ? "123 or N/A" : "123 ou S/N"}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
 
             <View style={[styles.formGroup, { flex: 2 }]}>
-              <Text style={styles.label}>Bairro *</Text>
+              <Text style={styles.label}>{isEn ? "Neighborhood *" : "Bairro *"}</Text>
               <TextInput
                 value={formData.bairro}
                 onChangeText={(value) => handleInputChange('bairro', value)}
                 style={styles.input}
-                placeholder="Centro, Zona Rural, etc."
+                placeholder={isEn ? "Downtown, Rural Area, etc." : "Centro, Zona Rural, etc."}
                 placeholderTextColor={Palette.textSecondary}
               />
             </View>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Cidade *</Text>
+            <Text style={styles.label}>{isEn ? "City *" : "Cidade *"}</Text>
             <TextInput
               value={formData.cidade}
               onChangeText={(value) => handleInputChange('cidade', value)}
               style={styles.input}
-              placeholder="Cidade"
+              placeholder={isEn ? "City" : "Cidade"}
               placeholderTextColor={Palette.textSecondary}
             />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Região</Text>
+            <Text style={styles.label}>{isEn ? "Region" : "Região"}</Text>
             <TextInput
               value={formData.regiao}
               onChangeText={(value) => handleInputChange('regiao', value)}
               style={styles.input}
-              placeholder="Ex: Interior, Litoral, Vale do Ribeira"
+              placeholder={isEn ? "e.g., Midwest, Coast, Valley" : "Ex: Interior, Litoral, Vale do Ribeira"}
               placeholderTextColor={Palette.textSecondary}
             />
           </View>
 
-          <Text style={styles.sectionTitle}>Demarcação da Fazenda</Text>
+          <Text style={styles.sectionTitle}>{isEn ? "Farm Boundary Demarcation" : "Demarcação da Fazenda"}</Text>
           <TouchableOpacity
             style={styles.mapBannerBtn}
             onPress={() => setShowMapModal(true)}
@@ -324,13 +362,15 @@ export default function AddPropertyScreen() {
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.mapBannerTitle}>
                 {polygonPoints.length >= 3
-                  ? `Área Demarcada (${polygonPoints.length} pontos)`
-                  : 'Demarcar Limites da Fazenda no Mapa'}
+                  ? (isEn
+                      ? `Demarcated Area (${polygonPoints.length} points)`
+                      : `Área Demarcada (${polygonPoints.length} pontos)`)
+                  : (isEn ? "Demarcate Farm Boundary on Map" : "Demarcar Limites da Fazenda no Mapa")}
               </Text>
               <Text style={styles.mapBannerSubtitle}>
                 {polygonPoints.length >= 3
-                  ? 'Toque para visualizar ou ajustar o polígono'
-                  : 'Toque para desenhar o contorno da propriedade no mapa'}
+                  ? (isEn ? "Tap to view or adjust polygon" : "Toque para visualizar ou ajustar o polígono")
+                  : (isEn ? "Tap to draw property boundary on map" : "Toque para desenhar o contorno da propriedade no mapa")}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={Palette.textSecondary} />
@@ -338,7 +378,7 @@ export default function AddPropertyScreen() {
 
           <View style={styles.row}>
             <View style={[styles.formGroup, { flex: 1, marginRight: 10 }]}>
-              <Text style={styles.label}>Latitude Central</Text>
+              <Text style={styles.label}>{isEn ? "Central Latitude" : "Latitude Central"}</Text>
               <TextInput
                 value={formData.latitude}
                 onChangeText={(value) => handleInputChange('latitude', value)}
@@ -350,7 +390,7 @@ export default function AddPropertyScreen() {
             </View>
 
             <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Longitude Central</Text>
+              <Text style={styles.label}>{isEn ? "Central Longitude" : "Longitude Central"}</Text>
               <TextInput
                 value={formData.longitude}
                 onChangeText={(value) => handleInputChange('longitude', value)}
@@ -364,7 +404,7 @@ export default function AddPropertyScreen() {
 
           <View style={styles.saveBtnContainer}>
             <Button
-              title={loading ? 'Salvando...' : 'Salvar Propriedade'}
+              title={loading ? t("common_saving") : (isEn ? "Save Property" : "Salvar Propriedade")}
               variant="primary"
               size="full"
               onPress={handleSave}
@@ -387,14 +427,14 @@ export default function AddPropertyScreen() {
               >
                 <Ionicons name="close" size={24} color={Palette.textPrimary} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Demarcar Limites da Fazenda</Text>
+              <Text style={styles.modalTitle}>{isEn ? "Demarcate Farm Boundary" : "Demarcar Limites da Fazenda"}</Text>
               <TouchableOpacity
                 onPress={handleConfirmLocation}
                 style={styles.modalConfirmBtn}
                 activeOpacity={0.85}
               >
                 <Text style={styles.modalConfirmText}>
-                  Confirmar ({polygonPoints.length})
+                  {t("common_confirm")} ({polygonPoints.length})
                 </Text>
               </TouchableOpacity>
             </View>
@@ -402,7 +442,9 @@ export default function AddPropertyScreen() {
             <View style={styles.modalInstructionBanner}>
               <Ionicons name="information-circle-outline" size={18} color="#0284C7" />
               <Text style={styles.modalInstructionText}>
-                Toque no mapa para marcar os pontos da fazenda. Com 3 ou mais pontos a forma fecha em amarelo.
+                {isEn
+                  ? "Tap on map to mark farm boundary points. With 3 or more points the shape closes in yellow."
+                  : "Toque no mapa para marcar os pontos da fazenda. Com 3 ou mais pontos a forma fecha em amarelo."}
               </Text>
             </View>
 
@@ -455,7 +497,7 @@ export default function AddPropertyScreen() {
                 disabled={polygonPoints.length === 0}
               >
                 <Ionicons name="arrow-undo-outline" size={18} color="#1E293B" />
-                <Text style={styles.mapControlBtnText}>Desfazer</Text>
+                <Text style={styles.mapControlBtnText}>{isEn ? "Undo" : "Desfazer"}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -464,12 +506,19 @@ export default function AddPropertyScreen() {
                 disabled={polygonPoints.length === 0}
               >
                 <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                <Text style={[styles.mapControlBtnText, { color: '#EF4444' }]}>Limpar</Text>
+                <Text style={[styles.mapControlBtnText, { color: '#EF4444' }]}>{isEn ? "Clear" : "Limpar"}</Text>
               </TouchableOpacity>
 
               <View style={styles.pointsCounterBadge}>
                 <Text style={styles.pointsCounterText}>
-                  {polygonPoints.length} {polygonPoints.length === 1 ? 'ponto' : 'pontos'}
+                  {polygonPoints.length}{" "}
+                  {polygonPoints.length === 1
+                    ? isEn
+                      ? "point"
+                      : "ponto"
+                    : isEn
+                      ? "points"
+                      : "pontos"}
                 </Text>
               </View>
             </View>

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Palette, FontSizes, FontWeights } from "@/constants/theme";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export type TreeStatus = "Não informado" | "Não tratado" | "Em tratamento" | "Tratado";
 
@@ -67,6 +68,23 @@ export function StatusSelectModal({
     onSelect,
     onClose,
 }: StatusSelectModalProps) {
+    const { t, isEn } = useLanguage();
+
+    const getStatusLabel = (id: TreeStatus) => {
+        switch (id) {
+            case "Não informado":
+                return t("status_unknown");
+            case "Não tratado":
+                return t("status_untreated");
+            case "Em tratamento":
+                return t("status_in_treatment");
+            case "Tratado":
+                return t("status_treated");
+            default:
+                return id;
+        }
+    };
+
     return (
         <Modal
         visible={visible}
@@ -93,9 +111,9 @@ export function StatusSelectModal({
                     <Ionicons name="swap-horizontal" size={22} color={Palette.primary} />
                 </View>
 
-                <Text style={styles.title}>Alterar Status</Text>
+                <Text style={styles.title}>{isEn ? "Change Status" : "Alterar Status"}</Text>
                 <Text style={styles.subtitle}>
-                    Selecione a situação atual da amostra analisada:
+                    {isEn ? "Select current status of analyzed sample:" : "Selecione a situação atual da amostra analisada:"}
                 </Text>
 
                 {/* Lista dos Botões de Status (conforme a imagem) */}
@@ -129,7 +147,7 @@ export function StatusSelectModal({
                             { color: item.textColor },
                             ]}
                         >
-                            {item.label}
+                            {getStatusLabel(item.id)}
                         </Text>
                         {isSelected && (
                             <View style={styles.checkIndicator}>
