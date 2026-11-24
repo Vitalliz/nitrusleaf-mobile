@@ -15,7 +15,7 @@ CORS(app)   # Permite requisições do React Native.\venv\Scripts\Activate.ps1
 # 1. CARREGAR MODELO
 # ============================================
 print("[INFO] Carregando modelo...")
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'folhas_mexerica_modelo.keras')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'modelo_zero.keras')
 
 try:
     modelo = tf.keras.models.load_model(MODEL_PATH)
